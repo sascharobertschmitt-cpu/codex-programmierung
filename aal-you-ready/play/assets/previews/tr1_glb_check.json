@@ -1,0 +1,138 @@
+{
+  "checks": [
+    {
+      "name": "GLB-Container glTF 2.0 lesbar",
+      "status": "PASS",
+      "detail": "Khronos glTF Blender I/O v4.2.70"
+    },
+    {
+      "name": "Sichtbare Geometrie vorhanden",
+      "status": "PASS",
+      "detail": "1504 Dreiecke"
+    },
+    {
+      "name": "Dreiecksbudget <= 40000",
+      "status": "PASS",
+      "detail": "1504"
+    },
+    {
+      "name": "Draw Calls (Primitive) <= 16",
+      "status": "PASS",
+      "detail": "2"
+    },
+    {
+      "name": "Dateigroesse <= 2.0 MB",
+      "status": "PASS",
+      "detail": "37 KB"
+    },
+    {
+      "name": "Alle Bilder eingebettet",
+      "status": "PASS",
+      "detail": "0 Bilder, extern: 0"
+    },
+    {
+      "name": "Materialien vorhanden",
+      "status": "PASS",
+      "detail": "2"
+    },
+    {
+      "name": "Ursprung am Boden (min Y ~ 0)",
+      "status": "PASS",
+      "detail": "min Y = -0.0012"
+    },
+    {
+      "name": "Ursprung horizontal mittig",
+      "status": "PASS",
+      "detail": "Mitte X = 0.000, Z = 0.000"
+    },
+    {
+      "name": "Masse plausibel",
+      "status": "PASS",
+      "detail": "ist [3.0, 0.2925, 0.2925] m, erwartet [3.0, 0.2925, 0.2925] m (Toleranz 0.03)"
+    }
+  ],
+  "analysis": {
+    "file_bytes": 38056,
+    "triangles": 1504,
+    "vertices": 1132,
+    "primitives": 2,
+    "meshes": 2,
+    "materials": [
+      {
+        "name": "M_Alu",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.7799999713897705,
+          0.7799999713897705,
+          0.800000011920929,
+          1
+        ],
+        "metallic": 1.0,
+        "roughness": 0.3199999928474426,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_Steel",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.6200000047683716,
+          0.6200000047683716,
+          0.6399999856948853,
+          1
+        ],
+        "metallic": 1.0,
+        "roughness": 0.2800000011920929,
+        "baseColorTexture": false,
+        "normalTexture": false
+      }
+    ],
+    "images": [],
+    "textures": 0,
+    "bounds_min": [
+      -1.5,
+      -0.0012,
+      -0.1462
+    ],
+    "bounds_max": [
+      1.5,
+      0.2912,
+      0.1462
+    ],
+    "size_m": [
+      3.0,
+      0.2925,
+      0.2925
+    ],
+    "material_bounds": {
+      "M_Steel": {
+        "min": [
+          -1.5,
+          -0.0012,
+          -0.1462
+        ],
+        "max": [
+          1.5,
+          0.2912,
+          0.1462
+        ]
+      },
+      "M_Alu": {
+        "min": [
+          -1.47,
+          0.0,
+          -0.145
+        ],
+        "max": [
+          1.47,
+          0.29,
+          0.145
+        ]
+      }
+    }
+  }
+}

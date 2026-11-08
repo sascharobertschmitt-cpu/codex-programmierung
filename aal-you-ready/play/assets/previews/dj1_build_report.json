@@ -1,0 +1,65 @@
+{
+  "asset": "DJ1",
+  "blender": "4.2.3 LTS",
+  "glb": "aal-you-ready/play/assets/club_dj_booth.glb",
+  "glb_bytes": 593892,
+  "triangles_total": 13606,
+  "meshes": {
+    "DJ1_Cabinet": {
+      "triangles": 332,
+      "vertices": 168,
+      "material": "M_Cabinet"
+    },
+    "DJ1_Grille": {
+      "triangles": 2,
+      "vertices": 4,
+      "material": "M_Grille"
+    },
+    "DJ1_MetalDark": {
+      "triangles": 2136,
+      "vertices": 1116,
+      "material": "M_MetalDark"
+    },
+    "DJ1_Steel": {
+      "triangles": 2320,
+      "vertices": 1372,
+      "material": "M_Steel"
+    },
+    "DJ1_Rubber": {
+      "triangles": 4032,
+      "vertices": 2058,
+      "material": "M_Rubber"
+    },
+    "DJ1_Plastic": {
+      "triangles": 2864,
+      "vertices": 1582,
+      "material": "M_Plastic"
+    },
+    "DJ1_LED": {
+      "triangles": 1280,
+      "vertices": 684,
+      "material": "M_LED"
+    },
+    "DJ1_Screen": {
+      "triangles": 448,
+      "vertices": 262,
+      "material": "M_Screen"
+    },
+    "DJ1_Panel": {
+      "triangles": 192,
+      "vertices": 98,
+      "material": "M_Panel"
+    }
+  },
+  "dims_m": {
+    "width": 2.4,
+    "depth": 0.8,
+    "height_total": 1.19
+  },
+  "previews": [
+    "aal-you-ready/play/assets/previews/dj1_front34.jpg",
+    "aal-you-ready/play/assets/previews/dj1_front_detail.jpg",
+    "aal-you-ready/play/assets/previews/dj1_rear34.jpg"
+  ],
+  "seconds": 283.2
+}

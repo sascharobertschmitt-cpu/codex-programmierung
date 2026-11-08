@@ -1,0 +1,370 @@
+{
+  "checks": [
+    {
+      "name": "GLB-Container glTF 2.0 lesbar",
+      "status": "PASS",
+      "detail": "Khronos glTF Blender I/O v4.2.70"
+    },
+    {
+      "name": "alphaMode MASK gesetzt",
+      "status": "PASS",
+      "detail": "geaendert: ['M_Grille']; fehlend: -"
+    },
+    {
+      "name": "Sichtbare Geometrie vorhanden",
+      "status": "PASS",
+      "detail": "13606 Dreiecke"
+    },
+    {
+      "name": "Dreiecksbudget <= 40000",
+      "status": "PASS",
+      "detail": "13606"
+    },
+    {
+      "name": "Draw Calls (Primitive) <= 16",
+      "status": "PASS",
+      "detail": "9"
+    },
+    {
+      "name": "Dateigroesse <= 2.0 MB",
+      "status": "PASS",
+      "detail": "580 KB"
+    },
+    {
+      "name": "Alle Bilder eingebettet",
+      "status": "PASS",
+      "detail": "5 Bilder, extern: 0"
+    },
+    {
+      "name": "Materialien vorhanden",
+      "status": "PASS",
+      "detail": "9"
+    },
+    {
+      "name": "Ursprung am Boden (min Y ~ 0)",
+      "status": "PASS",
+      "detail": "min Y = 0.0"
+    },
+    {
+      "name": "Ursprung horizontal mittig",
+      "status": "PASS",
+      "detail": "Mitte X = 0.000, Z = -0.003"
+    },
+    {
+      "name": "Masse plausibel",
+      "status": "PASS",
+      "detail": "ist [2.48, 1.2061, 0.866] m, erwartet [2.48, 1.206, 0.866] m (Toleranz 0.03)"
+    },
+    {
+      "name": "Front zeigt nach +Z",
+      "status": "PASS",
+      "detail": "M_Grille max Z = 0.404, Gesamt max Z = 0.43"
+    }
+  ],
+  "analysis": {
+    "file_bytes": 593912,
+    "triangles": 13606,
+    "vertices": 8643,
+    "primitives": 9,
+    "meshes": 9,
+    "materials": [
+      {
+        "name": "M_Cabinet",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": null,
+        "metallic": 0,
+        "roughness": 1.0,
+        "baseColorTexture": true,
+        "normalTexture": true
+      },
+      {
+        "name": "M_Grille",
+        "alphaMode": "MASK",
+        "alphaCutoff": 0.45,
+        "doubleSided": true,
+        "baseColorFactor": null,
+        "metallic": 0.3499999940395355,
+        "roughness": 0.41999998688697815,
+        "baseColorTexture": true,
+        "normalTexture": true
+      },
+      {
+        "name": "M_LED",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.5,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_MetalDark",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.04500000178813934,
+          0.04500000178813934,
+          0.05000000074505806,
+          1
+        ],
+        "metallic": 0.8500000238418579,
+        "roughness": 0.3799999952316284,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_Panel",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.4000000059604645,
+          0.4000000059604645,
+          0.41999998688697815,
+          1
+        ],
+        "metallic": 1.0,
+        "roughness": 0.44999998807907104,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_Plastic",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.10000000149011612,
+          0.10000000149011612,
+          0.10999999940395355,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.44999998807907104,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_Rubber",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.014000000432133675,
+          0.014000000432133675,
+          0.014000000432133675,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.550000011920929,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_Screen",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.009999999776482582,
+          0.009999999776482582,
+          0.014999999664723873,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.07999999821186066,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_Steel",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.6200000047683716,
+          0.6200000047683716,
+          0.6399999856948853,
+          1
+        ],
+        "metallic": 1.0,
+        "roughness": 0.2800000011920929,
+        "baseColorTexture": false,
+        "normalTexture": false
+      }
+    ],
+    "images": [
+      {
+        "name": "dj1_grain_normal",
+        "mimeType": "image/png",
+        "embedded": true,
+        "uri": null,
+        "bytes": 140511
+      },
+      {
+        "name": "dj1_wear_base",
+        "mimeType": "image/png",
+        "embedded": true,
+        "uri": null,
+        "bytes": 11283
+      },
+      {
+        "name": "dj1_wear_orm",
+        "mimeType": "image/png",
+        "embedded": true,
+        "uri": null,
+        "bytes": 90306
+      },
+      {
+        "name": "dj1_grille_normal",
+        "mimeType": "image/png",
+        "embedded": true,
+        "uri": null,
+        "bytes": 12748
+      },
+      {
+        "name": "dj1_grille_color",
+        "mimeType": "image/png",
+        "embedded": true,
+        "uri": null,
+        "bytes": 35997
+      }
+    ],
+    "textures": 5,
+    "bounds_min": [
+      -1.24,
+      0.0,
+      -0.436
+    ],
+    "bounds_max": [
+      1.24,
+      1.2061,
+      0.43
+    ],
+    "size_m": [
+      2.48,
+      1.2061,
+      0.866
+    ],
+    "material_bounds": {
+      "M_Steel": {
+        "min": [
+          -1.132,
+          0.0,
+          -0.352
+        ],
+        "max": [
+          1.132,
+          1.19,
+          0.4067
+        ]
+      },
+      "M_Screen": {
+        "min": [
+          -0.505,
+          1.176,
+          -0.093
+        ],
+        "max": [
+          0.505,
+          1.2061,
+          0.1749
+        ]
+      },
+      "M_Rubber": {
+        "min": [
+          -1.23,
+          1.028,
+          -0.436
+        ],
+        "max": [
+          1.23,
+          1.178,
+          0.27
+        ]
+      },
+      "M_Plastic": {
+        "min": [
+          -0.557,
+          1.17,
+          -0.192
+        ],
+        "max": [
+          0.567,
+          1.187,
+          0.1605
+        ]
+      },
+      "M_Panel": {
+        "min": [
+          -0.14,
+          1.1693,
+          -0.215
+        ],
+        "max": [
+          0.14,
+          1.1717,
+          0.175
+        ]
+      },
+      "M_MetalDark": {
+        "min": [
+          -1.24,
+          0.17,
+          -0.43
+        ],
+        "max": [
+          1.24,
+          1.2061,
+          0.43
+        ]
+      },
+      "M_LED": {
+        "min": [
+          -1.0,
+          0.318,
+          -0.189
+        ],
+        "max": [
+          1.0,
+          1.176,
+          0.377
+        ]
+      },
+      "M_Grille": {
+        "min": [
+          -1.058,
+          0.186,
+          0.404
+        ],
+        "max": [
+          1.058,
+          0.874,
+          0.404
+        ]
+      },
+      "M_Cabinet": {
+        "min": [
+          -1.2,
+          0.03,
+          -0.4
+        ],
+        "max": [
+          1.2,
+          1.03,
+          0.4
+        ]
+      }
+    }
+  }
+}

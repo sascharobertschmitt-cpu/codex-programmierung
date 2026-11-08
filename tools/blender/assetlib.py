@@ -412,3 +412,17 @@ def superellipse(w, h, n, count):
     x = w * np.sign(c) * np.abs(c) ** (2.0 / n)
     y = h * np.sign(s) * np.abs(s) ** (2.0 / n)
     return x, y
+
+
+def tube(part, p0, p1, radius, seg=10, caps=False, smooth=True):
+    """Rohr zwischen zwei Weltpunkten (Traversen-Streben, Kabel, Stangen)."""
+    p0 = np.asarray(p0, float)
+    p1 = np.asarray(p1, float)
+    z = p1 - p0
+    length = float(np.linalg.norm(z))
+    z = z / length
+    helper = np.array([0.0, 0.0, 1.0]) if abs(z[2]) < 0.9 else np.array([1.0, 0.0, 0.0])
+    x = np.cross(helper, z)
+    x /= np.linalg.norm(x)
+    y = np.cross(z, x)
+    cylinder(part, frame_matrix(p0, x, y, z), radius, 0.0, length, seg=seg, caps=caps, smooth=smooth)

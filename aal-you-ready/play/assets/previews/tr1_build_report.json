@@ -1,0 +1,28 @@
+{
+  "asset": "TR1",
+  "blender": "4.2.3 LTS",
+  "glb": "aal-you-ready/play/assets/club_truss_3m.glb",
+  "glb_bytes": 38056,
+  "triangles_total": 1504,
+  "meshes": {
+    "TR1_Alu": {
+      "triangles": 640,
+      "vertices": 640,
+      "material": "M_Alu"
+    },
+    "TR1_Steel": {
+      "triangles": 864,
+      "vertices": 492,
+      "material": "M_Steel"
+    }
+  },
+  "dims_m": {
+    "length": 3.0,
+    "section": 0.29
+  },
+  "previews": [
+    "aal-you-ready/play/assets/previews/tr1_front34.jpg",
+    "aal-you-ready/play/assets/previews/tr1_front_detail.jpg"
+  ],
+  "seconds": 156.7
+}

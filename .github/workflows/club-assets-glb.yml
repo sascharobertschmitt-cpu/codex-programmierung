@@ -43,9 +43,11 @@ env:
 jobs:
   build:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 80
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Cache Blender
         uses: actions/cache@v4
@@ -69,20 +71,30 @@ jobs:
 
       - name: List assets
         run: |
+          git diff --name-only HEAD~1 HEAD > /tmp/changed.txt 2>/dev/null || echo ALL > /tmp/changed.txt
           python3 - <<'PY' > build_assets.tsv
-          import json, os
+          import json, os, sys
           only = os.environ.get("ONLY", "").strip()
+          changed = open("/tmp/changed.txt").read().split()
+          shared = ("tools/blender/build_asset.py", "tools/blender/assetlib.py", "tools/glb_check.py",
+                    ".github/workflows/club-assets-glb.yml", "ALL")
+          build_all = only == "" and (os.environ.get("GITHUB_EVENT_NAME") != "push" or any(c in shared for c in changed))
           for a in json.load(open("tools/blender/assets.json")):
               if only and a["id"] != only:
+                  continue
+              mods = [a["geometry"]] + a.get("deps", [])
+              hit = any(f"tools/blender/{m}.py" in changed for m in mods)
+              if not only and not build_all and not hit:
+                  print(f"überspringe {a['id']} (unverändert)", file=sys.stderr)
                   continue
               print("\t".join([a["id"], a["geometry"], a["glb"], " ".join(map(str, a["expect_size"])),
                                a["front_material"], a["mask_materials"]]))
           PY
           cat build_assets.tsv
-          test -s build_assets.tsv
+          if [ ! -s build_assets.tsv ]; then echo "Nichts zu bauen"; fi
 
       - name: Build models with Blender (headless)
-        timeout-minutes: 35
+        timeout-minutes: 60
         run: |
           mkdir -p build "$PREVIEW_DIR"
           while IFS=$'\t' read -r id geom glb expect front mask; do

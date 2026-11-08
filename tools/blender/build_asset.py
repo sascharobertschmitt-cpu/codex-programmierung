@@ -102,7 +102,7 @@ def uv_node(nt, uv_name, loc):
 
 def make_material(name, base, metallic, roughness, normal_img=None, normal_strength=1.0,
                   color_img=None, alpha_from_image=False, double_sided=False,
-                  rough_img=None, wear_uv=None):
+                  rough_img=None, wear_uv=None, emission=None, emission_strength=1.0):
     m = bpy.data.materials.new(name)
     m.use_nodes = True
     m.use_backface_culling = not double_sided      # exportiert als glTF doubleSided
@@ -111,6 +111,9 @@ def make_material(name, base, metallic, roughness, normal_img=None, normal_stren
     bsdf.inputs["Base Color"].default_value = (*base, 1.0)
     bsdf.inputs["Metallic"].default_value = metallic
     bsdf.inputs["Roughness"].default_value = roughness
+    if emission is not None:                         # glTF emissiveFactor (+ emissive_strength)
+        bsdf.inputs["Emission Color"].default_value = (*emission, 1.0)
+        bsdf.inputs["Emission Strength"].default_value = emission_strength
     if color_img is not None:
         tex = nt.nodes.new("ShaderNodeTexImage")
         tex.image = color_img
@@ -163,12 +166,18 @@ def make_materials(imgs):
         "M_DustCap": make_material("M_DustCap", (0.02, 0.02, 0.022), 0.0, 0.22),
         "M_Horn": make_material("M_Horn", (0.016, 0.016, 0.018), 0.0, 0.36, double_sided=True),
         "M_Panel": make_material("M_Panel", (0.40, 0.40, 0.42), 1.0, 0.45),
+        # Ab hier für DJ-Booth, Traverse, Moving Heads
+        "M_Alu": make_material("M_Alu", (0.78, 0.78, 0.80), 1.0, 0.32),
+        "M_Plastic": make_material("M_Plastic", (0.10, 0.10, 0.11), 0.0, 0.45),
+        "M_Lens": make_material("M_Lens", (0.02, 0.02, 0.03), 0.0, 0.05, emission=(0.9, 0.95, 1.0), emission_strength=2.0),
+        "M_LED": make_material("M_LED", (0.0, 0.0, 0.0), 0.0, 0.5, emission=(0.15, 0.85, 1.0), emission_strength=3.0),
+        "M_Screen": make_material("M_Screen", (0.01, 0.01, 0.015), 0.0, 0.08, emission=(0.10, 0.22, 0.45), emission_strength=1.0),
     }
 
 
-def part_to_object(part, coll, material=None):
+def part_to_object(part, coll, material=None, offset=(0.0, 0.0, 0.0)):
     me = bpy.data.meshes.new(part.name)
-    verts = [tuple(v) for v in part.verts]
+    verts = [(v[0] - offset[0], v[1] - offset[1], v[2] - offset[2]) for v in part.verts]
     me.from_pydata(verts, [], part.faces)
     me.polygons.foreach_set("use_smooth", part.smooth)
     if material is None or part.material in TEXTURED:
@@ -214,14 +223,15 @@ def build_cabinet(spec, coll, mat):
 
     cut_coll = bpy.data.collections.new("Cutters")
     bpy.context.scene.collection.children.link(cut_coll)
-    for c in spec["cutters"]:
+    for c in spec.get("cutters") or []:
         o = part_to_object(c, cut_coll)
         o.hide_render = True
-    boo = cab.modifiers.new("Cutouts", "BOOLEAN")
-    boo.operation = "DIFFERENCE"
-    boo.solver = "EXACT"
-    boo.operand_type = "COLLECTION"
-    boo.collection = cut_coll
+    if spec.get("cutters"):
+        boo = cab.modifiers.new("Cutouts", "BOOLEAN")
+        boo.operation = "DIFFERENCE"
+        boo.solver = "EXACT"
+        boo.operand_type = "COLLECTION"
+        boo.collection = cut_coll
     # Hard-Surface-Shading: grosse Flaechen bleiben plan, Fasen weich (auch nach Boolean)
     wn = cab.modifiers.new("WeightedNormal", "WEIGHTED_NORMAL")
     wn.mode = "FACE_AREA"
@@ -270,11 +280,32 @@ def build_asset(imgs, spec):
     root.empty_display_size = 0.3
     coll.objects.link(root)
 
-    objs = [build_cabinet(spec, coll, mats["M_Cabinet"])]
-    for part in spec["parts"]:
-        objs.append(part_to_object(part, coll, mats[part.material]))
+    # Gruppen = bewegliche Teile (z. B. Pan/Tilt beim Moving Head), als Empties mit Drehpunkt
+    groups = {}
+    for name, g in (spec.get("groups") or {}).items():
+        e = bpy.data.objects.new(name, None)
+        e.empty_display_size = 0.1
+        coll.objects.link(e)
+        groups[name] = (e, g)
+    for name, (e, g) in groups.items():
+        parent = groups[g["parent"]][0] if g.get("parent") else root
+        porig = groups[g["parent"]][1]["origin"] if g.get("parent") else (0.0, 0.0, 0.0)
+        e.parent = parent
+        e.location = tuple(g["origin"][i] - porig[i] for i in range(3))
+
+    objs = [build_cabinet(spec, coll, mats["M_Cabinet"])] if spec.get("cabinet") else []
     for o in objs:
         o.parent = root
+    for part in spec["parts"]:
+        grp = getattr(part, "group", None)
+        if grp:
+            o = part_to_object(part, coll, mats[part.material], offset=groups[grp][1]["origin"])
+            o.parent = groups[grp][0]
+        else:
+            o = part_to_object(part, coll, mats[part.material])
+            o.parent = root
+        objs.append(o)
+    spec["_group_objs"] = [e for e, _ in groups.values()]
     return root, objs, spec
 
 
@@ -404,7 +435,7 @@ def main():
         log(f"{n:24s} {s['triangles']:6d} Dreiecke  {s['material']}")
     log(f"Summe: {total} Dreiecke, {len(objs)} Meshes")
 
-    export_glb(args.out, root, objs)
+    export_glb(args.out, root, objs + spec.get("_group_objs", []))
     size = os.path.getsize(args.out)
     log(f"GLB geschrieben: {args.out} ({size / 1024:.0f} KB)")
 
