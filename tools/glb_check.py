@@ -172,6 +172,8 @@ def main():
     ap.add_argument("--size-tolerance", type=float, default=0.03)
     ap.add_argument("--center-tolerance", type=float, default=0.1)
     ap.add_argument("--front-material", help="Material, das vorne (+Z) liegen muss")
+    ap.add_argument("--front-tolerance", type=float, default=0.05,
+                    help="erlaubter Überstand anderer Teile vor dem Front-Material (m)")
     ap.add_argument("--mask-materials", default="", help="Kommagetrennt: alphaMode MASK setzen")
     ap.add_argument("--alpha-cutoff", type=float, default=0.45)
     ap.add_argument("--json-out")
@@ -239,7 +241,7 @@ def main():
             check("Front zeigt nach +Z", False, f"Material {a.front_material} nicht gefunden")
         else:
             front_z = mb["max"][2]
-            check("Front zeigt nach +Z", front_z >= hi[2] - 0.02 and front_z > cz,
+            check("Front zeigt nach +Z", front_z >= hi[2] - a.front_tolerance and front_z > cz,
                   f"{a.front_material} max Z = {front_z}, Gesamt max Z = {hi[2]}")
 
     report(a, checks, r)
