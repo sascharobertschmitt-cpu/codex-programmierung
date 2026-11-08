@@ -28,10 +28,23 @@
     const meshes = [];
 
     // ---------------------------------------------------------- Himmel + Smog
-    scene.clearColor = new B.Color4(0.05, 0.026, 0.05, 1);
+    // Smog glüht vom Stadtlicht: heller Dunst am Horizont, Silhouetten davor dunkel
+    scene.clearColor = new B.Color4(0.03, 0.018, 0.04, 1);
     scene.fogMode = B.Scene.FOGMODE_EXP2;
-    scene.fogDensity = 0.0075;
-    scene.fogColor = new B.Color3(0.11, 0.055, 0.075);
+    scene.fogDensity = 0.0062;
+    scene.fogColor = new B.Color3(0.30, 0.13, 0.15);
+    const skyTex = new B.DynamicTexture('skyTex', { width: 16, height: 256 }, scene, false);
+    { const g = skyTex.getContext(); const gr = g.createLinearGradient(0, 0, 0, 256);
+      gr.addColorStop(0, '#07040c'); gr.addColorStop(0.45, '#1c0c1e'); gr.addColorStop(0.75, '#5a2430');
+      gr.addColorStop(0.9, '#8a3d36'); gr.addColorStop(1, '#4d2228');
+      g.fillStyle = gr; g.fillRect(0, 0, 16, 256); skyTex.update(); }
+    const sky = B.MeshBuilder.CreateSphere('sky', { diameter: 1400, segments: 16, sideOrientation: B.Mesh.BACKSIDE }, scene);
+    const skyMat = new B.StandardMaterial('skyMat', scene);
+    skyMat.disableLighting = true; skyMat.fogEnabled = false; skyMat.emissiveTexture = skyTex;
+    skyMat.backFaceCulling = false; sky.material = skyMat; sky.infiniteDistance = true;
+    if (o.glow) o.glow.addExcludedMesh(sky);
+    // Sphere-UV: v läuft von unten (0) nach oben (1); Verlauf auf obere Hälfte stauchen
+    skyTex.vScale = 2; skyTex.vOffset = -1; skyTex.wrapV = B.Texture.CLAMP_ADDRESSMODE;
 
     const mat = (name, hex, metal, rough, emissive) => {
       const m = new B.PBRMaterial(name, scene);
@@ -158,7 +171,7 @@
       const tm = new B.PBRMaterial('towerMat' + i, scene);
       tm.albedoColor = new B.Color3(0.035, 0.032, 0.04); tm.metallic = 0.3; tm.roughness = 0.6;
       tm.emissiveTexture = windowTex('win' + i, 11 + i * 7, Math.round(k.w / 0.9), Math.round(k.hgt / 1.6));
-      tm.emissiveColor = new B.Color3(1, 1, 1); tm.emissiveIntensity = 0.9;
+      tm.emissiveColor = new B.Color3(1, 1, 1); tm.emissiveIntensity = 1.7;
       m.material = tm;
       if (o.glow) o.glow.addExcludedMesh(m);
       return m;
@@ -217,7 +230,7 @@
       pivot.position.set(x, 0, z);
       const cone = B.MeshBuilder.CreateCylinder('beam' + i, { diameterTop: 26, diameterBottom: 1.5, height: 260, tessellation: 24, cap: B.Mesh.NO_CAP }, scene);
       cone.parent = pivot; cone.position.y = 130;
-      cone.material = unlit('beamMat' + i, col, 0.055);
+      cone.material = unlit('beamMat' + i, col, 0.09);
       if (o.glow) o.glow.addExcludedMesh(cone);
       beams.push({ pivot, ph: R() * 6, sp: 0.18 + R() * 0.15 });
     });
@@ -242,6 +255,11 @@
     frame.rotation.y = bb.rotation.y; frame.material = steel;
     const legs = B.MeshBuilder.CreateBox('billboardLegs', { width: 2, height: 42, depth: 2 }, scene);
     legs.position.set(bb.position.x, 21, bb.position.z + 1); legs.material = steel;
+    // zweite Tafel im Südosten, sichtbar von der Einlass-Seite
+    const bb2 = bb.clone('billboard2'); bb2.position.set(62, 34, -95); bb2.rotation.y = 2.56;
+    const fr2 = frame.clone('billboardFrame2'); fr2.rotation.y = 2.56;
+    fr2.position.set(62 + Math.sin(2.56) * 0.7, 34, -95 + Math.cos(2.56) * 0.7);
+    const lg2 = legs.clone('billboardLegs2'); lg2.scaling.y = 34 / 42; lg2.position.set(62, 17, -95);
     let lastSlot = -1;
     const drawBB = (t) => {
       const slot = Math.floor(t / 4.5) % slogans.length;
