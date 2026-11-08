@@ -1,0 +1,66 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Aal You Ready? – 3D-Arena-Labor</title><style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080b13;color:#f5f5ff;font-family:system-ui,Arial,sans-serif}#stage{position:absolute;inset:0;width:100%;height:100%;touch-action:none;outline:0}header{position:absolute;top:env(safe-area-inset-top,0px);left:0;right:0;padding:12px 16px;pointer-events:none;text-shadow:0 2px 8px #000}h1{font-size:16px;margin:0;letter-spacing:.07em}small{color:#8ff6f6}#tools{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);left:12px;right:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}button{border:1px solid #56c9d1;border-radius:20px;background:#121b2d;color:white;padding:11px 14px;font-weight:700}#status{position:absolute;top:67px;left:14px;right:14px;color:#d4f5ff;font-size:12px;pointer-events:none}#error{position:absolute;top:30%;left:8%;right:8%;padding:15px;background:#4b1026;border-radius:10px;display:none;white-space:pre-wrap}
+</style></head><body><canvas id="stage"></canvas><header><h1>AAL YOU READY? <small>ARENA LAB 0.1</small></h1><small>Eigenständiger 3D-Prototyp · ohne Multiplayer</small></header><div id="status">Initialisiere 3D …</div><div id="error"></div><div id="tools"><button id="overview">Übersicht</button><button id="angle">Perspektive</button><button id="walk">Weg prüfen</button><button id="stop">Stopp</button></div><script src="https://cdn.babylonjs.com/babylon.js"></script><script>
+'use strict';
+const $=id=>document.getElementById(id),status=$('status'),error=$('error');
+const PATH=(()=>{const p=[[0,0]];for(let x=1;x<8;x++)p.push([x,0]);for(let y=1;y<8;y++){if(y%2){for(let x=7;x>=1;x--)p.push([x,y])}else{for(let x=1;x<8;x++)p.push([x,y])}}for(let y=7;y>=1;y--)p.push([0,y]);return p})();
+const key=(p)=>p.join(',');
+const check=(()=>{const unique=new Set(PATH.map(key)).size===64,range=PATH.every(([x,y])=>x>=0&&x<8&&y>=0&&y<8),adj=PATH.every((p,i)=>{const q=PATH[(i+1)%64];return Math.abs(p[0]-q[0])+Math.abs(p[1]-q[1])===1});return {unique,range,adj,passed:unique&&range&&adj}})();
+window.ARENA_DIAGNOSTICS={path:PATH,checks:check,version:'0.1'};
+if(!check.passed)throw Error('Ungültiger 64-Felder-Rundkurs: '+JSON.stringify(check));
+function boot(){
+if(!window.BABYLON){error.style.display='block';error.textContent='Babylon.js konnte nicht geladen werden. Bitte Netzwerkverbindung prüfen.';return}
+try{
+const B=BABYLON,engine=new B.Engine($('stage'),true,{stencil:false,antialias:true}),scene=new B.Scene(engine);
+scene.clearColor=new B.Color4(.018,.023,.042,1);
+scene.imageProcessingConfiguration.toneMappingEnabled=false;
+const camera=new B.ArcRotateCamera('arenaCamera',-Math.PI/2,0.84,17,new B.Vector3(0,0,0),scene);
+camera.lowerRadiusLimit=10;camera.upperRadiusLimit=24;camera.lowerBetaLimit=.25;camera.upperBetaLimit=1.18;camera.wheelPrecision=45;camera.panningSensibility=0;camera.attachControl($('stage'),true);
+const hemi=new B.HemisphericLight('warehouseFill',new B.Vector3(0,1,0),scene);hemi.intensity=1.5;hemi.groundColor=new B.Color3(.28,.31,.42);
+const keylight=new B.DirectionalLight('overhead',new B.Vector3(-.6,-1,.3),scene);keylight.intensity=.85;
+const glow=new B.GlowLayer('neonGlow',scene,{blurKernelSize:32});glow.intensity=.3;
+const material=(name,hex,emit=0)=>{const m=new B.StandardMaterial(name,scene);m.diffuseColor=B.Color3.FromHexString(hex);m.emissiveColor=m.diffuseColor.scale(emit);m.specularColor=new B.Color3(.4,.46,.58);m.specularPower=70;return m};
+const steel=material('steel','#434c60'),dark=material('blackSteel','#171d2b'),ground=material('floor','#202b3b'),rust=material('rust','#6a352a'),yellow=material('hazard','#efb238',.15),red=material('red','#ff3555',1),cyan=material('cyan','#12dbf3',1),purple=material('purple','#d64aff',1),white=material('white','#c9e5ed',.45);
+const block=(name,w,h,d,x,y,z,m)=>{const mesh=B.MeshBuilder.CreateBox(name,{width:w,height:h,depth:d},scene);mesh.position.set(x,y,z);mesh.material=m;return mesh};
+block('warehouseBase',12,.4,12,0,-.5,0,dark);block('floorPlate',11.8,.08,11.8,0,-.26,0,ground);
+for(let i=-5;i<=5;i++){block('floorLineX'+i,11.5,.008,.014,0,-.213,i,steel);block('floorLineZ'+i,.014,.008,11.5,i,-.213,0,steel)}
+const at=i=>({x:(PATH[i][0]-3.5)*1.22,z:(PATH[i][1]-3.5)*1.22});
+const kinds=['START','ACTION','SLF','EVENT','SPECIAL'];
+const kind=i=>i===0?'START':i===63?'ZIEL':i%11===0?'SLF':i%7===0?'SPECIAL':i%3===0?'ACTION':'EVENT';
+const tint=t=>t==='SLF'?cyan:t==='ACTION'?red:t==='SPECIAL'?yellow:t==='START'||t==='ZIEL'?white:purple;
+const tiles=[];
+for(let i=0;i<64;i++){
+const p=at(i),t=kind(i),m=tint(t);
+block('tileBase'+i,.94,.25,.94,p.x,-.035,p.z,dark);
+block('tileRim'+i,.9,.06,.9,p.x,.13,p.z,m);
+block('tileFace'+i,.79,.035,.79,p.x,.181,p.z,steel);
+const dt=new B.DynamicTexture('tileNumber'+i,{width:256,height:256},scene,true),ctx=dt.getContext();
+ctx.clearRect(0,0,256,256);ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#ffffff';ctx.font='900 112px Arial';ctx.fillText(String(i+1),128,109);ctx.font='bold 26px Arial';ctx.fillStyle=t==='SLF'?'#44edff':t==='ACTION'?'#ff829a':'#f5d89e';ctx.fillText(t,128,199);dt.hasAlpha=true;dt.update();
+const tm=new B.StandardMaterial('tileTextMaterial'+i,scene);tm.diffuseTexture=dt;tm.opacityTexture=dt;tm.emissiveColor=new B.Color3(1,1,1);tm.disableLighting=true;tm.backFaceCulling=false;
+const plane=B.MeshBuilder.CreatePlane('tileLabel'+i,{size:.72},scene);plane.rotation.x=Math.PI/2;plane.position.set(p.x,.212,p.z);plane.material=tm;
+tiles.push({p,t});
+}
+for(let i=0;i<64;i++){const p=at(i),q=at((i+1)%64),x=(p.x+q.x)/2,z=(p.z+q.z)/2;if(p.x!==q.x)block('connector'+i,.3,.04,.09,x,.10,z,i%2?cyan:red);else block('connector'+i,.09,.04,.3,x,.10,z,i%2?cyan:red)}
+// All large props are deliberately outside the 64 tile footprints.
+for(const x of [-5.35,5.35])for(const z of [-5.35,5.35]){block('pillar'+x+z,.26,2.6,.26,x,1.05,z,steel);block('pillarBand'+x+z,.3,.08,.3,x,.75,z,yellow)}
+block('rearWall',11.5,2.3,.2,0,.8,5.72,steel);
+for(const x of [-4.8,-2.4,0,2.4,4.8]){block('wallPipe'+x,.1,2.1,.11,x,.85,5.54,rust);block('wallLight'+x,.04,1.5,.05,x,.9,5.45,x%2?red:cyan)}
+for(const z of [5.4]){block('truss'+z,11.2,.13,.15,0,2.65,z,dark);block('neonTruss'+z,11,.035,.05,0,2.55,z,red)}
+const reactor=B.MeshBuilder.CreateCylinder('reactor',{height:1.45,diameter:.62,tessellation:16},scene);reactor.position.set(5.35,.48,0);reactor.material=dark;
+const core=B.MeshBuilder.CreateCylinder('reactorCore',{height:1.08,diameter:.43,tessellation:16},scene);core.position.set(5.35,.52,0);core.material=red;
+const warningLight=new B.PointLight('reactorLight',new B.Vector3(5.3,1.7,0),scene);warningLight.diffuse=new B.Color3(1,.08,.14);warningLight.intensity=.65;warningLight.range=5;
+const marker=B.MeshBuilder.CreateSphere('routeTestMarker',{diameter:.35,segments:12},scene);marker.material=yellow;
+let walking=false,started=0,view=0;
+$('overview').onclick=()=>{camera.alpha=-Math.PI/2;camera.beta=.84;camera.radius=17;camera.target.set(0,0,0)};
+$('angle').onclick=()=>{view=(view+1)%3;camera.beta=[.84,.42,1.08][view];camera.radius=[17,19,15][view]};
+$('walk').onclick=()=>{walking=true;started=performance.now()};
+$('stop').onclick=()=>{walking=false;marker.setEnabled(false)};
+marker.setEnabled(false);
+engine.runRenderLoop(()=>{if(walking){const step=((performance.now()-started)/450)%64,i=Math.floor(step),f=step-i,p=at(i),q=at((i+1)%64);marker.setEnabled(true);marker.position.set(p.x+(q.x-p.x)*f,.53,p.z+(q.z-p.z)*f)}scene.render()});
+window.addEventListener('resize',()=>engine.resize());
+status.textContent='64/64 eindeutige Felder · Rundkurs geschlossen · '+scene.meshes.length+' 3D-Meshes';
+window.ARENA_DIAGNOSTICS.meshes=scene.meshes.length;window.ARENA_DIAGNOSTICS.ready=true;
+}catch(e){error.style.display='block';error.textContent='3D-Fehler: '+e.message;console.error(e)}
+}
+window.addEventListener('load',boot);
+</script></body></html>
