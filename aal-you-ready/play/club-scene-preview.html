@@ -22,6 +22,7 @@
   <button data-v="overview">Übersicht</button>
   <button data-v="city">Stadt</button>
   <button data-v="floor">Floor</button>
+  <button id="card">Karte</button>
   <button id="walk">Zug</button>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/babylonjs@7.54.3/babylon.js"></script>
@@ -45,6 +46,7 @@
     addEventListener('resize', () => sc.resize());
     const setView = (v) => { sc.setView(v); document.querySelectorAll('[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === v)); };
     document.querySelectorAll('[data-v]').forEach(b => b.onclick = () => setView(b.dataset.v));
+    document.querySelector('#card').onclick = () => { setView('cards'); const au = Math.random() < 0.5; sc.drawCard(au ? 'aufgabe' : 'ereignis', au ? 'Air-DJ' : 'Bass Drop'); };
     document.querySelector('#walk').onclick = async () => {
       const p = players[turn], d = ClubRules.rollDice(), from = p.lap * 64 + p.position, to = from + d.total;
       p.lap = Math.floor(to / 64); p.position = to % 64;
@@ -55,6 +57,7 @@
     const ms = Math.round(performance.now() - t0);
     setInterval(() => { info.textContent = `${sc.engine.getFps().toFixed(0)} fps · PA ${sc.paLoaded ? 'ok' : '–'} · Rigg ${sc.rigLoaded ? 'ok' : '–'} · Figuren ${sc.figuresLoaded ? 'ok' : '–'} · Menge ${sc.crowdLoaded ? 'ok' : '–'} · geladen in ${ms} ms`; }, 1000);
     if (Q.get('view')) setView(Q.get('view'));
+    if (Q.get('card')) { setView('cards'); sc.drawCard(Q.get('card'), Q.get('title') || 'Bass Drop'); }
     if (Q.get('walk')) { for (let i = 0; i < Number(Q.get('walk')); i++) await document.querySelector('#walk').onclick(); }
     await new Promise(r => setTimeout(r, 3000));
     window.TEST_RESULT = { ok: sc.paLoaded && sc.rigLoaded, checks: [
@@ -63,6 +66,7 @@
       { name: 'DJ-Booth + Rigg + Moving Heads', ok: sc.rigLoaded },
       { name: 'Spielfiguren + DJ + Türsteher', ok: sc.figuresLoaded },
       { name: 'Tanzende Menge', ok: sc.crowdLoaded },
+      { name: 'Kartenstapel', ok: typeof sc.drawCard === 'function' },
     ], stats: { fps: Math.round(sc.engine.getFps()) } };
   } catch (e) {
     console.error(e); info.textContent = 'Fehler: ' + e.message;

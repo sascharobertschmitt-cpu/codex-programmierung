@@ -61,6 +61,9 @@ jobs:
           PW_CHANNEL=chrome node tools/browser_smoke.mjs \
             "http://localhost:8080/club-scene-preview.html?view=floor&rain=0" \
             aal-you-ready/play/assets/previews/scene_floor.png 240000 | tee -a /tmp/browser.log || true
+          PW_CHANNEL=chrome node tools/browser_smoke.mjs \
+            "http://localhost:8080/club-scene-preview.html?card=aufgabe&title=Air-DJ&rain=0" \
+            aal-you-ready/play/assets/previews/scene_cards.png 240000 | tee -a /tmp/browser.log || true
       - name: Commit screenshot
         if: always()
         run: |

@@ -249,6 +249,87 @@
     const shadows = new B.ShadowGenerator(1024, key);
     shadows.useBlurExponentialShadowMap = true; shadows.blurKernel = 12; shadows.darkness = 0.45;
 
+    // ------------------------------------------- Kartenstapel in der Mitte
+    // Links Ereigniskarten (cyan), rechts Aufgabenkarten (gold). drawCard() hebt eine Karte ab.
+    const DECKS = { ereignis: { x: -1.7, col: '#29c6ff', label: 'EREIGNIS', icon: '⚡' },
+                    aufgabe: { x: 1.7, col: '#ffb627', label: 'AUFGABE', icon: '★' } };
+    const CARD_Z = -6.2, CARD_W = 1.05, CARD_D = 1.45;
+    const cardFace = (deck, title, body) => {
+      const d = DECKS[deck];
+      const t = new B.DynamicTexture('cardTex_' + deck + (title ? '_t' : ''), { width: 256, height: 356 }, scene, true);
+      const g = t.getContext();
+      g.fillStyle = '#0b0a14'; g.fillRect(0, 0, 256, 356);
+      g.strokeStyle = d.col; g.lineWidth = 10; g.strokeRect(10, 10, 236, 336);
+      g.fillStyle = d.col; g.textAlign = 'center'; g.textBaseline = 'middle';
+      if (!title) {
+        g.font = 'bold 120px system-ui,sans-serif'; g.fillText(d.icon, 128, 150);
+        g.font = 'bold 34px system-ui,sans-serif'; g.fillText(d.label, 128, 270);
+      } else {
+        g.font = 'bold 22px system-ui,sans-serif'; g.fillText(d.label + 'KARTE', 128, 44);
+        g.fillStyle = '#fff'; g.font = 'bold 30px system-ui,sans-serif';
+        const words = String(title).split(' '); let line = '', y = 120; const lines = [];
+        words.forEach(w => { const tl = line ? line + ' ' + w : w; if (g.measureText(tl).width > 210) { lines.push(line); line = w; } else line = tl; });
+        lines.push(line); lines.slice(0, 4).forEach((l, i) => g.fillText(l, 128, y + i * 38));
+        g.fillStyle = d.col; g.font = 'bold 70px system-ui,sans-serif'; g.fillText(d.icon, 128, 300);
+      }
+      t.update(); return t;
+    };
+    const decks = {};
+    Object.entries(DECKS).forEach(([key, d]) => {
+      const root = new B.TransformNode('deck_' + key, scene);
+      root.position.set(d.x, 0, CARD_Z);
+      const ped = B.MeshBuilder.CreateBox('deckPed_' + key, { width: 1.5, height: 0.7, depth: 1.9 }, scene);
+      ped.parent = root; ped.position.y = 0.35; ped.material = pbr('deckPedM_' + key, '#1b1b24', 0.6, 0.35);
+      ped.receiveShadows = true;
+      const edge = B.MeshBuilder.CreateBox('deckEdge_' + key, { width: 1.52, height: 0.03, depth: 1.92 }, scene);
+      edge.parent = root; edge.position.y = 0.69; edge.material = pbr('deckEdgeM_' + key, '#000000', 0, 1, d.col);
+      const sideMat = pbr('cardSide_' + key, '#e8e4f2', 0, 0.6);
+      for (let k = 0; k < 9; k++) {
+        const c = B.MeshBuilder.CreateBox('deckCard_' + key + k, { width: CARD_W, height: 0.018, depth: CARD_D }, scene);
+        c.parent = root; c.position.set((Math.sin(k * 2.1) * 0.03), 0.72 + k * 0.02, Math.cos(k * 1.7) * 0.03);
+        c.rotation.y = Math.sin(k * 3.3) * 0.05; c.material = sideMat; shadows.addShadowCaster(c);
+      }
+      const faceMat = new B.StandardMaterial('cardFaceM_' + key, scene);
+      faceMat.disableLighting = true; faceMat.emissiveTexture = cardFace(key); faceMat.diffuseTexture = null;
+      const top = B.MeshBuilder.CreatePlane('deckTop_' + key, { width: CARD_W * 0.98, height: CARD_D * 0.98 }, scene);
+      top.parent = root; top.rotation.x = Math.PI / 2; top.position.y = 0.72 + 9 * 0.02 + 0.001; top.material = faceMat;
+      glow.addExcludedMesh(top);
+      // schwebende Karte, die beim Ziehen hochfliegt
+      const fly = new B.TransformNode('deckFly_' + key, scene);
+      fly.parent = root; fly.position.y = 0.92; fly.setEnabled(false);
+      const back = B.MeshBuilder.CreatePlane('flyBack_' + key, { width: CARD_W, height: CARD_D, sideOrientation: B.Mesh.DOUBLESIDE }, scene);
+      back.parent = fly; back.material = faceMat; glow.addExcludedMesh(back);
+      const frontMat = new B.StandardMaterial('flyFrontM_' + key, scene); frontMat.disableLighting = true;
+      const front = B.MeshBuilder.CreatePlane('flyFront_' + key, { width: CARD_W, height: CARD_D }, scene);
+      front.parent = fly; front.position.z = -0.004; front.material = frontMat; glow.addExcludedMesh(front);
+      const lamp = new B.PointLight('deckLamp_' + key, new B.Vector3(d.x, 2.2, CARD_Z), scene);
+      lamp.diffuse = B.Color3.FromHexString(d.col); lamp.intensity = 6; lamp.range = 4.5;
+      decks[key] = { root, fly, front, frontMat, t: -1 };
+    });
+    let flyTex = null;
+    const drawCard = (deck, title) => {
+      const dk = decks[deck]; if (!dk) return;
+      Object.values(decks).forEach(o => { o.fly.setEnabled(false); o.t = -1; });
+      if (flyTex) flyTex.dispose();
+      flyTex = cardFace(deck, title); dk.frontMat.emissiveTexture = flyTex;
+      dk.fly.setEnabled(true); dk.t = 0;
+    };
+    scene.onBeforeRenderObservable.add(() => {
+      const dt = engine.getDeltaTime() / 1000;
+      Object.values(decks).forEach(o => {
+        if (o.t < 0) return;
+        o.t += dt;
+        const u = Math.min(1, o.t / 1.1);                              // hochheben und umdrehen
+        const e = 1 - Math.pow(1 - u, 3);
+        o.fly.position.y = 0.92 + e * 1.9 + Math.sin(o.t * 2) * 0.05 * e;
+        o.fly.rotation.x = Math.PI / 2 * (1 - e);                       // flach -> aufrecht
+        // aufrecht zur Kamera drehen
+        const cp = cam.position, wp = o.fly.getAbsolutePosition();
+        o.fly.rotation.y = Math.atan2(wp.x - cp.x, wp.z - cp.z) * e;
+        if (o.t > 9) { o.fly.setEnabled(false); o.t = -1; }
+      });
+    });
+
     // PA-Stacks links und rechts vom DJ (eigene GLBs: Sub + Topteil)
     let paLoaded = false;
     try {
@@ -479,6 +560,7 @@
       overview: { target: new B.Vector3(0, 2.0, 1.5), radius: 31, beta: 1.16, alpha: -Math.PI / 2 - 0.35 },
       city: { target: new B.Vector3(0, 20, 20), radius: 70, beta: 1.47, alpha: -Math.PI / 2 - 0.45 },
       floor: { target: new B.Vector3(0, 1.4, 4.2), radius: 10.5, beta: 1.22, alpha: -Math.PI / 2 - 0.42 },
+      cards: { target: new B.Vector3(0, 1.5, -6.2), radius: 7.5, beta: 1.2, alpha: -Math.PI / 2 },
     };
     let follow = 0, viewMode = 'follow', autoCam = true, camGoal = VIEWS.follow;
     canvas.addEventListener('pointerdown', () => { autoCam = false; });
@@ -535,7 +617,7 @@
     await scene.whenReadyAsync();
 
     return {
-      scene, engine, paLoaded, rigLoaded, figuresLoaded, crowdLoaded, tiles,
+      scene, engine, paLoaded, rigLoaded, figuresLoaded, crowdLoaded, tiles, drawCard,
       sync(players, active) {
         while (tokens.length < players.length) tokens.push(makeToken(tokens.length));
         tokens.forEach((tk, i) => {

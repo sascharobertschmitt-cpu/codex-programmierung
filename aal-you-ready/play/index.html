@@ -209,6 +209,13 @@ body.playing #game #roll,body.playing #game #reopenPopup:not(.hide){position:fix
 body.playing #game .exit-game{position:fixed!important;bottom:calc(max(20px,env(safe-area-inset-bottom)) + 6px)!important;left:12px!important;top:auto!important}
 body.playing #notice:not(.hide){bottom:calc(max(20px,env(safe-area-inset-bottom)) + 120px)!important}
 }
+
+/* 9.4: Ereignis- und Aufgabenkarten */
+.cardx{display:flex;flex-direction:column;gap:6px;padding:14px 16px;border-radius:16px;border:2px solid var(--cc,#29c6ff);background:linear-gradient(160deg,#141226,#0b0a14);box-shadow:0 0 22px color-mix(in srgb,var(--cc,#29c6ff) 35%,transparent);text-align:left}
+.cardx small{font-size:10.5px;font-weight:800;letter-spacing:.16em;color:var(--cc,#29c6ff)}
+.cardx b{font-size:21px;line-height:1.15;color:#fff}
+.cardx span{font-size:15px;line-height:1.35;color:#e6e0f5}
+.cardx.au{--cc:#ffb627}.cardx.ev{--cc:#29c6ff}
 </style><script defer src="https://cdn.jsdelivr.net/npm/babylonjs@7.54.3/babylon.js"></script><script defer src="https://cdn.jsdelivr.net/npm/babylonjs-loaders@7.54.3/babylonjs.loaders.min.js"></script><script defer src="./club-circuit-rules.js"></script><script defer src="./club-exterior.js"></script><script defer src="./club-circuit-scene.js"></script></head><body><main><div class="brandline"><span class="brandmark">◉</span><span>THE DOMINIK EXPERIENCE <em>RACE EDITION</em></span></div><h1>AAL YOU READY?</h1><p class="muted small">BABYLON 3D · ALPHA 7.7 · 2–8 Spieler · 64 Felder · jedes Feld hat eine Funktion</p>
 <div id="notice" class="error hide" role="alert"></div><button id="updateInLobby" type="button" onclick="updateInsideLobby()" class="hide">↻ Spiel aktualisieren</button>
 <section id="entry" class="panel"><div class="eyebrow">VERSION 7.7 · NEON CLUB</div><p class="muted small">Bitte auf allen Geräten denselben Link öffnen. Namen eingeben, dann beitreten. Querformat empfohlen; die Spieloberfläche funktioniert auch hochkant.</p><h2>Zusammen spielen</h2><input id="name" type="text" maxlength="25" placeholder="Dein Spielername" autocomplete="nickname"><button id="create" onclick="createRoom()">Neue Lobby erstellen</button><button id="solo" onclick="startSolo()" style="margin-top:8px;background:linear-gradient(180deg,#2ee6b0,#139a76);color:#04140f">🤖 Solo gegen Bots</button><div style="display:flex;gap:6px;margin-top:6px;align-items:center;font-size:13px;color:#b8b3d4">Gegner: <button class="botn" data-n="1" onclick="setSoloBots(1)" style="width:auto;padding:6px 12px;margin:0">1</button><button class="botn" data-n="2" onclick="setSoloBots(2)" style="width:auto;padding:6px 12px;margin:0;border-color:#2ee6b0">2</button><button class="botn" data-n="3" onclick="setSoloBots(3)" style="width:auto;padding:6px 12px;margin:0">3</button></div><p class="muted small" style="text-align:center">ODER MIT CODE BEITRETEN</p><input id="joincode" maxlength="6" placeholder="Lobbycode" autocapitalize="characters"><button class="secondary" id="join" onclick="joinRoom()">Lobby beitreten</button></section>
@@ -240,7 +247,7 @@ async function entryAction(fn,args){if(acting)return;if(!args.p_name){notice('Bi
 async function doAction(a){if(acting||!session)return;acting=true;revision++;notice('');$('roll').disabled=$('start').disabled=$('startCircuit').disabled=$('eventnext').disabled=true;const before=snapshot;try{const s=await rpc('party_action',{p_code:session.code,p_token:session.token,p_host_token:session.host_token||null,p_action:a});if(a==='roll'&&before){const mover=before.players[before.turn%before.players.length];const moved=s.players.find(p=>p.id===mover.id);lastMove={name:mover.name,dice:s.roll,from:mover.position,to:moved?.position??mover.position,turn:s.turn,at:Date.now(),id:mover.id};beginWalk(lastMove);boardPage=Math.floor((moved?.position??mover.position)/8);autoFollow=false;}render(s)}catch(e){notice('Aktion: '+e.message)}finally{acting=false;if(snapshot)render(snapshot);setTimeout(()=>refresh(true),250)}}
 async function refresh(force=false){if(!session||polling||acting)return;polling=true;const requestRevision=revision;const requestCode=session.code;try{const s=await rpc('party_snapshot',{p_code:session.code,p_token:session.token});if(session&&session.code===requestCode&&requestRevision===revision&&!acting)render(s);if(pollFailures||/^Verbinde mit Lobby/.test($('notice').textContent))notice('');pollFailures=0}catch(e){pollFailures++;if(pollFailures>=2)notice('Verbindung: '+e.message+' · Erneuter Versuch läuft.')}finally{polling=false}}
 function leave(){if(!confirm('Spiel auf diesem Gerät verlassen?'))return;revision++;session=null;snapshot=null;save();$('entry').classList.remove('hide');$('lobby').classList.add('hide');$('game').classList.add('hide');notice('');history.replaceState(null,'',location.pathname)}
-const BUILD_VERSION='9.3';
+const BUILD_VERSION='9.4';
 const STABLE_GAME_URL='https://raw.githack.com/sascharobertschmitt-cpu/codex-programmierung/main/aal-you-ready/play/index.html';
 const LATEST_SOURCE_URL='https://raw.githubusercontent.com/sascharobertschmitt-cpu/codex-programmierung/main/aal-you-ready/play/index.html';
 async function updateInsideLobby(){
@@ -495,12 +502,22 @@ function paintCircuit(){
 function circuitOnSnapshot(prev,s){
  if(!prev||prev.code!==s.code||!circ.scene)return;
  const ri=s.roll_info||{};
+ const cardKey=ri.card?s.turn+'|'+ri.player+'|'+ri.card.title:null;
+ if(cardKey&&cardKey!==circ.lastCard&&(s.phase==='event'||s.phase==='task')){circ.lastCard=cardKey;const c=ri.card;circ.queue=circ.queue.then(()=>{if(circ.scene&&circ.scene.drawCard)circ.scene.drawCard(c.deck,c.title)}).catch(()=>{})}
  s.players.forEach((p,i)=>{const old=prev.players.find(v=>v.id===p.id);if(!old)return;const a=circAbs(old),b=circAbs(p);if(a===b)return;
   let land=null;if(ri.player===p.id&&Number.isInteger(ri.total)&&a+ri.total!==b)land=a+ri.total;
   circ.queue=circ.queue.then(async()=>{if(land!==null){await circ.scene.walk(i,a,land);await circ.scene.walk(i,land,b)}else await circ.scene.walk(i,a,b)}).catch(()=>{});
  });
 }
+function circuitCardHtml(card,extra){const au=card.deck==='aufgabe';return '<div class="cardx '+(au?'au':'ev')+'"><small>'+(au?'★ AUFGABENKARTE · +'+esc(card.value)+' CASH':'⚡ EREIGNISKARTE')+'</small><b>'+esc(card.title)+'</b><span>'+esc(card.body)+'</span>'+(extra?'<span>'+extra+'</span>':'')+'</div>'}
+function renderCircuitCards(s){
+ const ri=s.roll_info||{},card=ri.card,pe=$('eventpanel').querySelector('.eyebrow'),pa=$('activitypanel').querySelector('.eyebrow');
+ const ok=$('activityjudge').querySelector('button'),evCard=card&&card.deck==='ereignis'&&s.phase==='event'&&String(s.task||'').startsWith('🃏'),auCard=card&&card.deck==='aufgabe'&&s.phase==='task';
+ if(evCard){$('eventtext').innerHTML=circuitCardHtml(card,card.kind==='rob_leader'&&card.victim?'Von '+esc(card.victim)+': '+esc(card.got)+' Cash':'');pe.textContent='🃏 KARTE GEZOGEN · FÜR ALLE SICHTBAR'}else pe.textContent='⚡ EREIGNIS · FÜR ALLE SICHTBAR';
+ if(auCard){$('activitytext').innerHTML=circuitCardHtml(card);pa.textContent='★ SONDERAUFGABE · FÜR ALLE SICHTBAR';ok.textContent='✓ Geschafft · +1 Punkt · +'+card.value+' Cash'}else{pa.textContent='🎭 ACTIVITY · GEHEIME AUFGABE';ok.textContent='✓ Geschafft · +1 Punkt'}
+}
 function renderCircuitInfo(s,f){
+ renderCircuitCards(s);
  const me=s.players.find(p=>p.id===s.your_id);
  $('roll').textContent=me&&me.skip&&s.your_turn?'🚫 Aussetzen bestätigen':'🎲 Würfeln';
  const ri=s.roll_info;
