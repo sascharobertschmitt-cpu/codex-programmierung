@@ -52,9 +52,10 @@ PORT_Z = Z0 + 0.80
 PORT_R = 0.045
 
 
-def rear_frame(x, z, out=0.0):
+def rear_frame(x, z, out=0.0, yb=None):
     """Lokaler Rahmen auf der Rueckwand: lokal Z zeigt nach hinten (+Y)."""
-    return frame_matrix((x, YB + out, z), (-1, 0, 0), (0, 0, 1), (0, 1, 0))
+    yb = YB if yb is None else yb
+    return frame_matrix((x, yb + out, z), (-1, 0, 0), (0, 0, 1), (0, 1, 0))
 
 
 def front_frame(x, z, out=0.0):
@@ -98,42 +99,44 @@ def build_cutters():
     return cutters
 
 
-def add_woofer(parts, z):
-    M = front_frame(0, z)
+def add_woofer(parts, z, scale=1.0, M=None):
+    """Tieftoener. scale=1.0 -> 12", 1.5 -> 18". M: eigener Rahmen (lokal Z = vorne)."""
+    s = scale
+    M = front_frame(0, z) if M is None else M
     behind = apply(M, [(0, 0, -0.5)])[0]
     hint = hint_from_point(behind)
 
     # Druckguss-Korbrand, liegt 10 mm auf der Schallwand auf
     frame = [(0.153, -0.001), (0.153, 0.006), (0.150, 0.0095), (0.146, 0.0105),
              (0.134, 0.0105), (0.131, 0.0085), (0.129, 0.004)]
-    lathe(parts["M_MetalDark"], M, frame, seg=64, hint=hint)
+    lathe(parts["M_MetalDark"], M, [(r * s, h * s) for r, h in frame], seg=64, hint=hint)
 
     # Gummisicke (Halbrolle)
     sur = []
     for t in np.linspace(0, np.pi, 9):
-        sur.append((0.120 + 0.009 * math.cos(t), 0.004 + 0.0085 * math.sin(t)))
+        sur.append(((0.120 + 0.009 * math.cos(t)) * s, (0.004 + 0.0085 * math.sin(t)) * s))
     lathe(parts["M_Rubber"], M, sur, seg=64, hint=hint)
 
     # Membran: leicht gekruemmter Konus
     cone = []
     for t in np.linspace(0, 1, 11):
         r = 0.111 - 0.065 * t
-        cone.append((r, 0.004 - 0.056 * t ** 0.8))
+        cone.append((r * s, (0.004 - 0.056 * t ** 0.8) * s))
     lathe(parts["M_Cone"], M, cone, seg=64, hint=hint)
 
     # Staubschutzkalotte
     cap = []
     for t in np.linspace(0, 1, 7):
         r = 0.046 * math.cos(t * math.pi / 2)
-        cap.append((r, -0.052 + 0.017 * math.sin(t * math.pi / 2)))
+        cap.append((r * s, (-0.052 + 0.017 * math.sin(t * math.pi / 2)) * s))
     lathe(parts["M_DustCap"], M, cap, seg=48, hint=hint)
 
     # 8 Befestigungsschrauben auf dem Korbrand
     for k in range(8):
         a = (k + 0.5) / 8 * 2 * math.pi
-        x, y = 0.1405 * math.cos(a), 0.1405 * math.sin(a)
+        x, y = 0.1405 * s * math.cos(a), 0.1405 * s * math.sin(a)
         Ms = M.copy()
-        Ms[:3, 3] = apply(M, [(x, y, 0.0105)])[0]
+        Ms[:3, 3] = apply(M, [(x, y, 0.0105 * s)])[0]
         screw_head(parts["M_Steel"], Ms, 0.0042)
 
 
@@ -183,14 +186,17 @@ def add_horn(parts):
             screw_head(parts["M_Steel"], Ms, 0.0035)
 
 
-def add_grille(parts):
+def add_grille(parts, xi=0.262, xo=0.274, xc=0.278, z0=None, z1=None, yf=None, yg=None,
+               side_screws=True):
     """Lochblech mit massivem Rahmen, Fase und nach hinten gekantetem Rand."""
+    Z0, Z1 = (globals()["Z0"] if z0 is None else z0), (globals()["Z1"] if z1 is None else z1)
+    YF = globals()["YF"] if yf is None else yf
+    yg = (YF - 0.016) if yg is None else yg
     g = parts["M_Grille"]
     fr = parts["M_MetalDark"]
-    xi, zi0, zi1 = 0.262, Z0 + 0.034, Z1 - 0.034         # Lochfeld
-    xo, zo0, zo1 = 0.274, Z0 + 0.022, Z1 - 0.022         # Aussenkante Front
-    xc, zc0, zc1 = 0.278, Z0 + 0.018, Z1 - 0.018         # nach Fase
-    yg = GRILLE_Y
+    zi0, zi1 = Z0 + 0.034, Z1 - 0.034         # Lochfeld
+    zo0, zo1 = Z0 + 0.022, Z1 - 0.022         # Aussenkante Front
+    zc0, zc1 = Z0 + 0.018, Z1 - 0.018         # nach Fase
     fwd = hint_dir((0, -1, 0))
 
     g.poly([(-xi, yg, zi0), (xi, yg, zi0), (xi, yg, zi1), (-xi, yg, zi1)], False, fwd)
@@ -217,8 +223,10 @@ def add_grille(parts):
     # Rahmenschrauben
     xm = (xi + xo) / 2
     zm0, zm1 = (zi0 + zo0) / 2, (zi1 + zo1) / 2
-    for x, z in [(-xm, zm0), (xm, zm0), (-xm, zm1), (xm, zm1), (0, zm0), (0, zm1),
-                 (-xm, (Z0 + Z1) / 2), (xm, (Z0 + Z1) / 2)]:
+    pts = [(-xm, zm0), (xm, zm0), (-xm, zm1), (xm, zm1), (0, zm0), (0, zm1)]
+    if side_screws:
+        pts += [(-xm, (Z0 + Z1) / 2), (xm, (Z0 + Z1) / 2)]
+    for x, z in pts:
         M = frame_matrix((x, yg, z), (1, 0, 0), (0, 0, 1), (0, -1, 0))
         screw_head(parts["M_Steel"], M, 0.0042)
 
@@ -241,22 +249,26 @@ def side_frame(sign, y, z, out=0.0):
 
 def add_handles(parts):
     for sign in (-1, 1):
-        M = side_frame(sign, 0.0, Z0 + 0.66)
-        # flache Griffschale
-        Mp = M.copy()
-        Mp[:3, 3] = apply(M, [(0, 0, 0.0)])[0]
-        rounded_box(parts["M_MetalDark"], Mp, (0.085, 0.034, 0.004), 0.0035, seg=2)
-        # Buegel: zwei Stuetzen + Stange
-        for sx in (-1, 1):
-            Ms = M.copy()
-            Ms[:3, 3] = apply(M, [(sx * 0.058, 0, 0.0)])[0]
-            cylinder(parts["M_Steel"], Ms, 0.0075, 0.0, 0.030, seg=16)
-        Mb = frame_matrix(apply(M, [(0, 0, 0.030)])[0], M[:3, 1], M[:3, 2], M[:3, 0])
-        cylinder(parts["M_Steel"], Mb, 0.0085, -0.066, 0.066, seg=16)
-        for sx in (-1, 1):
-            Ms = M.copy()
-            Ms[:3, 3] = apply(M, [(sx * 0.074, 0, 0.004)])[0]
-            screw_head(parts["M_Steel"], Ms, 0.004)
+        bar_handle(parts, side_frame(sign, 0.0, Z0 + 0.66))
+
+
+def bar_handle(parts, M):
+    """Stahl-Buegelgriff auf Griffschale. M: lokal X entlang, Z = Wandnormale."""
+    # flache Griffschale
+    Mp = M.copy()
+    Mp[:3, 3] = apply(M, [(0, 0, 0.0)])[0]
+    rounded_box(parts["M_MetalDark"], Mp, (0.085, 0.034, 0.004), 0.0035, seg=2)
+    # Buegel: zwei Stuetzen + Stange
+    for sx in (-1, 1):
+        Ms = M.copy()
+        Ms[:3, 3] = apply(M, [(sx * 0.058, 0, 0.0)])[0]
+        cylinder(parts["M_Steel"], Ms, 0.0075, 0.0, 0.030, seg=16)
+    Mb = frame_matrix(apply(M, [(0, 0, 0.030)])[0], M[:3, 1], M[:3, 2], M[:3, 0])
+    cylinder(parts["M_Steel"], Mb, 0.0085, -0.066, 0.066, seg=16)
+    for sx in (-1, 1):
+        Ms = M.copy()
+        Ms[:3, 3] = apply(M, [(sx * 0.074, 0, 0.004)])[0]
+        screw_head(parts["M_Steel"], Ms, 0.004)
 
 
 def add_fly_tracks(parts):
@@ -285,10 +297,19 @@ def add_feet_and_pole_cup(parts):
 
 
 def add_rear_panel(parts):
-    """Anschlussfeld: Alu-Platte, zwei Lautsprecherbuchsen (generisch), Schrauben."""
-    rear = rear_frame
+    connector_panel(parts, rear_frame, Z0 + 0.30)
+    for x in PORT_X:
+        round_port(parts, rear_frame(x, PORT_Z), PORT_R)
+    for x in (-0.155, 0.155):
+        for z in (Z0 + 0.07, Z1 - 0.07):
+            rigging_point(parts, rear_frame(x, z))
+    # leeres Typenschild (keine Marke, nur Flaeche)
+    rounded_box(parts["M_MetalDark"], rear_frame(0, Z0 + 0.46, 0.001), (0.070, 0.030, 0.0012), 0.002, seg=1)
 
-    zc = Z0 + 0.30
+
+def connector_panel(parts, rear, zc):
+    """Anschlussfeld: Alu-Platte, zwei Lautsprecherbuchsen (generisch), Schrauben.
+    rear(x, z, out) liefert den Wandrahmen (lokal Z = Aussennormale)."""
     rounded_box(parts["M_Panel"], rear(0, zc, 0.0015), (0.100, 0.062, 0.0025), 0.004, seg=2)
     for sx in (-1, 1):
         for sz in (-1, 1):
@@ -311,31 +332,29 @@ def add_rear_panel(parts):
             Ms = M.copy()
             Ms[:3, 3] = apply(M, [(0.0225 * math.cos(a), 0.0225 * math.sin(a), 0.0025)])[0]
             screw_head(parts["M_Steel"], Ms, 0.0022)
-    # Bassreflexrohre mit ausgerundetem Kragen
-    for x in PORT_X:
-        M = rear_frame(x, PORT_Z)
-        out_pt = apply(M, [(0, 0, 1.0)])[0]
-        r = PORT_R
-        prof = [(r + 0.024, -0.001), (r + 0.024, 0.003), (r + 0.020, 0.0065), (r + 0.012, 0.0075),
-                (r + 0.005, 0.0055), (r + 0.0015, 0.002), (r, -0.004), (r, -0.040), (r, -0.125)]
-        lathe(parts["M_Horn"], M, prof, seg=40, hint=hint_toward_point(out_pt))
-        lathe(parts["M_Rubber"], M, [(r, -0.125), (0.0, -0.125)], seg=40,
-              hint=hint_toward_point(out_pt))
-        for k in range(4):
-            a = math.radians(45 + 90 * k)
-            Ms = M.copy()
-            Ms[:3, 3] = apply(M, [((r + 0.017) * math.cos(a), (r + 0.017) * math.sin(a), 0.0068)])[0]
-            screw_head(parts["M_Steel"], Ms, 0.0028)
-    # M10-Anschlagpunkte in den Ecken der Rueckwand
-    for x in (-0.155, 0.155):
-        for z in (Z0 + 0.07, Z1 - 0.07):
-            M = rear_frame(x, z)
-            lathe(parts["M_MetalDark"], M,
-                  [(0.0125, -0.0005), (0.0125, 0.0015), (0.0110, 0.0028), (0.0068, 0.0028),
-                   (0.0060, 0.0010), (0.0, 0.0010)], seg=20,
-                  hint=hint_from_point(apply(M, [(0, 0, -0.05)])[0]))
-    # leeres Typenschild (keine Marke, nur Flaeche)
-    rounded_box(parts["M_MetalDark"], rear(0, Z0 + 0.46, 0.001), (0.070, 0.030, 0.0012), 0.002, seg=1)
+
+
+def round_port(parts, M, r):
+    """Bassreflexrohr mit ausgerundetem Kragen, lokal Z = aus der Wand heraus."""
+    out_pt = apply(M, [(0, 0, 1.0)])[0]
+    prof = [(r + 0.024, -0.001), (r + 0.024, 0.003), (r + 0.020, 0.0065), (r + 0.012, 0.0075),
+            (r + 0.005, 0.0055), (r + 0.0015, 0.002), (r, -0.004), (r, -0.040), (r, -0.125)]
+    lathe(parts["M_Horn"], M, prof, seg=40, hint=hint_toward_point(out_pt))
+    lathe(parts["M_Rubber"], M, [(r, -0.125), (0.0, -0.125)], seg=40,
+          hint=hint_toward_point(out_pt))
+    for k in range(4):
+        a = math.radians(45 + 90 * k)
+        Ms = M.copy()
+        Ms[:3, 3] = apply(M, [((r + 0.017) * math.cos(a), (r + 0.017) * math.sin(a), 0.0068)])[0]
+        screw_head(parts["M_Steel"], Ms, 0.0028)
+
+
+def rigging_point(parts, M):
+    """M10-Anschlagpunkt (Gewindeeinsatz mit Kragen)."""
+    lathe(parts["M_MetalDark"], M,
+          [(0.0125, -0.0005), (0.0125, 0.0015), (0.0110, 0.0028), (0.0068, 0.0028),
+           (0.0060, 0.0010), (0.0, 0.0010)], seg=20,
+          hint=hint_from_point(apply(M, [(0, 0, -0.05)])[0]))
 
 
 # ---------------------------------------------------------------------------
@@ -370,3 +389,15 @@ if __name__ == "__main__":
         print(f"{p.name:24s} {p.triangle_count():6d} Dreiecke")
         tot += p.triangle_count()
     print("Summe (ohne Bevel/Boolean)", tot)
+
+
+def build():
+    """Einheitliche Schnittstelle fuer build_asset.py."""
+    s = build_speaker()
+    s["name"] = "AYR212"
+    s["shots"] = {
+        "front34": ((-1.35, -2.75, 1.05), (0, 0, 0.50)),
+        "front_detail": ((-0.35, -1.25, 0.70), (0, -0.25, 0.62)),
+        "rear34": ((1.6, 2.6, 1.1), (0, 0, 0.48)),
+    }
+    return s

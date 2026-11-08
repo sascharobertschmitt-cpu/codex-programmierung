@@ -142,22 +142,22 @@ def texture_wear(size=512, seed=11):
     rough = 0.64 + 0.035 * periodic_noise(size, 10, rng)
     patch = periodic_noise(size, 30, rng)
     rubbed = np.clip((patch - 0.9) / 0.9, 0, 1)
-    rough = rough * (1 - rubbed) + 0.47 * rubbed
+    rough = rough * (1 - rubbed * 0.6) + 0.54 * rubbed * 0.6
     shade = np.zeros((size, size))
-    shade += rubbed * 0.010
+    shade += rubbed * 0.004
 
     segs = []
-    for _ in range(45):
+    for _ in range(28):
         x0, y0 = rng.uniform(0, size, 2)
         ang = rng.normal(0, 0.35) + (np.pi if rng.random() < 0.5 else 0)
         if rng.random() < 0.2:
             ang = rng.uniform(0, np.pi)
         ln = rng.uniform(15, 140)
         segs.append((x0, y0, x0 + ln * np.cos(ang), y0 + ln * np.sin(ang), rng.uniform(0.7, 1.6)))
-    _draw_segments(rough, segs, 0.36, rng)
+    _draw_segments(rough, segs, 0.46, rng)
     sc = np.zeros((size, size))
     _draw_segments(sc, segs, 1.0, rng)
-    shade += sc * 0.035
+    shade += sc * 0.014
 
     # quantisieren, damit PNG gut komprimiert
     g = (np.round(np.clip(rough, 0, 1) * 255 / 2) * 2).clip(0, 255).astype(np.uint8)

@@ -24,7 +24,7 @@
 <body>
 <canvas id="c"></canvas>
 <main>
-  <h1>Club-Lautsprecher AYR-212 · GLB-Prüfstand</h1>
+  <h1 id="title">Club-Lautsprecher AYR-212 · GLB-Prüfstand</h1>
   <div class="row">
     <button data-light="club" class="on">Club-Licht</button>
     <button data-light="studio">Studio-Licht</button>
@@ -55,7 +55,11 @@
   const EXPECT = (P.get('expect') || '0.60,0.995,0.53').split(',').map(Number);
   const checksEl = document.querySelector('#checks');
   const statsEl = document.querySelector('#stats');
-  document.querySelector('#fname').textContent = FILE;
+  const UNDER = P.get('under');   // z. B. club_sub_118.glb: Topteil auf Sub stellen
+  const TITLES = { 'club_speaker_pa212.glb': 'Club-Topteil AYR-212', 'club_sub_118.glb': 'Club-Subwoofer AYR-118' };
+  document.querySelector('#fname').textContent = FILE + (UNDER ? ' auf ' + UNDER : '');
+  document.querySelector('#title').textContent = (TITLES[FILE] || FILE) + (UNDER ? ' · Stack' : '') + ' · GLB-Prüfstand';
+  document.title = document.querySelector('#title').textContent;
   const checks = [];
   const render = () => {
     checksEl.innerHTML = checks.map(c =>
@@ -208,6 +212,18 @@
       `Dreiecke: ${stats.triangles}\nMeshes: ${stats.meshes}  Draw Calls: ${draws ?? '–'}\n` +
       `Materialien: ${stats.materials.join(', ')}\nLadezeit: ${loadMs} ms  FPS: ${stats.fps}\n` +
       `GPU: ${stats.renderer} (WebGL ${stats.webgl})`;
+
+    if (UNDER) {
+      const sub = await B.SceneLoader.ImportMeshAsync('', './assets/', UNDER + '?v=' + Date.now(), scene, null, '.glb');
+      let subTop = 0;
+      sub.meshes.filter(m => m.getTotalVertices && m.getTotalVertices() > 0).forEach(m => {
+        m.computeWorldMatrix(true); sg.addShadowCaster(m); m.receiveShadows = true;
+        subTop = Math.max(subTop, m.getBoundingInfo().boundingBox.maximumWorld.y);
+      });
+      res.meshes.filter(m => !m.parent).forEach(m => m.position.y += subTop);
+      cam.target = new B.Vector3(0, (subTop + size.y) / 2, 0); cam.radius = 3.6;
+      check('Stack: zweites Modell geladen', true, `${UNDER}, Oberkante ${subTop.toFixed(3)} m`);
+    }
 
     const grilleBtn = document.querySelector('#grille');
     grilleBtn.onclick = () => {
