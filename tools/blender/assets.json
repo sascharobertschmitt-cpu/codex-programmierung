@@ -75,5 +75,117 @@
     "deps": [
       "speaker_geometry"
     ]
+  },
+  {
+    "id": "fig_raver",
+    "name": "Spielfigur Raver",
+    "geometry": "fig_raver_geometry",
+    "glb": "club_fig_raver.glb",
+    "expect_size": [
+      0.456,
+      0.831,
+      0.43
+    ],
+    "front_material": "-",
+    "mask_materials": "-",
+    "deps": [
+      "figures_geometry"
+    ]
+  },
+  {
+    "id": "fig_dj",
+    "name": "Spielfigur DJ",
+    "geometry": "fig_dj_geometry",
+    "glb": "club_fig_dj.glb",
+    "expect_size": [
+      0.487,
+      0.794,
+      0.439
+    ],
+    "front_material": "-",
+    "mask_materials": "-",
+    "deps": [
+      "figures_geometry"
+    ]
+  },
+  {
+    "id": "fig_tuersteher",
+    "name": "Spielfigur Türsteher",
+    "geometry": "fig_tuersteher_geometry",
+    "glb": "club_fig_tuersteher.glb",
+    "expect_size": [
+      0.426,
+      0.783,
+      0.356
+    ],
+    "front_material": "-",
+    "mask_materials": "-",
+    "deps": [
+      "figures_geometry"
+    ]
+  },
+  {
+    "id": "fig_aal",
+    "name": "Spielfigur Aal",
+    "geometry": "fig_aal_geometry",
+    "glb": "club_fig_aal.glb",
+    "expect_size": [
+      0.421,
+      0.766,
+      0.341
+    ],
+    "front_material": "-",
+    "mask_materials": "-",
+    "deps": [
+      "figures_geometry"
+    ]
+  },
+  {
+    "id": "fig_robo",
+    "name": "Spielfigur Techno-Robo",
+    "geometry": "fig_robo_geometry",
+    "glb": "club_fig_robo.glb",
+    "expect_size": [
+      0.428,
+      0.83,
+      0.281
+    ],
+    "front_material": "-",
+    "mask_materials": "-",
+    "deps": [
+      "figures_geometry"
+    ]
+  },
+  {
+    "id": "fig_gasmaske",
+    "name": "Spielfigur Gasmasken-Raver",
+    "geometry": "fig_gasmaske_geometry",
+    "glb": "club_fig_gasmaske.glb",
+    "expect_size": [
+      0.51,
+      0.819,
+      0.406
+    ],
+    "front_material": "-",
+    "mask_materials": "-",
+    "deps": [
+      "figures_geometry"
+    ]
+  },
+  {
+    "id": "crowd",
+    "name": "Club-Gast (2 Posen)",
+    "geometry": "crowd_geometry",
+    "glb": "club_crowd.glb",
+    "expect_size": [
+      0.468,
+      0.857,
+      0.306
+    ],
+    "front_material": "-",
+    "mask_materials": "-",
+    "deps": [
+      "figures_geometry"
+    ]
   }
 ]

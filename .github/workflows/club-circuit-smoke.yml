@@ -9,6 +9,7 @@ on:
       - 'aal-you-ready/play/club-circuit-*'
       - 'aal-you-ready/play/club-exterior.js'
       - 'aal-you-ready/play/club-scene-preview.html'
+      - 'aal-you-ready/play/assets/*.glb'
       - 'tools/test_club_rules.js'
       - 'tools/browser_smoke.mjs'
       - '.github/workflows/club-circuit-smoke.yml'
@@ -54,12 +55,18 @@ jobs:
           PW_CHANNEL=chrome node tools/browser_smoke.mjs \
             "http://localhost:8080/club-scene-preview.html?view=follow&walk=1&rain=0" \
             aal-you-ready/play/assets/previews/scene_rig_follow.png 240000 | tee -a /tmp/browser.log || true
+          PW_CHANNEL=chrome node tools/browser_smoke.mjs \
+            "http://localhost:8080/club-scene-preview.html?view=follow&n=6&lineup=1&rain=0" \
+            aal-you-ready/play/assets/previews/scene_figures.png 240000 | tee -a /tmp/browser.log || true
+          PW_CHANNEL=chrome node tools/browser_smoke.mjs \
+            "http://localhost:8080/club-scene-preview.html?view=floor&rain=0" \
+            aal-you-ready/play/assets/previews/scene_floor.png 240000 | tee -a /tmp/browser.log || true
       - name: Commit screenshot
         if: always()
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add aal-you-ready/play/assets/previews/circuit_headless.png aal-you-ready/play/assets/previews/circuit_city.png aal-you-ready/play/assets/previews/scene_rig_*.png || true
+          git add aal-you-ready/play/assets/previews/circuit_headless.png aal-you-ready/play/assets/previews/circuit_city.png aal-you-ready/play/assets/previews/scene_*.png || true
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Circuit smoke test screenshot"
           git pull --rebase origin "${GITHUB_REF_NAME}"

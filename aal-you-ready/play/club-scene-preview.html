@@ -21,6 +21,7 @@
   <button data-v="follow" class="on">Folgen</button>
   <button data-v="overview">Übersicht</button>
   <button data-v="city">Stadt</button>
+  <button data-v="floor">Floor</button>
   <button id="walk">Zug</button>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/babylonjs@7.54.3/babylon.js"></script>
@@ -32,7 +33,9 @@
 (async () => {
   const Q = new URLSearchParams(location.search);
   const info = document.querySelector('#info');
-  const players = [{ id: 'a', position: 0, lap: 0 }, { id: 'b', position: 3, lap: 0 }, { id: 'c', position: 9, lap: 0 }];
+  // ?n=6 Anzahl Figuren, ?lineup=1 alle nebeneinander ab Feld 2
+  const N = Math.max(1, Math.min(8, Number(Q.get('n') || 3)));
+  const players = Array.from({ length: N }, (_, i) => ({ id: 'p' + i, position: Q.get('lineup') ? 2 + i : [0, 3, 9, 14, 20, 27, 33, 40][i], lap: 0 }));
   let turn = 0;
   try {
     const t0 = performance.now();
@@ -50,7 +53,7 @@
       turn = (turn + 1) % players.length; sc.sync(players, turn);
     };
     const ms = Math.round(performance.now() - t0);
-    setInterval(() => { info.textContent = `${sc.engine.getFps().toFixed(0)} fps · PA ${sc.paLoaded ? 'ok' : '–'} · Rigg ${sc.rigLoaded ? 'ok' : '–'} · geladen in ${ms} ms`; }, 1000);
+    setInterval(() => { info.textContent = `${sc.engine.getFps().toFixed(0)} fps · PA ${sc.paLoaded ? 'ok' : '–'} · Rigg ${sc.rigLoaded ? 'ok' : '–'} · Figuren ${sc.figuresLoaded ? 'ok' : '–'} · Menge ${sc.crowdLoaded ? 'ok' : '–'} · geladen in ${ms} ms`; }, 1000);
     if (Q.get('view')) setView(Q.get('view'));
     if (Q.get('walk')) { for (let i = 0; i < Number(Q.get('walk')); i++) await document.querySelector('#walk').onclick(); }
     await new Promise(r => setTimeout(r, 3000));
@@ -58,6 +61,8 @@
       { name: 'Szene geladen', ok: true, detail: ms + ' ms' },
       { name: 'PA-Stacks', ok: sc.paLoaded },
       { name: 'DJ-Booth + Rigg + Moving Heads', ok: sc.rigLoaded },
+      { name: 'Spielfiguren + DJ + Türsteher', ok: sc.figuresLoaded },
+      { name: 'Tanzende Menge', ok: sc.crowdLoaded },
     ], stats: { fps: Math.round(sc.engine.getFps()) } };
   } catch (e) {
     console.error(e); info.textContent = 'Fehler: ' + e.message;

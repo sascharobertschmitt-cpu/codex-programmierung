@@ -172,6 +172,16 @@ def make_materials(imgs):
         "M_Lens": make_material("M_Lens", (0.02, 0.02, 0.03), 0.0, 0.05, emission=(0.9, 0.95, 1.0), emission_strength=2.0),
         "M_LED": make_material("M_LED", (0.0, 0.0, 0.0), 0.0, 0.5, emission=(0.15, 0.85, 1.0), emission_strength=3.0),
         "M_Screen": make_material("M_Screen", (0.01, 0.01, 0.015), 0.0, 0.08, emission=(0.10, 0.22, 0.45), emission_strength=1.0),
+        # Figuren (stilisiert). M_Accent = Spielerfarbe, wird in Babylon pro Spieler umgefaerbt.
+        "M_Accent": make_material("M_Accent", (0.50, 0.08, 0.85), 0.0, 0.48),
+        "M_Cloth": make_material("M_Cloth", (0.030, 0.030, 0.036), 0.0, 0.82),
+        "M_Skin1": make_material("M_Skin1", (0.73, 0.41, 0.27), 0.0, 0.55),
+        "M_Skin2": make_material("M_Skin2", (0.35, 0.155, 0.074), 0.0, 0.52),
+        "M_Skin3": make_material("M_Skin3", (0.106, 0.043, 0.022), 0.0, 0.5),
+        "M_Eel": make_material("M_Eel", (0.040, 0.105, 0.060), 0.15, 0.22),
+        "M_White": make_material("M_White", (0.80, 0.80, 0.80), 0.0, 0.35),
+        "M_Glow": make_material("M_Glow", (0.0, 0.0, 0.0), 0.0, 0.4, emission=(1.0, 0.25, 0.75), emission_strength=4.0),
+        "M_Crowd": make_material("M_Crowd", (0.55, 0.55, 0.58), 0.0, 0.7),
     }
 
 

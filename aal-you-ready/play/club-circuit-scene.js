@@ -319,6 +319,104 @@
       });
       rigLoaded = true;
     } catch (e) { console.warn('DJ/Rigg nicht geladen', e); }
+
+    // ------------------------------------------------- Figuren (eigene GLBs)
+    // Spielfiguren in Spielerfarbe, DJ hinterm Pult, Türsteher am Einlass, tanzende Menge.
+    const FIG_ORDER = ['raver', 'dj', 'aal', 'robo', 'gasmaske', 'tuersteher'];
+    const TOK_SCALE = 0.85, NPC_SCALE = 2.15;
+    const figs = {};
+    const npcs = [];
+    let figuresLoaded = false, crowdLoaded = false;
+    const crowd = { meshes: [], dancers: [] };
+    const tint = (meshes, hex, glowScale) => meshes.forEach(m => {
+      const mt = m.material;
+      if (mt && mt.name.includes('M_Accent')) {
+        mt.albedoColor = B.Color3.FromHexString(hex).toLinearSpace();
+        mt.emissiveColor = B.Color3.FromHexString(hex).scale(glowScale);
+      }
+    });
+    const spawnFig = (kind, name, scale, hex) => {
+      const c = figs[kind]; if (!c) return null;
+      const inst = c.instantiateModelsToScene(n => name + '_' + n, true);
+      const body = new B.TransformNode(name, scene);
+      inst.rootNodes.forEach(r => { r.parent = body; });
+      body.scaling.setAll(scale);
+      const meshes = body.getChildMeshes(false);
+      if (hex) tint(meshes, hex, 0.12);
+      meshes.forEach(m => shadows.addShadowCaster(m));
+      return body;
+    };
+    try {
+      const load = (f) => B.SceneLoader.LoadAssetContainerAsync(o.assetBase, f, scene, null, '.glb');
+      const list = await Promise.all(FIG_ORDER.map(k => load('club_fig_' + k + '.glb').catch(() => null)));
+      FIG_ORDER.forEach((k, i) => { if (list[i]) figs[k] = list[i]; });
+      figuresLoaded = Object.keys(figs).length === FIG_ORDER.length;
+      // DJ hinter dem Pult (Podest-Oberkante y 0.6), Blick zur Tanzfläche
+      const dj = spawnFig('dj', 'npcDJ', NPC_SCALE * 1.1, '#29c6ff');
+      if (dj) { dj.position.set(0, 0.6, HL - 3.95); dj.rotation.y = Math.PI; npcs.push({ node: dj, kind: 'dj', y: 0.6 }); }
+      // Türsteher innen neben dem Einlass, schaut den ankommenden Figuren entgegen
+      const bo = spawnFig('tuersteher', 'npcBouncer', NPC_SCALE * 1.08, '#ff4fd8');
+      if (bo) { bo.position.set(tiles[0].x + 0.9, 0, tiles[0].z + 1.55); bo.rotation.y = -Math.PI / 2 - 0.35; npcs.push({ node: bo, kind: 'bouncer', y: 0 }); }
+    } catch (e) { console.warn('Figuren nicht geladen', e); }
+    try {
+      const cc = await B.SceneLoader.LoadAssetContainerAsync(o.assetBase, 'club_crowd.glb', scene, null, '.glb');
+      const inst = cc.instantiateModelsToScene(n => 'crowd_' + n, false);
+      const all = inst.rootNodes[0].getChildMeshes(false).filter(m => m.getTotalVertices() > 0);
+      const CROWD_COLS = ['#bb38ff', '#29c6ff', '#ff4fd8', '#2ee6b0', '#ffb627', '#8e83ff', '#3a3a48', '#5a5a6a', '#20202a', '#d8d0e8'];
+      ['A', 'B'].forEach((tag, pi) => {
+        const parts = all.filter(m => m.name.includes('CROWD_' + tag + '_'));
+        if (!parts.length) return;
+        const mesh = B.Mesh.MergeMeshes(parts, true, true, undefined, false, true);
+        mesh.name = 'crowd' + tag;
+        (mesh.material && mesh.material.subMaterials ? mesh.material.subMaterials : [mesh.material]).forEach(mt => { if (mt) mt.backFaceCulling = false; });
+        mesh.alwaysSelectAsActiveMesh = true;
+        mesh.receiveShadows = true;
+        crowd.meshes[pi] = mesh;
+      });
+      inst.rootNodes.forEach(r => r.dispose());
+      // Tanzfläche vor dem DJ, innerhalb des Rundkurses, lockeres Raster mit Zufall
+      let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+      for (let gz = 0; gz < 5; gz++) for (let gx = 0; gx < 8; gx++) {
+        if (rnd() < 0.12) continue;
+        const x = -4.1 + gx * 1.17 + (rnd() - 0.5) * 0.6, z = 0.9 + gz * 1.12 + (rnd() - 0.5) * 0.5;
+        crowd.dancers.push({ x, z, pose: rnd() < 0.5 ? 0 : 1, ph: rnd() * 6.28, s: 1.85 + rnd() * 0.35,
+          face: Math.atan2(-x * 0.15, (HL - 4.4) - z) + (rnd() - 0.5) * 0.6, col: CROWD_COLS[Math.floor(rnd() * CROWD_COLS.length)] });
+      }
+      crowd.meshes.forEach((mesh, pi) => {
+        if (!mesh) return;
+        const ds = crowd.dancers.filter(d => d.pose === pi);
+        const mats = new Float32Array(ds.length * 16), cols = new Float32Array(ds.length * 4);
+        ds.forEach((d, i) => { const c = B.Color3.FromHexString(d.col).toLinearSpace(); cols.set([c.r, c.g, c.b, 1], i * 4); });
+        mesh.thinInstanceSetBuffer('matrix', mats, 16, false);
+        mesh.thinInstanceSetBuffer('color', cols, 4, true);
+        crowd['list' + pi] = ds; crowd['buf' + pi] = mats;
+      });
+      crowdLoaded = crowd.dancers.length > 0 && !!crowd.meshes[0];
+    } catch (e) { console.warn('Menge nicht geladen', e); }
+    const BPM = 130 / 60;
+    const tmpM = new B.Matrix(), tmpQ = new B.Quaternion(), tmpS = new B.Vector3(), tmpP = new B.Vector3();
+    scene.onBeforeRenderObservable.add(() => {
+      const t = performance.now() / 1000;
+      const beat = t * BPM * Math.PI;
+      crowd.meshes.forEach((mesh, pi) => {
+        if (!mesh) return;
+        const ds = crowd['list' + pi], buf = crowd['buf' + pi];
+        ds.forEach((d, i) => {
+          const b = Math.abs(Math.sin(beat + d.ph * 0.3));
+          tmpS.set(d.s, d.s * (0.96 + 0.04 * b), d.s);
+          B.Quaternion.RotationYawPitchRollToRef(d.face + Math.sin(t * 0.9 + d.ph) * 0.35, 0, Math.sin(beat * 0.5 + d.ph) * 0.06, tmpQ);
+          tmpP.set(d.x, b * 0.07, d.z);
+          B.Matrix.ComposeToRef(tmpS, tmpQ, tmpP, tmpM);
+          tmpM.copyToArray(buf, i * 16);
+        });
+        mesh.thinInstanceBufferUpdated('matrix');
+      });
+      npcs.forEach(n => {
+        if (n.kind === 'dj') { n.node.position.y = n.y + Math.abs(Math.sin(beat)) * 0.035; n.node.rotation.x = Math.sin(beat) * 0.04; }
+        else n.node.rotation.z = Math.sin(t * 0.8) * 0.012;
+      });
+    });
+
     const BEAM_COLORS = ['#ff4fd8', '#29c6ff', '#f5ecff', '#2ee6b0', '#bb38ff', '#ffb627'].map(c => B.Color3.FromHexString(c));
     scene.onBeforeRenderObservable.add(() => {
       if (!heads.length) return;
@@ -338,15 +436,28 @@
     const makeToken = (i) => {
       const rootN = new B.TransformNode('tok' + i, scene);
       const col = COLORS[i % COLORS.length];
-      const mat = pbr('tokm' + i, col, 0.3, 0.35); mat.emissiveColor = B.Color3.FromHexString(col).scale(0.25);
-      const body = B.MeshBuilder.CreateCylinder('body' + i, { diameterTop: 0.2, diameterBottom: 0.34, height: 0.5, tessellation: 24 }, scene);
-      body.parent = rootN; body.position.y = 0.25; body.material = mat;
-      const head = B.MeshBuilder.CreateSphere('head' + i, { diameter: 0.26, segments: 16 }, scene);
-      head.parent = rootN; head.position.y = 0.62; head.material = mat;
       const ring = B.MeshBuilder.CreateTorus('ring' + i, { diameter: 0.46, thickness: 0.035, tessellation: 32 }, scene);
       ring.parent = rootN; ring.position.y = 0.02; ring.material = pbr('ringm' + i, '#000000', 0, 1, col);
-      [body, head].forEach(m => shadows.addShadowCaster(m));
-      return { root: rootN, ring, walking: false };
+      let body = spawnFig(FIG_ORDER[i % FIG_ORDER.length], 'tokFig' + i, TOK_SCALE, col);
+      if (body) {
+        body.parent = rootN;
+      } else {                                    // Rückfall: einfache Figur aus Grundformen
+        body = new B.TransformNode('tokFig' + i, scene); body.parent = rootN;
+        const mat = pbr('tokm' + i, col, 0.3, 0.35); mat.emissiveColor = B.Color3.FromHexString(col).scale(0.25);
+        const b = B.MeshBuilder.CreateCylinder('body' + i, { diameterTop: 0.2, diameterBottom: 0.34, height: 0.5, tessellation: 24 }, scene);
+        b.parent = body; b.position.y = 0.25; b.material = mat;
+        const h = B.MeshBuilder.CreateSphere('head' + i, { diameter: 0.26, segments: 16 }, scene);
+        h.parent = body; h.position.y = 0.62; h.material = mat;
+        [b, h].forEach(m => shadows.addShadowCaster(m));
+      }
+      return { root: rootN, body, ring, walking: false };
+    };
+    // Ruheblick: nach außen (zur Kamera) und etwas in Laufrichtung
+    const restYaw = (f) => {
+      const t = tiles[((f % 64) + 64) % 64];
+      const ol = Math.hypot(t.x, t.z) || 1;
+      const dx = t.x / ol + 0.6 * Math.cos(t.ang), dz = t.z / ol + 0.6 * Math.sin(t.ang);
+      return Math.atan2(dx, dz);
     };
     const field = (abs) => ((abs % 64) + 64) % 64;
     const slotPos = (f, idx) => {
@@ -365,6 +476,7 @@
       follow: { radius: 9.5, beta: 0.95 },
       overview: { target: new B.Vector3(0, 2.0, 1.5), radius: 31, beta: 1.16, alpha: -Math.PI / 2 - 0.35 },
       city: { target: new B.Vector3(0, 20, 20), radius: 70, beta: 1.47, alpha: -Math.PI / 2 - 0.45 },
+      floor: { target: new B.Vector3(0, 1.4, 4.2), radius: 10.5, beta: 1.22, alpha: -Math.PI / 2 - 0.42 },
     };
     let follow = 0, viewMode = 'follow', autoCam = true, camGoal = VIEWS.follow;
     canvas.addEventListener('pointerdown', () => { autoCam = false; });
@@ -400,7 +512,10 @@
       if (exterior) exterior.update(t, cam);
       if (Math.floor(t * 12) !== Math.floor((t - engine.getDeltaTime() / 1000) * 12)) { drawEq(t); drawWall(t); }
       spots.forEach((s, i) => { s.direction.x = Math.sin(t * 0.7 + i * 1.7) * 0.7; s.direction.z = -0.3 + Math.cos(t * 0.5 + i) * 0.5; });
-      tokens.forEach((tk, i) => { tk.ring.scaling.setAll(i === follow ? 1 + 0.12 * Math.sin(t * 6) : 1); });
+      tokens.forEach((tk, i) => {
+        tk.ring.scaling.setAll(i === follow ? 1 + 0.12 * Math.sin(t * 6) : 1);
+        if (tk.body && !tk.walking) tk.body.position.y = i === follow ? Math.abs(Math.sin(t * 130 / 60 * Math.PI)) * 0.045 : 0;
+      });
     });
     engine.runRenderLoop(() => scene.render());
 
@@ -409,6 +524,7 @@
       const obs = scene.onBeforeRenderObservable.add(() => {
         const f = Math.min(1, (performance.now() - start) / ms);
         const p = B.Vector3.Lerp(from, to, f); p.y += Math.sin(f * Math.PI) * (0.3 + Math.abs(to.y - from.y));
+        if (tok.body && Math.hypot(to.x - from.x, to.z - from.z) > 0.01) tok.body.rotation.y = Math.atan2(to.x - from.x, to.z - from.z);
         tok.root.position.copyFrom(p);
         if (f >= 1) { scene.onBeforeRenderObservable.remove(obs); res(); }
       });
@@ -417,12 +533,12 @@
     await scene.whenReadyAsync();
 
     return {
-      scene, engine, paLoaded, rigLoaded, tiles,
+      scene, engine, paLoaded, rigLoaded, figuresLoaded, crowdLoaded, tiles,
       sync(players, active) {
         while (tokens.length < players.length) tokens.push(makeToken(tokens.length));
         tokens.forEach((tk, i) => {
           tk.root.setEnabled(i < players.length);
-          if (i < players.length && !tk.walking) tk.root.position.copyFrom(slotPos(players[i].position, i));
+          if (i < players.length && !tk.walking) { tk.root.position.copyFrom(slotPos(players[i].position, i)); tk.body.rotation.y = restYaw(players[i].position); }
         });
         if (typeof active === 'number' && active !== follow) { follow = active; autoCam = true; }
       },
@@ -437,6 +553,7 @@
           await hop(tk, tk.root.position.clone(), slotPos(cur, idx), steps > 14 ? 150 : 230);
         }
         tk.walking = false;
+        tk.body.rotation.y = restYaw(cur);
       },
       setView(mode) { viewMode = VIEWS[mode] ? mode : 'follow'; camGoal = VIEWS[viewMode]; cam.upperRadiusLimit = viewMode === 'city' ? 120 : 42; autoCam = true; return viewMode; },
       get view() { return viewMode; },
