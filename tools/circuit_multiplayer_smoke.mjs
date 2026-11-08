@@ -35,7 +35,7 @@ ok('Server: Rundkurs gestartet', s.board_mode === 'circuit' && s.laps === 2);
 await sleep(9000);
 const hud = await page.locator('#cameraHud').innerText();
 ok('Seite zeigt Rundkurs-Szene', hud.includes('RUNDKURS'), hud);
-ok('Chips zeigen Runde und Cash', (await page.locator('#players').innerText()).includes('Runde 1/2'));
+{ const chips = await page.locator('#players').innerText(); ok('Chips zeigen Runde und Cash', /R1\/2/.test(chips) && chips.includes('💰'), chips); }
 
 const toks = [A.token, Bp.token];
 let rolls = 0, gate = 0, slfRounds = 0;
