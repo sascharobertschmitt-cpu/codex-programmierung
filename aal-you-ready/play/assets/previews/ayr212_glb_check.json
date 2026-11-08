@@ -28,7 +28,7 @@
     {
       "name": "Dateigroesse <= 2.0 MB",
       "status": "PASS",
-      "detail": "805 KB"
+      "detail": "792 KB"
     },
     {
       "name": "Alle Bilder eingebettet",
@@ -62,9 +62,9 @@
     }
   ],
   "analysis": {
-    "file_bytes": 824420,
+    "file_bytes": 811492,
     "triangles": 21668,
-    "vertices": 14467,
+    "vertices": 14471,
     "primitives": 9,
     "meshes": 9,
     "materials": [
@@ -216,14 +216,14 @@
         "mimeType": "image/png",
         "embedded": true,
         "uri": null,
-        "bytes": 18886
+        "bytes": 11283
       },
       {
         "name": "ayr212_wear_orm",
         "mimeType": "image/png",
         "embedded": true,
         "uri": null,
-        "bytes": 95725
+        "bytes": 90306
       },
       {
         "name": "ayr212_grille_normal",
