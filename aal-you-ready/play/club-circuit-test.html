@@ -322,11 +322,13 @@
   cam.minZ = 0.1; cam.lowerRadiusLimit = 3; cam.upperRadiusLimit = 42;
   cam.lowerBetaLimit = 0.25; cam.upperBetaLimit = 1.38;
   cam.wheelPrecision = 25; cam.pinchPrecision = 60; cam.panningSensibility = 0;
-  let follow = 0, overview = false, camGoal = { target: cam.target.clone(), radius: 10 };
+  let follow = 0, overview = false, autoCam = true, camGoal = { target: cam.target.clone(), radius: 8.5, beta: 1.0 };
+  canvas.addEventListener('pointerdown', () => { autoCam = false; });
   const setOverview = (on) => {
     overview = on;
     $('#view').textContent = on ? 'Folgen' : 'Übersicht';
-    camGoal = on ? { target: new B.Vector3(0, 0, 0.5), radius: 34, beta: 0.62 } : { radius: 10, beta: 1.02 };
+    camGoal = on ? { target: new B.Vector3(0, 0, 0.5), radius: 34, beta: 0.62, alpha: -Math.PI / 2 } : { radius: 8.5, beta: 1.0 };
+    autoCam = true;
   };
   $('#view').onclick = () => setOverview(!overview);
 
@@ -337,7 +339,14 @@
     const goalTarget = overview ? camGoal.target : tokens[follow].root.position.add(new B.Vector3(0, 0.4, 0));
     cam.target = B.Vector3.Lerp(cam.target, goalTarget, k);
     cam.radius += (camGoal.radius - cam.radius) * k;
-    if (camGoal.beta !== undefined) cam.beta += (camGoal.beta - cam.beta) * k * 0.6;
+    if (autoCam) {
+      if (camGoal.beta !== undefined) cam.beta += (camGoal.beta - cam.beta) * k * 0.6;
+      // Kamera steht aussen hinter der Figur und blickt zur Tanzflaeche
+      const p = tokens[follow].root.position;
+      const goalA = overview ? camGoal.alpha : Math.atan2(p.z * 0.55, p.x);
+      let d = goalA - cam.alpha; d = Math.atan2(Math.sin(d), Math.cos(d));
+      cam.alpha += d * k * 0.8;
+    }
     if (Math.floor(t * 12) !== Math.floor((t - engine.getDeltaTime() / 1000) * 12)) { drawEq(t); drawWall(t); }
     spots.forEach((s, i) => { s.direction.x = Math.sin(t * 0.7 + i * 1.7) * 0.7; s.direction.z = -0.3 + Math.cos(t * 0.5 + i) * 0.5; });
     tokens.forEach((tk, i) => { tk.ring.scaling.setAll(i === game.turn ? 1 + 0.12 * Math.sin(t * 6) : 1); });
@@ -357,7 +366,8 @@
     el.classList.add('show'); await sleep(1500); el.classList.remove('show'); await sleep(200);
   };
   const hop = (tok, from, to) => new Promise(res => {
-    const d = FAST ? 20 : 230, start = performance.now();
+    if (FAST) { tok.root.position.copyFrom(to); return res(); }
+    const d = 230, start = performance.now();
     const obs = scene.onBeforeRenderObservable.add(() => {
       const f = Math.min(1, (performance.now() - start) / d);
       const p = B.Vector3.Lerp(from, to, f); p.y += Math.sin(f * Math.PI) * 0.35;
@@ -375,7 +385,7 @@
     hud();
     for (const ev of nt.events) await toast(ev.text, EVENT_COLOR[ev.type]);
     const p = nt.player, idx = p.id;
-    follow = idx; if (overview) setOverview(false);
+    follow = idx; autoCam = true; if (overview) setOverview(false);
     $('#status').textContent = `${p.name} würfelt …`;
     const dice = Array.from({ length: DICE }, () => 1 + Math.floor(Math.random() * 6));
     const roll = dice.reduce((a, b) => a + b, 0);

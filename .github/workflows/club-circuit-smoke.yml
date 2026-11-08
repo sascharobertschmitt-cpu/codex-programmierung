@@ -41,8 +41,8 @@ jobs:
           sleep 2
           mkdir -p aal-you-ready/play/assets/previews
           PW_CHANNEL=chrome node tools/browser_smoke.mjs \
-            "http://localhost:8080/club-circuit-test.html?autoplay=30" \
-            aal-you-ready/play/assets/previews/circuit_headless.png 150000 | tee /tmp/browser.log
+            "http://localhost:8080/club-circuit-test.html?autoplay=14" \
+            aal-you-ready/play/assets/previews/circuit_headless.png 240000 | tee /tmp/browser.log
       - name: Commit screenshot
         if: always()
         run: |
