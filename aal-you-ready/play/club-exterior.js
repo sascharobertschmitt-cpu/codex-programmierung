@@ -114,7 +114,7 @@
       for (let x = x0; x <= x1 + 0.01; x += hw / 5) trussMats.push(M(x, h + 0.6, z, 0.08, 1.2, 0.08));
     };
     // Dach weitgehend eingestürzt: nur Endfelder stehen noch, zwei halbe Träger hängen in der Mitte
-    [-hl, -hl + 4, hl - 4, hl].forEach(z => truss(z, -hw, hw));
+    [-hl, hl - 4, hl].forEach(z => truss(z, -hw, hw));
     truss(-hl + 12, -hw, -hw + 6);
     truss(hl - 14, hw - 5, hw);
     trussMats.push(M(-hw, h + 1.2, 0, 0.14, 0.14, hl * 2), M(hw, h + 1.2, 0, 0.14, 0.14, hl * 2));
@@ -130,15 +130,15 @@
     // ---------------------------------------------------------- Skyline
     function windowTex(name, seed, cols, rows) {
       const r = rng(seed);
-      const t = new B.DynamicTexture(name, { width: 256, height: 512 }, scene, true);
+      const t = new B.DynamicTexture(name, { width: 512, height: 1024 }, scene, true);
       const g = t.getContext();
-      g.fillStyle = '#070609'; g.fillRect(0, 0, 256, 512);
-      const cw = 256 / cols, rh = 512 / rows;
+      g.fillStyle = '#070609'; g.fillRect(0, 0, 512, 1024);
+      const cw = 512 / cols, rh = 1024 / rows;
       const pal = ['#ffb347', '#ffb347', '#ffd27a', '#ffcf8a', '#5ee7ff', '#ff4fd8', '#b6ff6e'];
       for (let y = 0; y < rows; y++) {
-        const floorLit = r() < 0.55;
+        const floorLit = r() < 0.6;
         for (let x = 0; x < cols; x++) {
-          const lit = floorLit && r() < 0.35;
+          const lit = floorLit && r() < 0.42;
           g.fillStyle = lit ? pal[Math.floor(r() * pal.length)] : '#120f17';
           g.globalAlpha = lit ? 0.55 + r() * 0.45 : 1;
           g.fillRect(x * cw + cw * 0.18, y * rh + rh * 0.22, cw * 0.64, rh * 0.5);
@@ -157,7 +157,7 @@
       const m = B.MeshBuilder.CreateBox('towers' + i, { width: k.w, height: k.hgt, depth: k.d }, scene);
       const tm = new B.PBRMaterial('towerMat' + i, scene);
       tm.albedoColor = new B.Color3(0.035, 0.032, 0.04); tm.metallic = 0.3; tm.roughness = 0.6;
-      tm.emissiveTexture = windowTex('win' + i, 11 + i * 7, k.cols, k.rows);
+      tm.emissiveTexture = windowTex('win' + i, 11 + i * 7, Math.round(k.w / 0.9), Math.round(k.hgt / 1.6));
       tm.emissiveColor = new B.Color3(1, 1, 1); tm.emissiveIntensity = 0.9;
       m.material = tm;
       if (o.glow) o.glow.addExcludedMesh(m);
@@ -168,7 +168,7 @@
     const beacons = [];
     for (let i = 0; i < nTowers; i++) {
       const a = R() * Math.PI * 2;
-      const dist = 55 + Math.pow(R(), 0.7) * 230;
+      const dist = 75 + Math.pow(R(), 0.7) * 230;
       const x = Math.cos(a) * dist, z = Math.sin(a) * dist * 1.1;
       const kind = R() < 0.18 ? 2 : R() < 0.5 ? 0 : R() < 0.6 ? 1 : 3;
       const k = towerKinds[kind];
