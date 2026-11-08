@@ -1,12 +1,12 @@
 <!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Aal You Ready? – 3D-Arena-Labor</title><style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080b13;color:#f5f5ff;font-family:system-ui,Arial,sans-serif}#stage{position:absolute;inset:0;width:100%;height:100%;touch-action:none;outline:0}header{position:absolute;top:env(safe-area-inset-top,0px);left:0;right:0;padding:12px 16px;pointer-events:none;text-shadow:0 2px 8px #000}h1{font-size:16px;margin:0;letter-spacing:.07em}small{color:#8ff6f6}#tools{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);left:12px;right:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}button{border:1px solid #56c9d1;border-radius:20px;background:#121b2d;color:white;padding:11px 14px;font-weight:700}#status{position:absolute;top:67px;left:14px;right:14px;color:#d4f5ff;font-size:12px;pointer-events:none}#error{position:absolute;top:30%;left:8%;right:8%;padding:15px;background:#4b1026;border-radius:10px;display:none;white-space:pre-wrap}
-</style></head><body><canvas id="stage"></canvas><header><h1>AAL YOU READY? <small>ARENA LAB 0.1</small></h1><small>Eigenständiger 3D-Prototyp · ohne Multiplayer</small></header><div id="status">Initialisiere 3D …</div><div id="error"></div><div id="tools"><button id="overview">Übersicht</button><button id="angle">Perspektive</button><button id="walk">Weg prüfen</button><button id="stop">Stopp</button></div><script src="https://cdn.babylonjs.com/babylon.js"></script><script>
+</style></head><body><canvas id="stage"></canvas><header><h1>AAL YOU READY? <small>ARENA LAB 0.2</small></h1><small>Eigenständiger 3D-Prototyp · ohne Multiplayer</small></header><div id="status">Initialisiere 3D …</div><div id="error"></div><div id="tools"><button id="overview">Übersicht</button><button id="angle">Perspektive</button><button id="walk">Weg prüfen</button><button id="stop">Stopp</button></div><script src="https://cdn.babylonjs.com/babylon.js"></script><script>
 'use strict';
 const $=id=>document.getElementById(id),status=$('status'),error=$('error');
 const PATH=(()=>{const p=[[0,0]];for(let x=1;x<8;x++)p.push([x,0]);for(let y=1;y<8;y++){if(y%2){for(let x=7;x>=1;x--)p.push([x,y])}else{for(let x=1;x<8;x++)p.push([x,y])}}for(let y=7;y>=1;y--)p.push([0,y]);return p})();
 const key=(p)=>p.join(',');
 const check=(()=>{const unique=new Set(PATH.map(key)).size===64,range=PATH.every(([x,y])=>x>=0&&x<8&&y>=0&&y<8),adj=PATH.every((p,i)=>{const q=PATH[(i+1)%64];return Math.abs(p[0]-q[0])+Math.abs(p[1]-q[1])===1});return {unique,range,adj,passed:unique&&range&&adj}})();
-window.ARENA_DIAGNOSTICS={path:PATH,checks:check,version:'0.1'};
+window.ARENA_DIAGNOSTICS={path:PATH,checks:check,version:'0.2'};
 if(!check.passed)throw Error('Ungültiger 64-Felder-Rundkurs: '+JSON.stringify(check));
 function boot(){
 if(!window.BABYLON){error.style.display='block';error.textContent='Babylon.js konnte nicht geladen werden. Bitte Netzwerkverbindung prüfen.';return}
@@ -43,9 +43,47 @@ tiles.push({p,t});
 for(let i=0;i<64;i++){const p=at(i),q=at((i+1)%64),x=(p.x+q.x)/2,z=(p.z+q.z)/2;if(p.x!==q.x)block('connector'+i,.3,.04,.09,x,.10,z,i%2?cyan:red);else block('connector'+i,.09,.04,.3,x,.10,z,i%2?cyan:red)}
 // All large props are deliberately outside the 64 tile footprints.
 for(const x of [-5.35,5.35])for(const z of [-5.35,5.35]){block('pillar'+x+z,.26,2.6,.26,x,1.05,z,steel);block('pillarBand'+x+z,.3,.08,.3,x,.75,z,yellow)}
-block('rearWall',11.5,2.3,.2,0,.8,5.72,steel);
-for(const x of [-4.8,-2.4,0,2.4,4.8]){block('wallPipe'+x,.1,2.1,.11,x,.85,5.54,rust);block('wallLight'+x,.04,1.5,.05,x,.9,5.45,x%2?red:cyan)}
-for(const z of [5.4]){block('truss'+z,11.2,.13,.15,0,2.65,z,dark);block('neonTruss'+z,11,.035,.05,0,2.55,z,red)}
+// Modular industrial warehouse walls. Props remain behind/outside the playable grid.
+const concrete=material('smokedConcrete','#303c50'),panel=material('armoredWall','#4a5368'),edge=material('panelEdge','#111b2a'),copper=material('oxidizedCopper','#7b4a39'),lamp=material('lampWhite','#b9edff',1.2);
+const wallHeight=3.6,wallY=1.18;
+block('rearWallCore',11.5,wallHeight,.22,0,wallY,5.72,concrete);
+for(let i=0;i<11;i++){
+ const x=-5+i;
+ block('rearPanel'+i,.88,2.4,.065,x,.9,5.56,i%3===0?panel:steel);
+ block('rearPanelLower'+i,.87,.52,.075,x,-.61,5.5,dark);
+ block('rearPanelCap'+i,.9,.07,.09,x,2.12,5.51,edge);
+ block('rearPanelJoint'+i,.026,2.52,.10,x+.47,.91,5.49,edge);
+ for(const y of [-.14,1.75])for(const dx of [-.35,.35]){
+ const bolt=B.MeshBuilder.CreateSphere('wallBolt'+i+y+dx,{diameter:.055,segments:6},scene);
+ bolt.position.set(x+dx,y,5.44);bolt.material=yellow;
+ }
+}
+for(const x of [-4.65,-2.3,0,2.3,4.65]){
+ block('verticalConduit'+x,.15,3.1,.15,x,1.2,5.35,copper);
+ block('conduitLight'+x,.055,1.85,.065,x,1.1,5.245,x===0?red:cyan);
+ block('conduitClampA'+x,.27,.1,.2,x,.1,5.29,edge);
+ block('conduitClampB'+x,.27,.1,.2,x,2.1,5.29,edge);
+}
+block('rearWallTopGirder',11.7,.24,.34,0,3.02,5.44,dark);
+block('rearWallTopHazard',11.3,.055,.11,0,2.83,5.22,yellow);
+for(const x of [-4,-1.35,1.35,4]){
+ const lightbox=block('overheadWorkLight'+x,.78,.16,.22,x,2.72,5.2,edge);
+ block('overheadWorkLightGlow'+x,.64,.04,.1,x,2.61,5.08,lamp);
+}
+const signTexture=new B.DynamicTexture('clubSignTexture',{width:1024,height:256},scene,true);
+const signCtx=signTexture.getContext();signCtx.clearRect(0,0,1024,256);signCtx.textAlign='center';signCtx.textBaseline='middle';signCtx.fillStyle='#ff3e66';signCtx.font='900 112px Arial';signCtx.shadowColor='#ff3155';signCtx.shadowBlur=22;signCtx.fillText('AAL YOU READY?',512,118);signCtx.shadowBlur=0;signCtx.fillStyle='#86efff';signCtx.font='bold 36px Arial';signCtx.fillText('THE DOMINIK EXPERIENCE',512,202);signTexture.hasAlpha=true;signTexture.update();
+const signMat=new B.StandardMaterial('neonWallSign',scene);signMat.diffuseTexture=signTexture;signMat.opacityTexture=signTexture;signMat.emissiveColor=new B.Color3(1,1,1);signMat.disableLighting=true;signMat.backFaceCulling=false;
+const sign=B.MeshBuilder.CreatePlane('wallSign',{width:3.6,height:.9},scene);sign.position.set(0,2.0,5.18);sign.material=signMat;
+// Side walls are low, open industrial parapets so the mobile camera stays unobstructed.
+for(const side of [-1,1]){
+ const x=side*5.73;
+ block('sideWallLower'+side,.16,.65,10.7,x,-.06,0,concrete);
+ for(const z of [-4.8,-2.4,0,2.4,4.8]){
+  block('sideWallPillar'+side+z,.22,1.05,.24,x,.17,z,panel);
+  block('sideWallPillarBand'+side+z,.24,.085,.26,x,.38,z,yellow);
+ }
+ block('sideWallSafetyRail'+side,.08,.08,10.7,x,.76,0,cyan);
+}
 const reactor=B.MeshBuilder.CreateCylinder('reactor',{height:1.45,diameter:.62,tessellation:16},scene);reactor.position.set(5.35,.48,0);reactor.material=dark;
 const core=B.MeshBuilder.CreateCylinder('reactorCore',{height:1.08,diameter:.43,tessellation:16},scene);core.position.set(5.35,.52,0);core.material=red;
 const warningLight=new B.PointLight('reactorLight',new B.Vector3(5.3,1.7,0),scene);warningLight.diffuse=new B.Color3(1,.08,.14);warningLight.intensity=.65;warningLight.range=5;
