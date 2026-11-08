@@ -212,22 +212,25 @@ async function entryAction(fn,args){if(acting)return;if(!args.p_name){notice('Bi
 async function doAction(a){if(acting||!session)return;acting=true;revision++;notice('');$('roll').disabled=$('start').disabled=$('eventnext').disabled=true;const before=snapshot;try{const s=await rpc('party_action',{p_code:session.code,p_token:session.token,p_host_token:session.host_token||null,p_action:a});if(a==='roll'&&before){const mover=before.players[before.turn%before.players.length];const moved=s.players.find(p=>p.id===mover.id);lastMove={name:mover.name,dice:s.roll,from:mover.position,to:moved?.position??mover.position,turn:s.turn,at:Date.now(),id:mover.id};beginWalk(lastMove);boardPage=Math.floor((moved?.position??mover.position)/8);autoFollow=false;}render(s)}catch(e){notice('Aktion: '+e.message)}finally{acting=false;if(snapshot)render(snapshot);setTimeout(()=>refresh(true),250)}}
 async function refresh(force=false){if(!session||polling||acting)return;polling=true;const requestRevision=revision;const requestCode=session.code;try{const s=await rpc('party_snapshot',{p_code:session.code,p_token:session.token});if(session&&session.code===requestCode&&requestRevision===revision&&!acting)render(s);if(pollFailures)notice('');pollFailures=0}catch(e){pollFailures++;if(pollFailures>=2)notice('Verbindung: '+e.message+' · Erneuter Versuch läuft.')}finally{polling=false}}
 function leave(){if(!confirm('Spiel auf diesem Gerät verlassen?'))return;revision++;session=null;snapshot=null;save();$('entry').classList.remove('hide');$('lobby').classList.add('hide');$('game').classList.add('hide');notice('');history.replaceState(null,'',location.pathname)}
-const BUILD_VERSION='7.6';
+const BUILD_VERSION='7.8';
+const STABLE_GAME_URL='https://raw.githack.com/sascharobertschmitt-cpu/codex-programmierung/master/aal-you-ready/play/index.html';
+const LATEST_SOURCE_URL='https://raw.githubusercontent.com/sascharobertschmitt-cpu/codex-programmierung/refs/heads/master/aal-you-ready/play/index.html';
 async function updateInsideLobby(){
  if(!session){notice('Bitte zuerst einer Lobby beitreten.');return}
- const button=$('updateInLobby');if(button){button.disabled=true;button.textContent='Prüfe Update …'}
+ const button=$('updateInLobby');if(button){button.disabled=true;button.textContent='Suche neue Version …'}
  try{
-  const url=location.origin+location.pathname+'?refresh='+Date.now();
-  const response=await fetch(url,{cache:'no-store'});
-  if(!response.ok)throw Error('Update-Server: '+response.status);
+  const response=await fetch(LATEST_SOURCE_URL+'?v='+Date.now(),{cache:'no-store'});
+  if(!response.ok)throw Error('Update-Server '+response.status);
   const html=await response.text();
-  if(!html.includes('aal-you-ready-session')||!html.includes('function render(s)'))throw Error('Unvollständige Spieldatei erhalten');
-  save();
-  document.open();document.write(html);document.close();
- }catch(e){notice('Update: '+e.message);if(button){button.disabled=false;button.textContent='↻ Spiel aktualisieren'}}
+  const match=html.match(/const BUILD_VERSION='([^']+)'/);
+  if(!match||!html.includes('function render(s){')||!html.includes('aal-you-ready-session'))throw Error('Ungültige Spieldatei');
+  if(match[1]===BUILD_VERSION){notice('Version '+BUILD_VERSION+' ist aktuell. Du bleibst in deiner Lobby.');return}
+  save();document.open();document.write(html);document.close();
+ }catch(e){notice('Update fehlgeschlagen: '+e.message+' · Du bleibst in deiner Lobby.')}
+ finally{if(button){button.disabled=false;button.textContent='↻ Spiel aktualisieren'}}
 }
-function shareRoom(){const url=location.origin+location.pathname+'?join='+encodeURIComponent(session.code);if(navigator.share)navigator.share({title:'Aal You Ready?',url}).catch(()=>{});else if(navigator.clipboard)navigator.clipboard.writeText(url).then(()=>alert('Link kopiert')).catch(()=>prompt('Link kopieren:',url));else prompt('Link kopieren:',url)}
-function renderQR(code){if(qrKey===code)return;qrKey=code;const url=location.origin+location.pathname+'?join='+encodeURIComponent(code);$('qr').innerHTML='<img alt="Lobby-QR-Code" src="https://api.qrserver.com/v1/create-qr-code/?size=432x432&margin=8&data='+encodeURIComponent(url)+'">'}
+function shareRoom(){const url=STABLE_GAME_URL+'?join='+encodeURIComponent(session.code);if(navigator.share)navigator.share({title:'Aal You Ready?',url}).catch(()=>{});else if(navigator.clipboard)navigator.clipboard.writeText(url).then(()=>alert('Link kopiert')).catch(()=>prompt('Link kopieren:',url));else prompt('Link kopieren:',url)}
+function renderQR(code){if(qrKey===code)return;qrKey=code;const url=STABLE_GAME_URL+'?join='+encodeURIComponent(code);$('qr').innerHTML='<img alt="Lobby-QR-Code" src="https://api.qrserver.com/v1/create-qr-code/?size=432x432&margin=8&data='+encodeURIComponent(url)+'">'}
 function render(s){if(!session||!s||!Array.isArray(s.players)||!s.players.length)return;const previous=snapshot;if(previous&&previous.code===s.code){for(const p of s.players){const old=previous.players.find(v=>v.id===p.id);if(old&&p.position!==old.position&&p.position>old.position&&!club.walking){beginWalk({id:p.id,from:old.position,to:p.position});break}}}snapshot=s;$('entry').classList.add('hide');$('updateInLobby').classList.remove('hide');const lobby=s.status==='lobby';$('lobby').classList.toggle('hide',!lobby);$('game').classList.toggle('hide',lobby);
 if(lobby){$('code').textContent=s.code;renderQR(s.code);$('members').innerHTML=s.players.map((p,i)=>chip(p,i)).join('');$('start').classList.toggle('hide',!session.host_token);$('start').disabled=acting||s.players.length<2;$('waiting').textContent=s.players.length+' / 8 Spieler · '+(session.host_token?'Du bist Host':'Warte auf den Host');return}
 const current=s.players[s.turn%s.players.length],finished=s.status==='finished',event=s.phase==='event',activity=s.phase==='task',slf=s.phase==='slf',slfReview=s.phase==='slf_review',slfResults=s.phase==='slf_results';serverOffset=s.server_now?Date.now()-Date.parse(s.server_now):0;document.body.classList.add('playing');
@@ -467,7 +470,7 @@ club.camera.setTarget(target);
 }
 function paintClub(){if(!club.ready&&!club.failed)initClub();else if(club.ready){club.engine.resize();syncAvatars()}else if(club.failed){$('cameraHud').textContent='3D konnte nicht starten';$('cameraHud').style.display='block'}}
 const invite=new URLSearchParams(location.search).get('join');if(invite){$('joincode').value=invite.toUpperCase();$('name').focus();}
-session=readSession();if(session){$('entry').classList.add('hide');$('lobby').classList.add('hide');$('game').classList.remove('hide');$('status').textContent='Verbindung zur bestehenden Lobby wird hergestellt …';refresh(true)}
+session=readSession();if(invite&&session&&session.code!==invite.toUpperCase()){session=null;notice('Einladung zu einer anderen Lobby: Bitte Namen eingeben.')}if(session){$('entry').classList.add('hide');$('lobby').classList.add('hide');$('game').classList.add('hide');notice('Verbinde mit Lobby '+session.code+' …');refresh(true)}
 setInterval(()=>{if(session&&!document.hidden)refresh()},1800);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&session)refresh(true)});
 </script></body></html>
