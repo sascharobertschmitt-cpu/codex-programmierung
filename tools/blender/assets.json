@@ -77,54 +77,6 @@
     ]
   },
   {
-    "id": "fig_raver",
-    "name": "Spielfigur Raver",
-    "geometry": "fig_raver_geometry",
-    "glb": "club_fig_raver.glb",
-    "expect_size": [
-      0.456,
-      0.831,
-      0.43
-    ],
-    "front_material": "-",
-    "mask_materials": "-",
-    "deps": [
-      "figures_geometry"
-    ]
-  },
-  {
-    "id": "fig_dj",
-    "name": "Spielfigur DJ",
-    "geometry": "fig_dj_geometry",
-    "glb": "club_fig_dj.glb",
-    "expect_size": [
-      0.487,
-      0.794,
-      0.439
-    ],
-    "front_material": "-",
-    "mask_materials": "-",
-    "deps": [
-      "figures_geometry"
-    ]
-  },
-  {
-    "id": "fig_tuersteher",
-    "name": "Spielfigur Türsteher",
-    "geometry": "fig_tuersteher_geometry",
-    "glb": "club_fig_tuersteher.glb",
-    "expect_size": [
-      0.426,
-      0.783,
-      0.356
-    ],
-    "front_material": "-",
-    "mask_materials": "-",
-    "deps": [
-      "figures_geometry"
-    ]
-  },
-  {
     "id": "fig_aal",
     "name": "Spielfigur Aal",
     "geometry": "fig_aal_geometry",
@@ -141,50 +93,104 @@
     ]
   },
   {
-    "id": "fig_robo",
-    "name": "Spielfigur Techno-Robo",
-    "geometry": "fig_robo_geometry",
-    "glb": "club_fig_robo.glb",
+    "id": "hum_raver",
+    "name": "Mensch Raverin",
+    "geometry": "hum_raver_geometry",
+    "glb": "club_hum_raver.glb",
     "expect_size": [
-      0.428,
-      0.83,
-      0.281
+      0.621,
+      2.06,
+      0.339
     ],
     "front_material": "-",
     "mask_materials": "-",
     "deps": [
+      "humans_geometry",
       "figures_geometry"
     ]
   },
   {
-    "id": "fig_gasmaske",
-    "name": "Spielfigur Gasmasken-Raver",
-    "geometry": "fig_gasmaske_geometry",
-    "glb": "club_fig_gasmaske.glb",
+    "id": "hum_dj",
+    "name": "Mensch DJ",
+    "geometry": "hum_dj_geometry",
+    "glb": "club_hum_dj.glb",
     "expect_size": [
-      0.51,
-      0.819,
-      0.406
+      0.599,
+      1.777,
+      0.603
     ],
     "front_material": "-",
     "mask_materials": "-",
     "deps": [
+      "humans_geometry",
+      "figures_geometry"
+    ]
+  },
+  {
+    "id": "hum_tuersteher",
+    "name": "Mensch Türsteher",
+    "geometry": "hum_tuersteher_geometry",
+    "glb": "club_hum_tuersteher.glb",
+    "expect_size": [
+      0.634,
+      1.817,
+      0.444
+    ],
+    "front_material": "-",
+    "mask_materials": "-",
+    "deps": [
+      "humans_geometry",
+      "figures_geometry"
+    ]
+  },
+  {
+    "id": "hum_gasmaske",
+    "name": "Mensch Gasmasken-Punk",
+    "geometry": "hum_gasmaske_geometry",
+    "glb": "club_hum_gasmaske.glb",
+    "expect_size": [
+      0.708,
+      1.992,
+      0.289
+    ],
+    "front_material": "-",
+    "mask_materials": "-",
+    "deps": [
+      "humans_geometry",
+      "figures_geometry"
+    ]
+  },
+  {
+    "id": "hum_taenzerin",
+    "name": "Mensch Tänzerin",
+    "geometry": "hum_taenzerin_geometry",
+    "glb": "club_hum_taenzerin.glb",
+    "expect_size": [
+      0.768,
+      1.784,
+      0.335
+    ],
+    "front_material": "-",
+    "mask_materials": "-",
+    "deps": [
+      "humans_geometry",
       "figures_geometry"
     ]
   },
   {
     "id": "crowd",
-    "name": "Club-Gast (2 Posen)",
+    "name": "Club-Gäste (6 Varianten)",
     "geometry": "crowd_geometry",
     "glb": "club_crowd.glb",
     "expect_size": [
-      0.468,
-      0.857,
-      0.306
+      0.684,
+      2.084,
+      0.569
     ],
     "front_material": "-",
     "mask_materials": "-",
     "deps": [
+      "humans_geometry",
       "figures_geometry"
     ]
   }

@@ -467,8 +467,11 @@
 
     // ------------------------------------------------- Figuren (eigene GLBs)
     // Spielfiguren in Spielerfarbe, DJ hinterm Pult, Türsteher am Einlass, tanzende Menge.
-    const FIG_ORDER = ['raver', 'dj', 'aal', 'robo', 'gasmaske', 'tuersteher'];
-    const TOK_SCALE = 1.3, NPC_SCALE = 2.15;
+    // Menschen sind in echter Größe modelliert (ca. 1,75 m), der Aal als Maskottchen 0,8 m
+    const FIG_ORDER = ['raver', 'dj', 'aal', 'taenzerin', 'gasmaske', 'tuersteher'];
+    const FIG_FILE = k => k === 'aal' ? 'club_fig_aal.glb' : 'club_hum_' + k + '.glb';
+    const TOK = { aal: 1.3 }, TOK_HUMAN = 0.66;
+    const tokScale = k => TOK[k] || TOK_HUMAN;
     const figs = {};
     const npcs = [];
     let figuresLoaded = false, crowdLoaded = false;
@@ -495,47 +498,46 @@
     };
     try {
       const load = (f) => B.SceneLoader.LoadAssetContainerAsync(o.assetBase, f, scene, null, '.glb');
-      const list = await Promise.all(FIG_ORDER.map(k => load('club_fig_' + k + '.glb').catch(() => null)));
+      const list = await Promise.all(FIG_ORDER.map(k => load(FIG_FILE(k)).catch(() => null)));
       FIG_ORDER.forEach((k, i) => { if (list[i]) figs[k] = list[i]; });
       figuresLoaded = Object.keys(figs).length === FIG_ORDER.length;
       // DJ hinter dem Pult (Podest-Oberkante y 0.6), Blick zur Tanzfläche
-      const dj = spawnFig('dj', 'npcDJ', NPC_SCALE * 1.1, '#29c6ff');
+      const dj = spawnFig('dj', 'npcDJ', 1.0, '#29c6ff');
       if (dj) { dj.position.set(0, 0.6, HL - 3.95); dj.rotation.y = Math.PI; npcs.push({ node: dj, kind: 'dj', y: 0.6 }); }
       // Türsteher innen neben dem Einlass, schaut den ankommenden Figuren entgegen
-      const bo = spawnFig('tuersteher', 'npcBouncer', NPC_SCALE, '#ff4fd8');
+      const bo = spawnFig('tuersteher', 'npcBouncer', 1.0, '#ff4fd8');
       if (bo) { bo.position.set(tiles[0].x + 1.5, 0, tiles[0].z + 2.7); bo.rotation.y = -Math.PI / 2 - 0.6; npcs.push({ node: bo, kind: 'bouncer', y: 0 }); }
     } catch (e) { console.warn('Figuren nicht geladen', e); }
     try {
       const cc = await B.SceneLoader.LoadAssetContainerAsync(o.assetBase, 'club_crowd.glb', scene, null, '.glb');
       const inst = cc.instantiateModelsToScene(n => 'crowd_' + n, false);
       const all = inst.rootNodes[0].getChildMeshes(false).filter(m => m.getTotalVertices() > 0);
-      const CROWD_COLS = ['#bb38ff', '#29c6ff', '#ff4fd8', '#2ee6b0', '#ffb627', '#8e83ff', '#4a4a5c', '#6a6a7e', '#d8d0e8'];
-      ['A', 'B'].forEach((tag, pi) => {
-        const parts = all.filter(m => m.name.includes('CROWD_' + tag + '_'));
-        if (!parts.length) return;
-        const mesh = B.Mesh.MergeMeshes(parts, true, true, undefined, false, true);
-        mesh.name = 'crowd' + tag;
-        (mesh.material && mesh.material.subMaterials ? mesh.material.subMaterials : [mesh.material]).forEach(mt => { if (mt) { mt.backFaceCulling = false; tameGlow(mt); } });
+      // 6 Gäste-Varianten (Kleidung, Haut, Haare als Vertex-Farben), je ein Mesh mit Thin Instances
+      for (let v = 0; v < 6; v++) {
+        const parts = all.filter(m => m.name.includes('CROWD_V' + v + '_'));
+        if (!parts.length) continue;
+        const mesh = B.Mesh.MergeMeshes(parts, true, true, undefined, false, false);
+        mesh.name = 'crowdV' + v;
+        if (mesh.material) { mesh.material.backFaceCulling = false; }
         mesh.alwaysSelectAsActiveMesh = true;
         mesh.receiveShadows = true;
-        crowd.meshes[pi] = mesh;
-      });
+        crowd.meshes[v] = mesh;
+      }
       inst.rootNodes.forEach(r => r.dispose());
+      const nV = crowd.meshes.filter(Boolean).length;
       // Tanzfläche vor dem DJ, innerhalb des Rundkurses, lockeres Raster mit Zufall
       let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
       for (let gz = 0; gz < 5; gz++) for (let gx = 0; gx < 8; gx++) {
         if (rnd() < 0.12) continue;
         const x = -4.1 + gx * 1.17 + (rnd() - 0.5) * 0.6, z = 0.9 + gz * 1.12 + (rnd() - 0.5) * 0.5;
-        crowd.dancers.push({ x, z, pose: rnd() < 0.5 ? 0 : 1, ph: rnd() * 6.28, s: 1.85 + rnd() * 0.35,
-          face: Math.atan2(-x * 0.15, (HL - 4.4) - z) + (rnd() - 0.5) * 0.6, col: CROWD_COLS[Math.floor(rnd() * CROWD_COLS.length)] });
+        crowd.dancers.push({ x, z, pose: Math.floor(rnd() * 6), ph: rnd() * 6.28, s: 0.94 + rnd() * 0.12,
+          face: Math.atan2(-x * 0.15, (HL - 4.4) - z) + (rnd() - 0.5) * 0.6 });
       }
       crowd.meshes.forEach((mesh, pi) => {
         if (!mesh) return;
-        const ds = crowd.dancers.filter(d => d.pose === pi);
-        const mats = new Float32Array(ds.length * 16), cols = new Float32Array(ds.length * 4);
-        ds.forEach((d, i) => { const c = B.Color3.FromHexString(d.col).toLinearSpace(); cols.set([c.r, c.g, c.b, 1], i * 4); });
+        const ds = crowd.dancers.filter(d => d.pose % nV === pi);
+        const mats = new Float32Array(Math.max(1, ds.length) * 16);
         mesh.thinInstanceSetBuffer('matrix', mats, 16, false);
-        mesh.thinInstanceSetBuffer('color', cols, 4, true);
         crowd['list' + pi] = ds; crowd['buf' + pi] = mats;
       });
       crowdLoaded = crowd.dancers.length > 0 && !!crowd.meshes[0];
@@ -579,9 +581,9 @@
         const ds = crowd['list' + pi], buf = crowd['buf' + pi];
         ds.forEach((d, i) => {
           const b = Math.abs(Math.sin(beat + d.ph * 0.3));
-          tmpS.set(d.s, d.s * (0.96 + 0.04 * b), d.s);
+          tmpS.set(d.s, d.s * (0.985 + 0.015 * b), d.s);
           B.Quaternion.RotationYawPitchRollToRef(d.face + Math.sin(t * 0.9 + d.ph) * 0.35, 0, Math.sin(beat * 0.5 + d.ph) * 0.06, tmpQ);
-          tmpP.set(d.x, 0.04 + b * 0.07, d.z);
+          tmpP.set(d.x, 0.04 + b * 0.05, d.z);
           B.Matrix.ComposeToRef(tmpS, tmpQ, tmpP, tmpM);
           tmpM.copyToArray(buf, i * 16);
         });
@@ -614,7 +616,8 @@
       const col = COLORS[i % COLORS.length];
       const ring = B.MeshBuilder.CreateTorus('ring' + i, { diameter: 0.46, thickness: 0.035, tessellation: 32 }, scene);
       ring.parent = rootN; ring.position.y = 0.02; ring.material = pbr('ringm' + i, '#000000', 0, 1, col);
-      let body = spawnFig(FIG_ORDER[i % FIG_ORDER.length], 'tokFig' + i, TOK_SCALE, col);
+      const kind = FIG_ORDER[i % FIG_ORDER.length];
+      let body = spawnFig(kind, 'tokFig' + i, tokScale(kind), col);
       if (body) {
         body.parent = rootN;
       } else {                                    // Rückfall: einfache Figur aus Grundformen

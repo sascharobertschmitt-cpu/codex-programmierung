@@ -102,7 +102,7 @@ def uv_node(nt, uv_name, loc):
 
 def make_material(name, base, metallic, roughness, normal_img=None, normal_strength=1.0,
                   color_img=None, alpha_from_image=False, double_sided=False,
-                  rough_img=None, wear_uv=None, emission=None, emission_strength=1.0):
+                  rough_img=None, wear_uv=None, emission=None, emission_strength=1.0, vertex_color=False):
     m = bpy.data.materials.new(name)
     m.use_nodes = True
     m.use_backface_culling = not double_sided      # exportiert als glTF doubleSided
@@ -114,6 +114,11 @@ def make_material(name, base, metallic, roughness, normal_img=None, normal_stren
     if emission is not None:                         # glTF emissiveFactor (+ emissive_strength)
         bsdf.inputs["Emission Color"].default_value = (*emission, 1.0)
         bsdf.inputs["Emission Strength"].default_value = emission_strength
+    if vertex_color:                                 # glTF COLOR_0 (z. B. Club-Gaeste)
+        vc = nt.nodes.new("ShaderNodeVertexColor")
+        vc.layer_name = "Col"
+        vc.location = (-500, 300)
+        nt.links.new(vc.outputs["Color"], bsdf.inputs["Base Color"])
     if color_img is not None:
         tex = nt.nodes.new("ShaderNodeTexImage")
         tex.image = color_img
@@ -181,7 +186,13 @@ def make_materials(imgs):
         "M_Eel": make_material("M_Eel", (0.040, 0.105, 0.060), 0.15, 0.22),
         "M_White": make_material("M_White", (0.80, 0.80, 0.80), 0.0, 0.35),
         "M_Glow": make_material("M_Glow", (0.0, 0.0, 0.0), 0.0, 0.4, emission=(1.0, 0.25, 0.75), emission_strength=4.0),
-        "M_Crowd": make_material("M_Crowd", (0.55, 0.55, 0.58), 0.0, 0.7),
+        "M_Crowd": make_material("M_Crowd", (1.0, 1.0, 1.0), 0.0, 0.62, vertex_color=True),
+        # Menschen (realistischere Figuren)
+        "M_Denim": make_material("M_Denim", (0.045, 0.085, 0.17), 0.0, 0.78),
+        "M_HairDark": make_material("M_HairDark", (0.018, 0.011, 0.008), 0.0, 0.5),
+        "M_HairLight": make_material("M_HairLight", (0.42, 0.26, 0.09), 0.0, 0.5),
+        "M_Eye": make_material("M_Eye", (0.01, 0.01, 0.012), 0.0, 0.1),
+        "M_Lips": make_material("M_Lips", (0.33, 0.09, 0.08), 0.0, 0.45),
     }
 
 
@@ -196,6 +207,12 @@ def part_to_object(part, coll, material=None, offset=(0.0, 0.0, 0.0)):
         uv.data.foreach_set("uv", [c for xy in uvs for c in xy])
     if material is not None:
         me.materials.append(material)
+    if getattr(part, "colors", None):                # Vertex-Farben (linear) pro Punkt
+        ca = me.color_attributes.new("Col", "FLOAT_COLOR", "POINT")
+        flat = []
+        for c in part.colors:
+            flat += [c[0], c[1], c[2], 1.0]
+        ca.data.foreach_set("color", flat)
     me.update()
     obj = bpy.data.objects.new(part.name, me)
     coll.objects.link(obj)
@@ -326,7 +343,7 @@ def export_glb(path, root, objs):
     for o in [root] + objs:
         o.select_set(True)
     bpy.context.view_layer.objects.active = root
-    bpy.ops.export_scene.gltf(
+    kw = dict(
         filepath=path,
         export_format="GLB",
         use_selection=True,
@@ -337,6 +354,10 @@ def export_glb(path, root, objs):
         export_cameras=False,
         export_lights=False,
     )
+    try:                                             # Vertex-Farben, wenn das Material sie nutzt (Blender 4.2)
+        bpy.ops.export_scene.gltf(**kw, export_vertex_color="MATERIAL")
+    except TypeError:
+        bpy.ops.export_scene.gltf(**kw)
     if not os.path.isfile(path) or os.path.getsize(path) < 1000:
         raise RuntimeError(f"GLB-Export fehlgeschlagen: {path}")
 
