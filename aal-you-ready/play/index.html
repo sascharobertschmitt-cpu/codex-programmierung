@@ -185,6 +185,10 @@ body.playing #game #slfnext{display:block!important;position:sticky!important;bo
 body.playing #game #slfnext.hide{display:none!important}
 body.playing #updateInLobby:not(.hide){top:6px!important;right:8px!important;max-width:150px!important;font-size:10px!important;padding:6px!important;z-index:90!important}
 body.playing #game .game-controls .hud-brand{top:10px!important;max-width:calc(100vw - 170px)!important;overflow:hidden!important}
+/* Arena 8.1: remove black veil/vignette and preserve bright emissive tiles */
+body.playing #game .board-stage:after,body.playing #game .board-stage:before{display:none!important;content:none!important}
+body.playing #game .board-stage,body.playing #game .board-panel{filter:none!important;opacity:1!important}
+body.playing #clubCanvas{filter:none!important;opacity:1!important}
 </style><script defer src="https://cdn.jsdelivr.net/npm/babylonjs@7.54.3/babylon.js"></script></head><body><main><div class="brandline"><span class="brandmark">◉</span><span>THE DOMINIK EXPERIENCE <em>RACE EDITION</em></span></div><h1>AAL YOU READY?</h1><p class="muted small">BABYLON 3D · ALPHA 7.7 · 2–8 Spieler · 64 Felder · jedes Feld hat eine Funktion</p>
 <div id="notice" class="error hide" role="alert"></div><button id="updateInLobby" type="button" onclick="updateInsideLobby()" class="hide">↻ Spiel aktualisieren</button>
 <section id="entry" class="panel"><div class="eyebrow">VERSION 7.7 · NEON CLUB</div><p class="muted small">Bitte auf allen Geräten denselben Link öffnen. Namen eingeben, dann beitreten. Querformat empfohlen; die Spieloberfläche funktioniert auch hochkant.</p><h2>Zusammen spielen</h2><input id="name" type="text" maxlength="25" placeholder="Dein Spielername" autocomplete="nickname"><button id="create" onclick="createRoom()">Neue Lobby erstellen</button><p class="muted small" style="text-align:center">ODER MIT CODE BEITRETEN</p><input id="joincode" maxlength="6" placeholder="Lobbycode" autocapitalize="characters"><button class="secondary" id="join" onclick="joinRoom()">Lobby beitreten</button></section>
@@ -212,9 +216,9 @@ async function entryAction(fn,args){if(acting)return;if(!args.p_name){notice('Bi
 async function doAction(a){if(acting||!session)return;acting=true;revision++;notice('');$('roll').disabled=$('start').disabled=$('eventnext').disabled=true;const before=snapshot;try{const s=await rpc('party_action',{p_code:session.code,p_token:session.token,p_host_token:session.host_token||null,p_action:a});if(a==='roll'&&before){const mover=before.players[before.turn%before.players.length];const moved=s.players.find(p=>p.id===mover.id);lastMove={name:mover.name,dice:s.roll,from:mover.position,to:moved?.position??mover.position,turn:s.turn,at:Date.now(),id:mover.id};beginWalk(lastMove);boardPage=Math.floor((moved?.position??mover.position)/8);autoFollow=false;}render(s)}catch(e){notice('Aktion: '+e.message)}finally{acting=false;if(snapshot)render(snapshot);setTimeout(()=>refresh(true),250)}}
 async function refresh(force=false){if(!session||polling||acting)return;polling=true;const requestRevision=revision;const requestCode=session.code;try{const s=await rpc('party_snapshot',{p_code:session.code,p_token:session.token});if(session&&session.code===requestCode&&requestRevision===revision&&!acting)render(s);if(pollFailures)notice('');pollFailures=0}catch(e){pollFailures++;if(pollFailures>=2)notice('Verbindung: '+e.message+' · Erneuter Versuch läuft.')}finally{polling=false}}
 function leave(){if(!confirm('Spiel auf diesem Gerät verlassen?'))return;revision++;session=null;snapshot=null;save();$('entry').classList.remove('hide');$('lobby').classList.add('hide');$('game').classList.add('hide');notice('');history.replaceState(null,'',location.pathname)}
-const BUILD_VERSION='8.0';
-const STABLE_GAME_URL='https://raw.githack.com/sascharobertschmitt-cpu/codex-programmierung/master/aal-you-ready/play/index.html';
-const LATEST_SOURCE_URL='https://raw.githubusercontent.com/sascharobertschmitt-cpu/codex-programmierung/refs/heads/master/aal-you-ready/play/index.html';
+const BUILD_VERSION='8.1';
+const STABLE_GAME_URL='https://raw.githack.com/sascharobertschmitt-cpu/codex-programmierung/main/aal-you-ready/play/index.html';
+const LATEST_SOURCE_URL='https://raw.githubusercontent.com/sascharobertschmitt-cpu/codex-programmierung/main/aal-you-ready/play/index.html';
 async function updateInsideLobby(){
  if(!session){notice('Bitte zuerst einer Lobby beitreten.');return}
  const button=$('updateInLobby');if(button){button.disabled=true;button.textContent='Suche neue Version …'}
@@ -326,33 +330,33 @@ club.engine.setHardwareScalingLevel(Math.max(1,Math.min(1.5,(window.devicePixelR
 club.scene=new B.Scene(club.engine);
 club.scene.clearColor=new B.Color4(.003,.002,.011,1);
 club.scene.fogMode=B.Scene.FOGMODE_NONE; // Keep the full 64-tile board visible.
-club.scene.imageProcessingConfiguration.toneMappingEnabled=true;
-club.scene.imageProcessingConfiguration.exposure=1.4;club.scene.imageProcessingConfiguration.contrast=1.12;
+club.scene.imageProcessingConfiguration.toneMappingEnabled=false;
+club.scene.imageProcessingConfiguration.exposure=1.25;club.scene.imageProcessingConfiguration.contrast=1.08;
 club.camera=new B.FreeCamera('clubCinematicCamera',new B.Vector3(9,14,-13),club.scene);
-club.camera.fov=.84;club.camera.minZ=.12;club.camera.maxZ=120;club.camera.setTarget(new B.Vector3(0,0,0));club.scene.activeCamera=club.camera;
+club.camera.fov=.93;club.camera.minZ=.12;club.camera.maxZ=120;club.camera.setTarget(new B.Vector3(0,0,0));club.scene.activeCamera=club.camera;
 const ambient=new B.HemisphericLight('clubAmbient',new B.Vector3(0,1,0),club.scene);
-ambient.intensity=1.25;ambient.diffuse=new B.Color3(.52,.47,.93);ambient.groundColor=new B.Color3(.12,.035,.3);
+ambient.intensity=1.25;ambient.diffuse=new B.Color3(.9,.9,1);ambient.groundColor=new B.Color3(.4,.35,.5);
 const key=new B.DirectionalLight('clubKey',new B.Vector3(-.4,-1,.3),club.scene);key.intensity=1.05;key.diffuse=new B.Color3(.5,.74,1);
 try{const glow=new B.GlowLayer('neonBloom',club.scene,{blurKernelSize:48});glow.intensity=.32;club.glow=glow;}catch(e){console.warn('Glow fallback',e)}
 // Industrial dystopian bunker, 64 readable raised steel tiles and a closed route.
-const metal=mat('blackenedSteel','#252936'),floor=mat('wetAsphalt','#10151e'),dark=mat('deepBlack','#080b12'),rust=mat('rust','#543027'),hazard=mat('hazardYellow','#e4a324',.35),red=mat('emergencyRed','#ff2444',1.6),cyan=mat('coldCyan','#00e8ff',1.6),magenta=mat('acidMagenta','#ff27e8',1.45),amber=mat('amberSignal','#ff9c18',1.5);
+const metal=mat('blackenedSteel','#4a4c5b'),floor=mat('wetAsphalt','#252836'),dark=mat('deepBlack','#1b1d29'),rust=mat('rust','#543027'),hazard=mat('hazardYellow','#e4a324',.35),red=mat('emergencyRed','#ff2444',1.6),cyan=mat('coldCyan','#00e8ff',1.6),magenta=mat('acidMagenta','#ff27e8',1.45),amber=mat('amberSignal','#ff9c18',1.5);
 metal.specularColor=new B.Color3(.65,.72,.82);metal.specularPower=96;
 floor.specularColor=new B.Color3(.48,.52,.65);floor.specularPower=110;
 box3('undergroundFoundation',13,.55,13,0,-.53,0,dark);
 box3('reflectiveWarehouseFloor',12,.09,12,0,-.22,0,floor);
 for(let i=-5;i<=5;i++){box3('floorSeamX'+i,11.8,.004,.012,0,-.168,i,metal);box3('floorSeamZ'+i,.012,.004,11.8,i,-.168,0,metal)}
 const tileKinds={activity:'#ff315b',slf:'#00dcff',special:'#ffc238',event:'#a24dff',start:'#ffffff',finish:'#ff4a25'};
-const tileFaces={activity:mat('paintedRedSteel','#3c192a',.27),slf:mat('paintedBlueSteel','#0c3443',.27),special:mat('paintedAmberSteel','#4b3616',.27),event:mat('paintedPurpleSteel','#271b3e',.27),start:mat('startSteel','#343946',.2),finish:mat('finishSteel','#59251c',.3)};
-const rim={};for(const [k,v] of Object.entries(tileKinds))rim[k]=mat('luminousTileRim'+k,v,1.4);
+const tileFaces={activity:mat('paintedRedSteel','#68243c',.8),slf:mat('paintedBlueSteel','#136c83',.8),special:mat('paintedAmberSteel','#8b571c',.8),event:mat('paintedPurpleSteel','#623c92',.8),start:mat('startSteel','#5a6579',.7),finish:mat('finishSteel','#9b4229',.8)};
+const rim={};for(const [k,v] of Object.entries(tileKinds))rim[k]=mat('luminousTileRim'+k,v,2.3);
 const drawIcon=(n,type)=>{
 const dt=new B.DynamicTexture('engravedGlyph'+n,{width:512,height:512},club.scene,true),ctx=dt.getContext();dt.hasAlpha=true;
 ctx.clearRect(0,0,512,512);ctx.textAlign='center';ctx.textBaseline='middle';
-ctx.fillStyle='#e8edf8';ctx.font='bold 79px Arial';ctx.fillText(String(n),256,84);
+ctx.fillStyle='#ffffff';ctx.font='bold 112px Arial';ctx.fillText(String(n),256,84);
 const symbol=type==='activity'?['✎','☏','◉'][n%3]:type==='slf'?'SLF':type==='special'?'★':type==='event'?'ϟ':type==='finish'?'🏆':'⚑';
 ctx.fillStyle=tileKinds[type];ctx.shadowColor=tileKinds[type];ctx.shadowBlur=12;ctx.font=(symbol==='SLF'?'bold 124px':'166px')+' Arial';ctx.fillText(symbol,256,271);ctx.shadowBlur=0;
 ctx.fillStyle='#f5f6fb';ctx.font='bold 36px Arial';ctx.fillText(type==='activity'?['MALEN','REDEN','PANTOMIME'][n%3]:type==='slf'?'STADT LAND FLUSS':type==='special'?'SPECIAL':type==='event'?'EREIGNIS':type==='finish'?'ZIEL':'START',256,420);dt.update();
 const m=new B.StandardMaterial('engravedGlyphMaterial'+n,club.scene);m.diffuseTexture=dt;m.opacityTexture=dt;m.emissiveColor=new B.Color3(1,1,1);m.disableLighting=true;m.backFaceCulling=false;
-const plane=B.MeshBuilder.CreatePlane('engravedGlyphPlane'+n,{size:.79},club.scene);plane.rotation.x=Math.PI/2;plane.position.set(tileXY(n).x,.334,tileXY(n).z);plane.material=m;
+const plane=B.MeshBuilder.CreatePlane('engravedGlyphPlane'+n,{size:.79},club.scene);plane.rotation.x=-Math.PI/2;plane.position.set(tileXY(n).x,.334,tileXY(n).z);plane.material=m;
 };
 for(let n=0;n<64;n++){
 const p=tileXY(n),type=n===0?'start':n===63?'finish':ACTIVITIES.includes(n)?'activity':SLF_FIELDS.includes(n)?'slf':SPECIAL_FIELDS.includes(n)?'special':'event';
@@ -442,8 +446,8 @@ focus=new BABYLON.Vector3(x,0,z);
 if(progress>=1){club.walking=null;club.walkFinishedAt=now+700}
 }
 const aspect=club.engine.getRenderWidth()/Math.max(1,club.engine.getRenderHeight());
-const overview=new BABYLON.Vector3(8.5,aspect<.8?14:12,aspect<.8?-14:-13);
-const desired=focus?new BABYLON.Vector3(focus.x+2.8,6.5,focus.z-6.5):overview;
+const overview=new BABYLON.Vector3(8.8,aspect<.8?12.2:11,aspect<.8?-12.5:-12);
+const desired=focus?new BABYLON.Vector3(focus.x+3.4,7.5,focus.z-8):overview;
 club.camera.position=BABYLON.Vector3.Lerp(club.camera.position,desired,focus?.095:.04);
 const target=focus?new BABYLON.Vector3(focus.x,.15,focus.z):new BABYLON.Vector3(0,.2,0);
 club.camera.setTarget(target);
