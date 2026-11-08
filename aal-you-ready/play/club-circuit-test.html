@@ -141,8 +141,15 @@
       d -= s.len;
     }
   };
+  // Höhenprofil: flach am Einlass, Anstieg bis vor den DJ, kleine Wellen. Periodisch -> Runde schließt.
+  const LAND = Number(Q.get('land') ?? 1);
+  const heightAt = (n) => {
+    const u = n / R.FIELDS * Math.PI * 2;
+    const h = 0.42 * (1 - Math.cos(u)) + 0.11 * Math.sin(4 * u) * Math.sin(u / 2) + 0.05 * Math.sin(7 * u + 1.3) * Math.sin(u / 2);
+    return Math.max(0, h) * LAND;
+  };
   const tiles = [];
-  for (let n = 0; n < R.FIELDS; n++) tiles.push(at(n * SPACING));
+  for (let n = 0; n < R.FIELDS; n++) tiles.push(Object.assign(at(n * SPACING), { h: heightAt(n) }));
 
   // Feld-Icons als Canvas-Texturen (eine pro Typ)
   function iconTexture(type, color) {
@@ -189,17 +196,31 @@
     tops[type] = top;
   }
   const rotY = (ang) => B.Quaternion.RotationAxis(B.Axis.Y, -ang);
+  // Neonkante oben am Podest, eine Variante pro Feldtyp
+  const edges = {};
+  for (const type of Object.keys(TYPE_COLOR)) {
+    const e = B.MeshBuilder.CreateBox('tileEdge_' + type, { width: 0.92, height: 0.025, depth: 1.26 }, scene);
+    const m = new B.PBRMaterial('tileEdgeMat_' + type, scene);
+    m.albedoColor = new B.Color3(0, 0, 0); m.emissiveColor = B.Color3.FromHexString(TYPE_COLOR[type]).scale(0.55);
+    e.material = m; edges[type] = e;
+  }
   tiles.forEach((t, n) => {
     const big = n === 0 ? 1.25 : 1;
-    base.thinInstanceAdd(B.Matrix.Compose(new B.Vector3(big, 1, big), rotY(t.ang), new B.Vector3(t.x, 0.08, t.z)));
+    const hBase = 0.16 + t.h;                      // Podesthöhe inkl. Grundplatte
+    base.thinInstanceAdd(B.Matrix.Compose(new B.Vector3(big, hBase / 0.16, big), rotY(t.ang), new B.Vector3(t.x, hBase / 2, t.z)));
+    edges[R.fieldType(n)].thinInstanceAdd(B.Matrix.Compose(new B.Vector3(big, 1, big), rotY(t.ang),
+      new B.Vector3(t.x, hBase - 0.03, t.z)));
     tops[R.fieldType(n)].thinInstanceAdd(B.Matrix.Compose(new B.Vector3(big, 1, big), rotY(t.ang),
-      new B.Vector3(t.x, 0.165, t.z)));
+      new B.Vector3(t.x, hBase + 0.005, t.z)));
   });
 
   // Prüfungen zur Streckengeometrie
   const gaps = tiles.map((t, i) => { const u = tiles[(i + 1) % tiles.length]; return Math.hypot(u.x - t.x, u.z - t.z); });
   check('64 Felder auf geschlossener Runde', tiles.length === 64 && Math.abs(gaps[63] - gaps[0]) < 0.06,
     `Abstand 63→0: ${gaps[63].toFixed(3)} m, Feldabstand ${SPACING.toFixed(3)} m`);
+  const steps = tiles.map((t, i) => Math.abs(tiles[(i + 1) % tiles.length].h - t.h));
+  check('Höhenprofil begehbar', Math.max(...steps) < 0.12 && tiles[0].h < 0.01,
+    `max. Stufe ${Math.max(...steps).toFixed(3)} m, höchstes Feld ${Math.max(...tiles.map(t => t.h)).toFixed(2)} m, Einlass ${tiles[0].h.toFixed(2)} m`);
   check('Gleichmäßige Feldabstände', Math.max(...gaps) - Math.min(...gaps) < 0.08,
     `min ${Math.min(...gaps).toFixed(3)} / max ${Math.max(...gaps).toFixed(3)} m`);
 
@@ -228,9 +249,9 @@
 
   // DJ-Booth am Kopfende (Platzhalter, wird später ein eigenes GLB)
   const booth = new B.TransformNode('booth', scene);
-  booth.position.set(0, 0, HL - 4.4);
-  const riser = B.MeshBuilder.CreateBox('riser', { width: 5.2, height: 0.35, depth: 2.6 }, scene);
-  riser.parent = booth; riser.position.y = 0.175; riser.material = pbr('riser', '#16161c', 0.3, 0.6);
+  booth.position.set(0, 0.25, HL - 4.4);
+  const riser = B.MeshBuilder.CreateBox('riser', { width: 5.2, height: 0.6, depth: 2.6 }, scene);
+  riser.parent = booth; riser.position.y = 0.05; riser.material = pbr('riser', '#16161c', 0.3, 0.6);
   const desk = B.MeshBuilder.CreateBox('desk', { width: 2.8, height: 1.0, depth: 0.85 }, scene);
   desk.parent = booth; desk.position.set(0, 0.85, -0.3); desk.material = pbr('desk', '#101014', 0.4, 0.5);
   const eqTex = new B.DynamicTexture('eqTex', { width: 512, height: 128 }, scene, true);
@@ -312,7 +333,7 @@
   const slotPos = (field, idx) => {
     const t = tiles[field], [a, b] = SLOTS[idx % SLOTS.length];
     const tx = Math.cos(t.ang), tz = Math.sin(t.ang);
-    return new B.Vector3(t.x + tx * a - tz * b, 0.17, t.z + tz * a + tx * b);
+    return new B.Vector3(t.x + tx * a - tz * b, 0.17 + t.h, t.z + tz * a + tx * b);
   };
   tokens.forEach((t, i) => t.root.position.copyFrom(slotPos(0, i)));
 
@@ -370,7 +391,7 @@
     const d = 230, start = performance.now();
     const obs = scene.onBeforeRenderObservable.add(() => {
       const f = Math.min(1, (performance.now() - start) / d);
-      const p = B.Vector3.Lerp(from, to, f); p.y += Math.sin(f * Math.PI) * 0.35;
+      const p = B.Vector3.Lerp(from, to, f); p.y += Math.sin(f * Math.PI) * (0.3 + Math.abs(to.y - from.y));
       tok.root.position.copyFrom(p);
       if (f >= 1) { scene.onBeforeRenderObservable.remove(obs); res(); }
     });
