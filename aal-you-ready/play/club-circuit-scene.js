@@ -48,7 +48,21 @@
 
     // Raum: Betonboden, dunkle Ziegelwände, Säulen
     const floor = B.MeshBuilder.CreateGround('floor', { width: 30, height: 44 }, scene);
-    floor.material = pbr('concrete', '#24232b', 0, 0.42);
+    floor.material = pbr('concrete', '#ffffff', 0, 0.42);
+    {   // Beton: Körnung, Flecken, Pfützen (glänzend), alte Hallenmarkierungen
+      const ft = new B.DynamicTexture('floorTex', { width: 1024, height: 1024 }, scene, true);
+      const g = ft.getContext();
+      g.fillStyle = '#2a2830'; g.fillRect(0, 0, 1024, 1024);
+      let sd = 3; const rr = () => (sd = (sd * 16807) % 2147483647) / 2147483647;
+      for (let i = 0; i < 9000; i++) { const v = 30 + rr() * 22; g.fillStyle = `rgba(${v},${v},${v + 4},0.5)`; g.fillRect(rr() * 1024, rr() * 1024, 2 + rr() * 3, 2 + rr() * 3); }
+      for (let i = 0; i < 26; i++) { g.fillStyle = `rgba(10,9,14,${0.12 + rr() * 0.18})`; g.beginPath(); g.ellipse(rr() * 1024, rr() * 1024, 30 + rr() * 90, 20 + rr() * 60, rr() * 3, 0, 7); g.fill(); }
+      g.strokeStyle = 'rgba(0,0,0,0.35)'; g.lineWidth = 3;                          // Fugen
+      for (let k = 0; k <= 1024; k += 256) { g.beginPath(); g.moveTo(k, 0); g.lineTo(k, 1024); g.stroke(); g.beginPath(); g.moveTo(0, k); g.lineTo(1024, k); g.stroke(); }
+      g.strokeStyle = 'rgba(214,190,60,0.28)'; g.lineWidth = 14; g.setLineDash([60, 40]);   // alte Fahrwege der Halle
+      g.beginPath(); g.moveTo(0, 180); g.lineTo(1024, 180); g.stroke(); g.setLineDash([]);
+      ft.update();
+      floor.material.albedoTexture = ft; ft.uScale = 3; ft.vScale = 4.4;
+    }
     floor.receiveShadows = true;
     // Außenwelt (Ruinenhalle + dystopische Stadt). ?ext=0 schaltet sie ab, ?q=0.5 reduziert Details.
     const EXT = o.exterior !== false;
@@ -111,6 +125,7 @@
       return Math.max(0, (Math.max(0.05, hill) + 0.5 * JIT[(n * 7) % 10]) * g) * LAND;
     };
     const tiles = [];
+    const truss0 = pbr('truss', '#3a3a44', 0.9, 0.3);
     for (let n = 0; n < R.FIELDS; n++) tiles.push(Object.assign(at(n * SPACING), { h: heightAt(n) }));
 
     // Feld-Icons als Canvas-Texturen (eine pro Typ)
@@ -124,31 +139,41 @@
       rr(14, 14, 228, 228, 28); g.stroke();
       g.globalAlpha = 0.12; g.fillStyle = '#fff'; g.fill(); g.globalAlpha = 1;
       g.lineWidth = 9; g.fillStyle = '#fff';
-      if (type === 'activity') {           // Blitz
-        g.beginPath(); g.moveTo(146, 52); g.lineTo(92, 136); g.lineTo(128, 136); g.lineTo(108, 206); g.lineTo(168, 116); g.lineTo(132, 116); g.closePath(); g.stroke();
-      } else if (type === 'event') {        // Sprechblase
-        g.beginPath(); g.ellipse(128, 118, 66, 48, 0, 0, Math.PI * 2); g.stroke();
-        g.beginPath(); g.moveTo(98, 160); g.lineTo(82, 196); g.lineTo(124, 166); g.stroke();
-      } else if (type === 'special') {      // Stern
-        g.beginPath();
-        for (let i = 0; i < 10; i++) { const r = i % 2 ? 30 : 74, a = -Math.PI / 2 + i * Math.PI / 5; g.lineTo(128 + r * Math.cos(a), 132 + r * Math.sin(a)); }
-        g.closePath(); g.stroke();
+      const card = (inner) => {          // Spielkarte hochkant, Symbol innen
+        g.save(); g.translate(128, 128); g.rotate(-0.12);
+        rr(-50, -70, 100, 140, 12); g.stroke();
+        inner(); g.restore();
+      };
+      if (type === 'activity') {           // Theatermaske
+        g.beginPath(); g.moveTo(66, 70); g.quadraticCurveTo(128, 52, 190, 70); g.quadraticCurveTo(194, 170, 128, 206); g.quadraticCurveTo(62, 170, 66, 70); g.closePath(); g.stroke();
+        g.beginPath(); g.ellipse(104, 112, 15, 9, 0.2, 0, 7); g.fill(); g.beginPath(); g.ellipse(152, 112, 15, 9, -0.2, 0, 7); g.fill();
+        g.beginPath(); g.arc(128, 146, 26, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke();
+      } else if (type === 'event') {        // Ereigniskarte mit Blitz
+        card(() => { g.beginPath(); g.moveTo(10, -46); g.lineTo(-22, 6); g.lineTo(2, 6); g.lineTo(-10, 48); g.lineTo(24, -10); g.lineTo(0, -10); g.closePath(); g.fill(); });
+      } else if (type === 'special') {      // Aufgabenkarte mit Stern
+        card(() => { g.beginPath(); for (let i = 0; i < 10; i++) { const r = i % 2 ? 15 : 36, a = -Math.PI / 2 + i * Math.PI / 5; g.lineTo(r * Math.cos(a), r * Math.sin(a)); } g.closePath(); g.fill(); });
       } else if (type === 'slf') {
         g.font = 'bold 76px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('SLF', 128, 132);
       } else if (type === 'gate') {
         g.font = 'bold 44px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle';
         g.fillText('START', 128, 104); g.fillText('ZIEL', 128, 156);
       }
+      // Laufrichtung: zwei kleine Pfeile am vorderen Rand (lokal +x = Laufrichtung)
+      if (type !== 'gate') {
+        g.globalAlpha = 0.75; g.lineWidth = 7;
+        [222, 238].forEach(x => { g.beginPath(); g.moveTo(x - 10, 108); g.lineTo(x, 128); g.lineTo(x - 10, 148); g.stroke(); });
+        g.globalAlpha = 1;
+      }
       t.update(); t.hasAlpha = false;
       return t;
     }
 
-    const base = B.MeshBuilder.CreateBox('tileBase', { width: 0.90, height: 0.16, depth: 1.24 }, scene);
+    const base = B.MeshBuilder.CreateBox('tileBase', { width: 0.99, height: 0.16, depth: 1.24 }, scene);
     base.material = pbr('tileBody', '#3a3a48', 0.75, 0.32);
     base.receiveShadows = true;
     const tops = {};
     for (const type of Object.keys(TYPE_COLOR)) {
-      const top = B.MeshBuilder.CreateGround('tileTop_' + type, { width: 0.80, height: 1.12 }, scene);
+      const top = B.MeshBuilder.CreateGround('tileTop_' + type, { width: 0.88, height: 1.12 }, scene);
       const m = new B.PBRMaterial('tileTopMat_' + type, scene);
       m.albedoColor = new B.Color3(0.02, 0.02, 0.03); m.metallic = 0.2; m.roughness = 0.25;
       m.emissiveTexture = iconTexture(type, TYPE_COLOR[type]);
@@ -161,7 +186,7 @@
     // Neonkante oben am Podest, eine Variante pro Feldtyp
     const edges = {};
     for (const type of Object.keys(TYPE_COLOR)) {
-      const e = B.MeshBuilder.CreateBox('tileEdge_' + type, { width: 0.92, height: 0.025, depth: 1.26 }, scene);
+      const e = B.MeshBuilder.CreateBox('tileEdge_' + type, { width: 1.0, height: 0.025, depth: 1.26 }, scene);
       const m = new B.PBRMaterial('tileEdgeMat_' + type, scene);
       m.albedoColor = new B.Color3(0, 0, 0); m.emissiveColor = B.Color3.FromHexString(TYPE_COLOR[type]).scale(0.55);
       e.material = m; edges[type] = e;
@@ -180,10 +205,47 @@
     const gaps = tiles.map((t, i) => { const u = tiles[(i + 1) % tiles.length]; return Math.hypot(u.x - t.x, u.z - t.z); });
     const steps = tiles.map((t, i) => Math.abs(tiles[(i + 1) % tiles.length].h - t.h));
 
+    // Fahrbahn: dunkler Belag unter dem ganzen Kurs, LED-Linien innen und außen
+    {
+      const left = [], right = [], inL = [], outL = [];
+      for (let d = 0; d <= TOTAL + 1e-6; d += 0.25) {
+        const p = at(d), nx = -Math.sin(p.ang), nz = Math.cos(p.ang);
+        const out = (nx * p.x + nz * p.z) >= 0 ? 1 : -1;
+        left.push(new B.Vector3(p.x + nx * 0.9, 0.006, p.z + nz * 0.9));
+        right.push(new B.Vector3(p.x - nx * 0.9, 0.006, p.z - nz * 0.9));
+        inL.push(new B.Vector3(p.x - out * nx * 0.86, 0.02, p.z - out * nz * 0.86));
+        outL.push(new B.Vector3(p.x + out * nx * 0.86, 0.02, p.z + out * nz * 0.86));
+      }
+      const lane = B.MeshBuilder.CreateRibbon('lane', { pathArray: [left, right], closePath: true, sideOrientation: B.Mesh.DOUBLESIDE }, scene);
+      lane.material = pbr('laneM', '#121118', 0.1, 0.55); lane.receiveShadows = true;
+      [[inL, '#29c6ff'], [outL, '#bb38ff']].forEach(([path, col], i) => {
+        const tube = B.MeshBuilder.CreateTube('laneLed' + i, { path: path.concat([path[0]]), radius: 0.022, tessellation: 6 }, scene);
+        tube.material = pbr('laneLedM' + i, '#000000', 0, 1, col); tube.material.emissiveColor = tube.material.emissiveColor.scale(0.7);
+      });
+    }
+    // Nummernschilder an jedem 8. Feld, außen am Kurs
+    for (let n = 8; n < R.FIELDS; n += 8) {
+      const t = tiles[n], nx = -Math.sin(t.ang), nz = Math.cos(t.ang);
+      const out = (nx * t.x + nz * t.z) >= 0 ? 1 : -1;
+      const pos = new B.Vector3(t.x + out * nx * 1.05, 0, t.z + out * nz * 1.05);
+      const hgt = t.h + 1.05;
+      const pole = B.MeshBuilder.CreateCylinder('numPole' + n, { diameter: 0.05, height: hgt, tessellation: 8 }, scene);
+      pole.position.set(pos.x, hgt / 2, pos.z); pole.material = truss0;
+      const tx = new B.DynamicTexture('numTex' + n, { width: 128, height: 128 }, scene, true);
+      const g = tx.getContext(); g.fillStyle = '#07060c'; g.fillRect(0, 0, 128, 128);
+      g.strokeStyle = '#f5ecff'; g.lineWidth = 6; g.strokeRect(5, 5, 118, 118);
+      g.fillStyle = '#fff'; g.font = 'bold 66px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(n), 64, 68); tx.update();
+      const sign = B.MeshBuilder.CreatePlane('numSign' + n, { size: 0.42, sideOrientation: B.Mesh.DOUBLESIDE }, scene);
+      sign.position.set(pos.x, hgt + 0.2, pos.z);
+      sign.billboardMode = B.Mesh.BILLBOARDMODE_Y;
+      const sm2 = new B.StandardMaterial('numM' + n, scene); sm2.disableLighting = true; sm2.emissiveTexture = tx; sign.material = sm2;
+      glow.addExcludedMesh(sign);
+    }
+
     // Einlass-Tor (Start/Ziel) über Feld 0
     const gateRoot = new B.TransformNode('gate', scene);
     gateRoot.position.set(tiles[0].x, 0, tiles[0].z);
-    const truss = pbr('truss', '#3a3a44', 0.9, 0.3);
+    const truss = truss0;
     const neonW = pbr('neonW', '#000000', 0, 1, '#f5ecff');
     [-1, 1].forEach(s => {
       const p = B.MeshBuilder.CreateBox('gatePost', { width: 0.22, height: 2.9, depth: 0.22 }, scene);
@@ -304,6 +366,7 @@
       front.parent = fly; front.position.z = -0.004; front.material = frontMat; glow.addExcludedMesh(front);
       const lamp = new B.PointLight('deckLamp_' + key, new B.Vector3(d.x, 2.2, CARD_Z), scene);
       lamp.diffuse = B.Color3.FromHexString(d.col); lamp.intensity = 1.6; lamp.range = 3.5;
+      lamp.includedOnlyMeshes = [ped].concat(root.getChildMeshes(false));
       decks[key] = { root, fly, front, frontMat, t: -1 };
     });
     let flyTex = null;
@@ -405,7 +468,7 @@
     // ------------------------------------------------- Figuren (eigene GLBs)
     // Spielfiguren in Spielerfarbe, DJ hinterm Pult, Türsteher am Einlass, tanzende Menge.
     const FIG_ORDER = ['raver', 'dj', 'aal', 'robo', 'gasmaske', 'tuersteher'];
-    const TOK_SCALE = 1.1, NPC_SCALE = 2.15;
+    const TOK_SCALE = 1.3, NPC_SCALE = 2.15;
     const figs = {};
     const npcs = [];
     let figuresLoaded = false, crowdLoaded = false;
@@ -477,7 +540,36 @@
       });
       crowdLoaded = crowd.dancers.length > 0 && !!crowd.meshes[0];
     } catch (e) { console.warn('Menge nicht geladen', e); }
+    // LED-Tanzfläche: Raster aus Leuchtplatten, Farbwellen im Takt
+    const ledTile = B.MeshBuilder.CreateBox('ledFloor', { width: 1.04, height: 0.04, depth: 1.04 }, scene);
+    { const lm = new B.StandardMaterial('ledFloorM', scene); lm.disableLighting = true; lm.diffuseColor = new B.Color3(0, 0, 0); lm.emissiveColor = new B.Color3(1, 1, 1); ledTile.material = lm; }
+    glow.addExcludedMesh(ledTile);
+    const LED_COLS = ['#bb38ff', '#29c6ff', '#ff4fd8', '#2ee6b0'].map(c => B.Color3.FromHexString(c));
+    const ledCells = [];
+    for (let gx = 0; gx < 8; gx++) for (let gz = 0; gz < 5; gz++) ledCells.push({ x: -3.85 + gx * 1.1, z: 0.75 + gz * 1.1 });
+    { const mats = new Float32Array(ledCells.length * 16);
+      ledCells.forEach((c, i) => B.Matrix.Translation(c.x, 0.02, c.z).copyToArray(mats, i * 16));
+      ledTile.thinInstanceSetBuffer('matrix', mats, 16, true);
+    }
+    const ledColors = new Float32Array(ledCells.length * 4);
+    ledTile.thinInstanceSetBuffer('color', ledColors, 4, false);
+    let ledStep = -1;
     const BPM = 130 / 60;
+    scene.onBeforeRenderObservable.add(() => {
+      const t = performance.now() / 1000, step = Math.floor(t * BPM * 2);       // Achtelnoten
+      if (step === ledStep) return; ledStep = step;
+      const pat = Math.floor(step / 32) % 3, base = LED_COLS[Math.floor(step / 8) % LED_COLS.length];
+      ledCells.forEach((c, i) => {
+        let k;
+        if (pat === 0) k = 0.5 + 0.5 * Math.sin(step * 0.8 - Math.hypot(c.x, c.z - 3) * 1.6);          // Ringe
+        else if (pat === 1) k = ((Math.round((c.x + 3.85) / 1.1) + step) % 4 === 0) ? 1 : 0.12;       // Lauflicht
+        else k = ((Math.round((c.x + 3.85) / 1.1) + Math.round((c.z - 0.75) / 1.1) + step) % 2) ? 0.9 : 0.1;  // Schach
+        const col = (i + step) % 7 === 0 ? LED_COLS[(Math.floor(step / 8) + 1) % LED_COLS.length] : base;
+        const a = 0.08 + 0.42 * k;
+        ledColors.set([col.r * a, col.g * a, col.b * a, 1], i * 4);
+      });
+      ledTile.thinInstanceBufferUpdated('color');
+    });
     const tmpM = new B.Matrix(), tmpQ = new B.Quaternion(), tmpS = new B.Vector3(), tmpP = new B.Vector3();
     scene.onBeforeRenderObservable.add(() => {
       const t = performance.now() / 1000;
@@ -489,7 +581,7 @@
           const b = Math.abs(Math.sin(beat + d.ph * 0.3));
           tmpS.set(d.s, d.s * (0.96 + 0.04 * b), d.s);
           B.Quaternion.RotationYawPitchRollToRef(d.face + Math.sin(t * 0.9 + d.ph) * 0.35, 0, Math.sin(beat * 0.5 + d.ph) * 0.06, tmpQ);
-          tmpP.set(d.x, b * 0.07, d.z);
+          tmpP.set(d.x, 0.04 + b * 0.07, d.z);
           B.Matrix.ComposeToRef(tmpS, tmpQ, tmpP, tmpM);
           tmpM.copyToArray(buf, i * 16);
         });
@@ -515,7 +607,7 @@
     });
 
     // ------------------------------------------------------------ Spieler
-    const SLOTS = [[-0.2, -0.32], [0.2, 0.32], [0.2, -0.32], [-0.2, 0.32], [0, 0], [-0.3, 0], [0.3, 0], [0, 0.45]];
+    const SLOTS = [[-0.22, -0.3], [0.22, 0.3], [0.22, -0.3], [-0.22, 0.3], [0, 0], [-0.3, 0], [0.3, 0], [0, 0.45]];
     const tokens = [];
     const makeToken = (i) => {
       const rootN = new B.TransformNode('tok' + i, scene);
@@ -557,7 +649,7 @@
     cam.lowerBetaLimit = 0.25; cam.upperBetaLimit = 1.45;
     cam.wheelPrecision = 25; cam.pinchPrecision = 60; cam.panningSensibility = 0;
     const VIEWS = {
-      follow: { radius: 9.5, beta: 0.95 },
+      follow: { radius: 8.3, beta: 0.95 },
       overview: { target: new B.Vector3(0, 2.0, 1.5), radius: 31, beta: 1.16, alpha: -Math.PI / 2 - 0.35 },
       city: { target: new B.Vector3(0, 20, 20), radius: 70, beta: 1.47, alpha: -Math.PI / 2 - 0.45 },
       floor: { target: new B.Vector3(0, 1.4, 4.2), radius: 10.5, beta: 1.22, alpha: -Math.PI / 2 - 0.42 },
