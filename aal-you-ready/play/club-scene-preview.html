@@ -59,6 +59,7 @@
     if (Q.get('view')) setView(Q.get('view'));
     if (Q.get('card')) { setView('cards'); sc.drawCard(Q.get('card'), Q.get('title') || 'Bass Drop'); }
     if (Q.get('walk')) { for (let i = 0; i < Number(Q.get('walk')); i++) await document.querySelector('#walk').onclick(); }
+    await Promise.race([sc.avatarsReady, new Promise(r => setTimeout(r, 60000))]);
     await new Promise(r => setTimeout(r, 3000));
     window.TEST_RESULT = { ok: sc.paLoaded && sc.rigLoaded, checks: [
       { name: 'Szene geladen', ok: true, detail: ms + ' ms' },

@@ -465,98 +465,145 @@
       rigLoaded = true;
     } catch (e) { console.warn('DJ/Rigg nicht geladen', e); }
 
-    // ------------------------------------------------- Figuren (eigene GLBs)
-    // Spielfiguren in Spielerfarbe, DJ hinterm Pult, Türsteher am Einlass, tanzende Menge.
-    // Ein überspitzter Charakter für alle (club_character.glb, ca. 0,9 m hoch modelliert),
-    // unterschieden über Spielerfarbe, Hautton und eine wählbare Kopfbedeckung (club_hats_a/b.glb).
-    const HAT_LIFT = [0.73, 0.6726];   // Hüte liegen in der GLB auf dem Boden (Prüfung), hier zurück auf Kopfhöhe
-    const HAT_ORDER = ['fischerhut', 'cap', 'kopfhoerer', 'beanie', 'gasmaske', 'aalmuetze', 'hasenohren', 'ledhelm'];
-    const SKINS = ['#e9b493', '#a8704c', '#5a3624', '#d29a74', '#7b4a2e', '#f1c7a5'];
-    const TOK_SCALE = 1.15, NPC_SCALE = 2.0;
-    let charC = null, hatC = [];
+    // ------------------------------------------------- Figuren: 100Avatars (Polygonal Mind, CC BY 4.0)
+    // Alle Avatare sind auf 1 m Höhe normalisiert, Blick +Z, Mixamo-Skelett. Animation per Knochen-Posen.
+    const AV = {
+      players: ['002', '027', '038', '052', '046', '079', '086', '088', '087', '120', '160', '093'],
+      dj: '069', bouncer: '102', crowd: ['003', '012', '018', '053', '054', '060', '070', '072'],
+    };
+    const TOK_SCALE = 0.95;
+    const avCache = {};
+    const loadAv = (id) => avCache[id] || (avCache[id] = B.SceneLoader.LoadAssetContainerAsync(
+      o.assetBase + 'avatars/', 'club_av_' + id + '.glb', scene, null, '.glb').catch(e => { console.warn('Avatar fehlt', id, e); return null; }));
     const npcs = [];
+    const dancers = [];
     let figuresLoaded = false, crowdLoaded = false;
-    const crowd = { meshes: [], dancers: [] };
-    const tameGlow = (mt) => { if (mt && mt.name.includes('M_Glow')) mt.emissiveIntensity = 1.1; };
-    const tint = (meshes, hex, glowScale, skin) => meshes.forEach(m => {
-      const mt = m.material;
-      tameGlow(mt);
-      if (mt && mt.name.includes('M_Accent')) {
-        mt.albedoColor = B.Color3.FromHexString(hex).toLinearSpace();
-        mt.emissiveColor = B.Color3.FromHexString(hex).scale(glowScale);
-      }
-      if (mt && skin && mt.name.includes('M_Skin')) mt.albedoColor = B.Color3.FromHexString(skin).toLinearSpace();
-    });
-    // Hut-Instanz: nur die Gruppe HAT_<name> behalten
-    const spawnHat = (hat, name) => {
-      const ci = hatC.findIndex(h => h && (h.transformNodes.some(n => n.name === 'HAT_' + hat) || h.meshes.some(m => m.name.includes('HAT_' + hat))));
-      if (ci < 0) return null;
-      const c = hatC[ci];
-      const inst = c.instantiateModelsToScene(n => name + '_' + n, true);
-      inst.rootNodes.forEach(r => { r.position.y += HAT_LIFT[ci]; });
-      // Gruppen liegen unter __root__ / HATS_x / HAT_<name>: alle fremden Hut-Gruppen samt Inhalt entfernen
-      inst.rootNodes.forEach(r => r.getDescendants(false, n => n.getClassName() === 'TransformNode' && /HAT_[a-z]+$/.test(n.name))
-        .filter(n => !n.name.endsWith('HAT_' + hat)).forEach(n => n.dispose(false, false)));   // Material teilen sich alle Hüte: nicht mitlöschen
-      return inst.rootNodes;
+    const crowd = { meshes: [], dancers };
+    const tameGlow = () => {};
+
+    // --- Rig: Knochen finden, Posen (lokale Quaternionen) einmalig berechnen, danach nur noch Slerp
+    const V = (x, y, z) => new B.Vector3(x, y, z);
+    const BONES = ['Hips', 'Spine', 'Spine1', 'Spine2', 'Neck', 'Head', 'HeadTop_End', 'LeftArm', 'LeftForeArm', 'LeftHand',
+      'RightArm', 'RightForeArm', 'RightHand', 'LeftUpLeg', 'LeftLeg', 'LeftFoot', 'LeftToeBase', 'RightUpLeg', 'RightLeg', 'RightFoot', 'RightToeBase'];
+    const ANIM = ['Spine1', 'Neck', 'Head', 'LeftArm', 'LeftForeArm', 'RightArm', 'RightForeArm', 'LeftUpLeg', 'LeftLeg', 'RightUpLeg', 'RightLeg'];
+    const refresh = (n) => { n.computeWorldMatrix(true); n.getDescendants(false).forEach(d => d.computeWorldMatrix && d.computeWorldMatrix(true)); };
+    // Knochen so drehen, dass die Richtung zum Kind auf target zeigt (frac = Anteil). Vorzeichen wird geprüft.
+    const aim = (n, child, target, frac) => {
+      if (!n || !child) return;
+      const d = child.getAbsolutePosition().subtract(n.getAbsolutePosition()).normalize();
+      const t = target.clone().normalize();
+      const dot = Math.max(-1, Math.min(1, B.Vector3.Dot(d, t)));
+      let axis = B.Vector3.Cross(d, t);
+      if (axis.length() < 1e-5) return;
+      axis.normalize();
+      const ang = Math.acos(dot) * (frac ?? 1);
+      n.rotate(axis, ang, B.Space.WORLD); refresh(n);
+      const d2 = child.getAbsolutePosition().subtract(n.getAbsolutePosition()).normalize();
+      if (B.Vector3.Dot(d2, t) < dot) { n.rotate(axis, -2 * ang, B.Space.WORLD); refresh(n); }
     };
-    const spawnFig = (name, scale, hex, hat, skin) => {
-      if (!charC) return null;
-      const body = new B.TransformNode(name, scene);
-      charC.instantiateModelsToScene(n => name + '_' + n, true).rootNodes.forEach(r => { r.parent = body; });
-      if (hat) (spawnHat(hat, name + '_hat') || []).forEach(r => { r.parent = body; });
-      body.scaling.setAll(scale);
-      const meshes = body.getChildMeshes(false);
-      if (hex) tint(meshes, hex, 0.1, skin);
-      meshes.forEach(m => shadows.addShadowCaster(m));
-      body.metadata = { hat };
-      return body;
+    const makeRig = (holder) => {
+      const nodes = {};
+      holder.getDescendants(false).forEach(n => { const m = /mixamorig:(\w+)$/.exec(n.name || ''); if (m && !nodes[m[1]] && n.getClassName() === 'TransformNode') nodes[m[1]] = n; });
+      if (!nodes.Hips || !nodes.LeftArm || !nodes.RightArm || !nodes.LeftUpLeg) return null;
+      ANIM.concat(['Hips']).forEach(k => { const n = nodes[k]; if (n && !n.rotationQuaternion) n.rotationQuaternion = B.Quaternion.FromEulerVector(n.rotation); });
+      holder.computeWorldMatrix(true); refresh(holder);
+      const bind = {}; ANIM.forEach(k => { if (nodes[k]) bind[k] = nodes[k].rotationQuaternion.clone(); });
+      const reset = () => { ANIM.forEach(k => { if (nodes[k]) nodes[k].rotationQuaternion.copyFrom(bind[k]); }); refresh(nodes.Hips); };
+      const snap = () => { const q = {}; ANIM.forEach(k => { if (nodes[k]) q[k] = nodes[k].rotationQuaternion.clone(); }); return q; };
+      // Körperachsen aus dem Skelett: rechts = linke -> rechte Schulter, vorne = Fuß -> Zehe
+      const up = V(0, 1, 0);
+      const right = nodes.RightArm.getAbsolutePosition().subtract(nodes.LeftArm.getAbsolutePosition()); right.y = 0; right.normalize();
+      let fwd = nodes.LeftToeBase && nodes.LeftFoot ? nodes.LeftToeBase.getAbsolutePosition().subtract(nodes.LeftFoot.getAbsolutePosition()) : B.Vector3.Cross(right, up);
+      fwd.y = 0; if (fwd.length() < 1e-4) fwd = B.Vector3.Cross(right, up); fwd.normalize();
+      const L = right.scale(-1), Rr = right;
+      const down = V(0, -1, 0);
+      const mix = (...vs) => { const r = V(0, 0, 0); for (let i = 0; i < vs.length; i += 2) r.addInPlace(vs[i].scale(vs[i + 1])); return r.normalize(); };
+      const armsDown = () => {
+        aim(nodes.LeftArm, nodes.LeftForeArm, mix(down, 1, L, 0.22, fwd, 0.05));
+        aim(nodes.RightArm, nodes.RightForeArm, mix(down, 1, Rr, 0.22, fwd, 0.05));
+        aim(nodes.LeftForeArm, nodes.LeftHand, mix(down, 1, fwd, 0.35, L, 0.1));
+        aim(nodes.RightForeArm, nodes.RightHand, mix(down, 1, fwd, 0.35, Rr, 0.1));
+      };
+      const P = {};
+      reset(); armsDown(); P.rest = snap();
+      // Laufen: Bein vor / zurück, Arme gegengleich
+      const legs = (lf) => {
+        aim(nodes.LeftUpLeg, nodes.LeftLeg, mix(down, 1, fwd, 0.45 * lf));
+        aim(nodes.RightUpLeg, nodes.RightLeg, mix(down, 1, fwd, -0.45 * lf));
+        aim(nodes.LeftLeg, nodes.LeftFoot, mix(down, 1, fwd, lf > 0 ? -0.15 : -0.5));
+        aim(nodes.RightLeg, nodes.RightFoot, mix(down, 1, fwd, lf > 0 ? -0.5 : -0.15));
+        aim(nodes.LeftArm, nodes.LeftForeArm, mix(down, 1, L, 0.2, fwd, -0.4 * lf));
+        aim(nodes.RightArm, nodes.RightForeArm, mix(down, 1, Rr, 0.2, fwd, 0.4 * lf));
+      };
+      reset(); armsDown(); legs(1); P.walkA = snap();
+      reset(); armsDown(); legs(-1); P.walkB = snap();
+      // Arme hoch (Tanzen / Jubeln) und angewinkelt (Pumpen)
+      reset(); armsDown();
+      aim(nodes.LeftArm, nodes.LeftForeArm, mix(up, 1, L, 0.45, fwd, 0.1));
+      aim(nodes.RightArm, nodes.RightForeArm, mix(up, 1, Rr, 0.45, fwd, 0.1));
+      aim(nodes.LeftForeArm, nodes.LeftHand, mix(up, 1, L, 0.1));
+      aim(nodes.RightForeArm, nodes.RightHand, mix(up, 1, Rr, 0.1));
+      P.up = snap();
+      reset(); armsDown();
+      aim(nodes.LeftArm, nodes.LeftForeArm, mix(L, 1, up, 0.35, fwd, 0.2));
+      aim(nodes.RightArm, nodes.RightForeArm, mix(Rr, 1, up, 0.35, fwd, 0.2));
+      aim(nodes.LeftForeArm, nodes.LeftHand, mix(up, 1, fwd, 0.4));
+      aim(nodes.RightForeArm, nodes.RightHand, mix(up, 1, fwd, 0.4));
+      P.pump = snap();
+      // Kopfnicken und DJ-Haltung (Hände vorne auf Pulthöhe)
+      reset(); armsDown();
+      if (nodes.Head && nodes.HeadTop_End) aim(nodes.Head, nodes.HeadTop_End, mix(up, 1, fwd, 0.45));
+      P.nod = snap();
+      reset(); armsDown();
+      aim(nodes.LeftArm, nodes.LeftForeArm, mix(down, 1, fwd, 0.55, L, 0.15));
+      aim(nodes.RightArm, nodes.RightForeArm, mix(down, 1, fwd, 0.55, Rr, 0.15));
+      aim(nodes.LeftForeArm, nodes.LeftHand, mix(fwd, 1, down, 0.2));
+      aim(nodes.RightForeArm, nodes.RightHand, mix(fwd, 1, down, 0.2));
+      P.dj = snap();
+      reset();
+      const cur = {};
+      const set = (pa, pb, f) => { ANIM.forEach(k => { const n = nodes[k]; if (n && pa[k] && pb[k]) B.Quaternion.SlerpToRef(pa[k], pb[k], f, n.rotationQuaternion); }); };
+      set(P.rest, P.rest, 0);
+      return { nodes, P, set, hips: nodes.Hips, hipsY: nodes.Hips.position.y };
     };
-    try {
-      const load = (f) => B.SceneLoader.LoadAssetContainerAsync(o.assetBase, f, scene, null, '.glb');
-      const [ch, ha, hb] = await Promise.all(['club_character.glb', 'club_hats_a.glb', 'club_hats_b.glb'].map(f => load(f).catch(() => null)));
-      charC = ch; hatC = [ha, hb];
-      figuresLoaded = !!(ch && ha && hb);
-      // DJ hinter dem Pult (Podest-Oberkante y 0.6), Blick zur Tanzfläche
-      const dj = spawnFig('npcDJ', NPC_SCALE, '#29c6ff', 'kopfhoerer', SKINS[1]);
-      if (dj) { dj.position.set(0, 0.6, HL - 3.95); dj.rotation.y = Math.PI; npcs.push({ node: dj, kind: 'dj', y: 0.6 }); }
-      // Türsteher innen neben dem Einlass: breit gebaut, schaut den ankommenden Figuren entgegen
-      const bo = spawnFig('npcBouncer', NPC_SCALE, '#1a1a22', 'beanie', SKINS[2]);
-      if (bo) { bo.scaling.x *= 1.3; bo.position.set(tiles[0].x + 1.5, 0, tiles[0].z + 2.7); bo.rotation.y = -Math.PI / 2 - 0.6; npcs.push({ node: bo, kind: 'bouncer', y: 0 }); }
-    } catch (e) { console.warn('Figuren nicht geladen', e); }
-    try {
-      const cc = await B.SceneLoader.LoadAssetContainerAsync(o.assetBase, 'club_crowd.glb', scene, null, '.glb');
-      const inst = cc.instantiateModelsToScene(n => 'crowd_' + n, false);
-      const all = inst.rootNodes[0].getChildMeshes(false).filter(m => m.getTotalVertices() > 0);
-      // 6 Gäste-Varianten (Kleidung, Haut, Haare als Vertex-Farben), je ein Mesh mit Thin Instances
-      for (let v = 0; v < 6; v++) {
-        const parts = all.filter(m => m.name.includes('CROWD_V' + v + '_'));
-        if (!parts.length) continue;
-        const mesh = B.Mesh.MergeMeshes(parts, true, true, undefined, false, false);
-        mesh.name = 'crowdV' + v;
-        if (mesh.material) { mesh.material.backFaceCulling = false; }
-        mesh.alwaysSelectAsActiveMesh = true;
-        mesh.receiveShadows = true;
-        crowd.meshes[v] = mesh;
-      }
-      inst.rootNodes.forEach(r => r.dispose());
-      const nV = crowd.meshes.filter(Boolean).length;
-      // Tanzfläche vor dem DJ, innerhalb des Rundkurses, lockeres Raster mit Zufall
-      let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-      for (let gz = 0; gz < 5; gz++) for (let gx = 0; gx < 8; gx++) {
-        if (rnd() < 0.12) continue;
-        const x = -4.1 + gx * 1.17 + (rnd() - 0.5) * 0.6, z = 0.9 + gz * 1.12 + (rnd() - 0.5) * 0.5;
-        crowd.dancers.push({ x, z, pose: Math.floor(rnd() * 6), ph: rnd() * 6.28, s: 0.94 + rnd() * 0.12,
-          face: Math.atan2(-x * 0.15, (HL - 4.4) - z) + (rnd() - 0.5) * 0.6 });
-      }
-      crowd.meshes.forEach((mesh, pi) => {
-        if (!mesh) return;
-        const ds = crowd.dancers.filter(d => d.pose % nV === pi);
-        const mats = new Float32Array(Math.max(1, ds.length) * 16);
-        mesh.thinInstanceSetBuffer('matrix', mats, 16, false);
-        crowd['list' + pi] = ds; crowd['buf' + pi] = mats;
-      });
-      crowdLoaded = crowd.dancers.length > 0 && !!crowd.meshes[0];
-    } catch (e) { console.warn('Menge nicht geladen', e); }
+    const spawnAv = async (id, name, scale) => {
+      const c = await loadAv(id);
+      if (!c) return null;
+      const holder = new B.TransformNode(name, scene);
+      c.instantiateModelsToScene(n => name + '_' + n, false, { doNotInstantiate: true }).rootNodes.forEach(r => { r.parent = holder; });
+      holder.scaling.setAll(scale);
+      holder.getChildMeshes(false).forEach(m => { shadows.addShadowCaster(m); m.alwaysSelectAsActiveMesh = true; });
+      const rig = makeRig(holder);
+      return { holder, rig };
+    };
+    // Tanzende Menge, DJ, Türsteher (laden im Hintergrund, Spielstart wartet nicht darauf)
+    const avatarsReady = (async () => {
+      try {
+        const dj = await spawnAv(AV.dj, 'npcDJ', 1.75);
+        if (dj) { dj.holder.position.set(0, 0.6, HL - 3.85); dj.holder.rotation.y = Math.PI; npcs.push({ ...dj, kind: 'dj', y: 0.6 }); }
+        const bo = await spawnAv(AV.bouncer, 'npcBouncer', 1.95);
+        if (bo) { bo.holder.position.set(tiles[0].x + 1.5, 0, tiles[0].z + 2.7); bo.holder.rotation.y = -Math.PI / 2 - 0.6; npcs.push({ ...bo, kind: 'bouncer', y: 0 }); }
+        figuresLoaded = npcs.length === 2;
+        let seed = 7; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+        const spots = [];
+        for (let gz = 0; gz < 4; gz++) for (let gx = 0; gx < 6; gx++) {
+          if (rnd() < 0.18) continue;
+          spots.push({ x: -3.9 + gx * 1.55 + (rnd() - 0.5) * 0.5, z: 1.1 + gz * 1.35 + (rnd() - 0.5) * 0.4 });
+        }
+        const STYLES = ['up', 'pump', 'sway', 'nod'];
+        for (let i = 0; i < spots.length; i++) {
+          const sp = spots[i], id = AV.crowd[i % AV.crowd.length];
+          const a = await spawnAv(id, 'guest' + i, 1.6 + rnd() * 0.25);
+          if (!a) continue;
+          a.holder.position.set(sp.x, 0.04, sp.z);
+          const face = Math.atan2(-sp.x * 0.15, (HL - 4.4) - sp.z) + (rnd() - 0.5) * 0.6;
+          a.holder.rotation.y = face;
+          dancers.push({ ...a, face, ph: rnd() * 6.28, style: STYLES[Math.floor(rnd() * STYLES.length)] });
+        }
+        crowdLoaded = dancers.length > 0;
+      } catch (e) { console.warn('Avatare nicht geladen', e); }
+    })();
+
     // LED-Tanzfläche: Raster aus Leuchtplatten, Farbwellen im Takt
     const ledTile = B.MeshBuilder.CreateBox('ledFloor', { width: 1.04, height: 0.04, depth: 1.04 }, scene);
     { const lm = new B.StandardMaterial('ledFloorM', scene); lm.disableLighting = true; lm.diffuseColor = new B.Color3(0, 0, 0); lm.emissiveColor = new B.Color3(1, 1, 1); ledTile.material = lm; }
@@ -587,26 +634,24 @@
       });
       ledTile.thinInstanceBufferUpdated('color');
     });
-    const tmpM = new B.Matrix(), tmpQ = new B.Quaternion(), tmpS = new B.Vector3(), tmpP = new B.Vector3();
     scene.onBeforeRenderObservable.add(() => {
       const t = performance.now() / 1000;
-      const beat = t * BPM * Math.PI;
-      crowd.meshes.forEach((mesh, pi) => {
-        if (!mesh) return;
-        const ds = crowd['list' + pi], buf = crowd['buf' + pi];
-        ds.forEach((d, i) => {
-          const b = Math.abs(Math.sin(beat + d.ph * 0.3));
-          tmpS.set(d.s, d.s * (0.985 + 0.015 * b), d.s);
-          B.Quaternion.RotationYawPitchRollToRef(d.face + Math.sin(t * 0.9 + d.ph) * 0.35, 0, Math.sin(beat * 0.5 + d.ph) * 0.06, tmpQ);
-          tmpP.set(d.x, 0.04 + b * 0.05, d.z);
-          B.Matrix.ComposeToRef(tmpS, tmpQ, tmpP, tmpM);
-          tmpM.copyToArray(buf, i * 16);
-        });
-        mesh.thinInstanceBufferUpdated('matrix');
+      const beat = t * BPM * Math.PI;               // eine Halbwelle pro Viertelnote
+      const b = Math.abs(Math.sin(beat));
+      dancers.forEach(d => {
+        const r = d.rig; if (!r) return;
+        const bb = Math.abs(Math.sin(beat + d.ph * 0.25));
+        if (d.style === 'up') r.set(r.P.up, r.P.pump, bb);
+        else if (d.style === 'pump') r.set(r.P.rest, r.P.pump, bb);
+        else if (d.style === 'sway') r.set(r.P.walkA, r.P.walkB, 0.5 + 0.5 * Math.sin(beat * 0.5 + d.ph));
+        else r.set(r.P.rest, r.P.nod, bb);
+        d.holder.position.y = 0.04 + bb * 0.04;
+        d.holder.rotation.y = d.face + Math.sin(t * 0.9 + d.ph) * 0.3;
       });
       npcs.forEach(n => {
-        if (n.kind === 'dj') { n.node.position.y = n.y + Math.abs(Math.sin(beat)) * 0.035; n.node.rotation.x = Math.sin(beat) * 0.04; }
-        else n.node.rotation.z = Math.sin(t * 0.8) * 0.012;
+        const r = n.rig;
+        if (n.kind === 'dj') { if (r) { r.set(r.P.dj, r.P.dj, 0); const h = r.nodes.Head; if (h && r.P.nod.Head) B.Quaternion.SlerpToRef(r.P.dj.Head, r.P.nod.Head, b * 0.8, h.rotationQuaternion); } n.holder.position.y = n.y + b * 0.02; }
+        else if (r) r.set(r.P.rest, r.P.rest, 0);
       });
     });
 
@@ -629,22 +674,23 @@
     const makeToken = (i, players) => {
       const rootN = new B.TransformNode('tok' + i, scene);
       const col = COLORS[i % COLORS.length];
-      const ring = B.MeshBuilder.CreateTorus('ring' + i, { diameter: 0.46, thickness: 0.035, tessellation: 32 }, scene);
+      const ring = B.MeshBuilder.CreateTorus('ring' + i, { diameter: 0.5, thickness: 0.04, tessellation: 32 }, scene);
       ring.parent = rootN; ring.position.y = 0.02; ring.material = pbr('ringm' + i, '#000000', 0, 1, col);
-      const hat = (players && players[i] && players[i].hat) || HAT_ORDER[i % HAT_ORDER.length];
-      let body = spawnFig('tokFig' + i, TOK_SCALE, col, hat, SKINS[i % SKINS.length]);
-      if (body) {
-        body.parent = rootN;
-      } else {                                    // Rückfall: einfache Figur aus Grundformen
-        body = new B.TransformNode('tokFig' + i, scene); body.parent = rootN;
-        const mat = pbr('tokm' + i, col, 0.3, 0.35); mat.emissiveColor = B.Color3.FromHexString(col).scale(0.25);
-        const b = B.MeshBuilder.CreateCylinder('body' + i, { diameterTop: 0.2, diameterBottom: 0.34, height: 0.5, tessellation: 24 }, scene);
-        b.parent = body; b.position.y = 0.25; b.material = mat;
-        const h = B.MeshBuilder.CreateSphere('head' + i, { diameter: 0.26, segments: 16 }, scene);
-        h.parent = body; h.position.y = 0.62; h.material = mat;
-        [b, h].forEach(m => shadows.addShadowCaster(m));
-      }
-      return { root: rootN, body, ring, walking: false, hat, i };
+      const body = new B.TransformNode('tokBody' + i, scene); body.parent = rootN;
+      const tk = { root: rootN, body, ring, walking: false, hat: null, i, rig: null, av: null };
+      setAvatar(tk, (players && players[i] && players[i].hat) || AV.players[i % AV.players.length]);
+      return tk;
+    };
+    // Avatar eines Spielers setzen oder wechseln (lädt bei Bedarf nach)
+    const setAvatar = (tk, id) => {
+      if (AV.players.indexOf(id) < 0) id = AV.players[tk.i % AV.players.length];
+      if (tk.hat === id) return;
+      tk.hat = id;
+      spawnAv(id, 'tokAv' + tk.i + '_' + id, TOK_SCALE).then(a => {
+        if (!a || tk.hat !== id) { if (a) a.holder.dispose(false, true); return; }
+        if (tk.av) tk.av.dispose(false, true);
+        a.holder.parent = tk.body; tk.av = a.holder; tk.rig = a.rig;
+      });
     };
     // Ruheblick: nach außen (zur Kamera) und etwas in Laufrichtung
     const restYaw = (f) => {
@@ -709,7 +755,10 @@
       spots.forEach((s, i) => { s.direction.x = Math.sin(t * 0.7 + i * 1.7) * 0.7; s.direction.z = -0.3 + Math.cos(t * 0.5 + i) * 0.5; });
       tokens.forEach((tk, i) => {
         tk.ring.scaling.setAll(i === follow ? 1 + 0.12 * Math.sin(t * 6) : 1);
-        if (tk.body && !tk.walking) tk.body.position.y = i === follow ? Math.abs(Math.sin(t * 130 / 60 * Math.PI)) * 0.045 : 0;
+        const r = tk.rig;
+        if (tk.walking) { if (r) r.set(r.P.walkA, r.P.walkB, 0.5 + 0.5 * Math.sin(t * 14)); }
+        else if (i === follow) { tk.body.position.y = 0; if (r) r.set(r.P.rest, r.P.pump, Math.abs(Math.sin(t * 130 / 60 * Math.PI))); }
+        else { tk.body.position.y = 0; if (r) r.set(r.P.rest, r.P.nod, 0.15 + 0.15 * Math.sin(t * 1.3 + i)); }
       });
     });
     engine.runRenderLoop(() => scene.render());
@@ -728,16 +777,12 @@
     await scene.whenReadyAsync();
 
     return {
-      scene, engine, paLoaded, rigLoaded, figuresLoaded, crowdLoaded, tiles, drawCard,
+      scene, engine, paLoaded, rigLoaded, tiles, drawCard, avatarsReady,
+      get figuresLoaded() { return figuresLoaded; }, get crowdLoaded() { return crowdLoaded; },
       sync(players, active) {
         while (tokens.length < players.length) tokens.push(makeToken(tokens.length, players));
         tokens.forEach((tk, i) => {
-          // Kopfbedeckung geändert (z. B. Lobby): Figur neu aufbauen
-          const want = players[i] && players[i].hat;
-          if (want && want !== tk.hat && charC) {
-            const nb = spawnFig('tokFig' + i + '_' + want, TOK_SCALE, COLORS[i % COLORS.length], want, SKINS[i % SKINS.length]);
-            if (nb) { nb.parent = tk.root; nb.rotation.y = tk.body.rotation.y; tk.body.dispose(false, true); tk.body = nb; tk.hat = want; }
-          }
+          if (players[i] && players[i].hat) setAvatar(tk, players[i].hat);
           tk.root.setEnabled(i < players.length);
           if (i < players.length && !tk.walking) { tk.root.position.copyFrom(slotPos(players[i].position, i)); tk.body.rotation.y = restYaw(players[i].position); }
         });
