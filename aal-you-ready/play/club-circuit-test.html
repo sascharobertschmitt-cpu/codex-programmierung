@@ -42,6 +42,7 @@
 <script src="https://cdn.jsdelivr.net/npm/babylonjs@7.54.3/babylon.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/babylonjs-loaders@7.54.3/babylonjs.loaders.min.js"></script>
 <script src="./club-circuit-rules.js"></script>
+<script src="./club-exterior.js"></script>
 <script>
 (async () => {
   const Q = new URLSearchParams(location.search);
@@ -100,11 +101,20 @@
   const floor = B.MeshBuilder.CreateGround('floor', { width: 30, height: 44 }, scene);
   floor.material = pbr('concrete', '#24232b', 0, 0.42);
   floor.receiveShadows = true;
-  const wallMat = pbr('brick', '#231a20', 0, 0.85);
-  [[0, 22, 30, 0.4], [0, -22, 30, 0.4], [15, 0, 0.4, 44], [-15, 0, 0.4, 44]].forEach(([x, z, w, d], i) => {
-    const wl = B.MeshBuilder.CreateBox('wall' + i, { width: w, height: 7, depth: d }, scene);
-    wl.position.set(x, 3.5, z); wl.material = wallMat;
-  });
+  // Außenwelt (Ruinenhalle + dystopische Stadt). ?ext=0 schaltet sie ab, ?q=0.5 reduziert Details.
+  const EXT = Q.get('ext') !== '0';
+  let exterior = null;
+  if (EXT && window.ClubExterior) {
+    exterior = ClubExterior.build(scene, B, { hall: { hw: 15, hl: 22, h: 8.5 }, glow,
+      rain: Q.get('rain') !== '0', quality: Number(Q.get('q') || 1) });
+  } else {
+    const wallMat = pbr('brick', '#231a20', 0, 0.85);
+    [[0, 22, 30, 0.4], [0, -22, 30, 0.4], [15, 0, 0.4, 44], [-15, 0, 0.4, 44]].forEach(([x, z, w, d], i) => {
+      const wl = B.MeshBuilder.CreateBox('wall' + i, { width: w, height: 7, depth: d }, scene);
+      wl.position.set(x, 3.5, z); wl.material = wallMat;
+    });
+  }
+  check('Außenwelt aufgebaut', EXT ? !!exterior : true, EXT ? (exterior ? exterior.meshes.length + ' Instanz-Meshes' : 'Skript fehlt') : 'abgeschaltet');
   const pillarMat = pbr('steel', '#2a2a33', 0.8, 0.35);
   [[-10.5, -14], [10.5, -14], [-10.5, 0], [10.5, 0], [-10.5, 14], [10.5, 14]].forEach(([x, z], i) => {
     const p = B.MeshBuilder.CreateBox('pillar' + i, { width: 0.6, height: 7, depth: 0.6 }, scene);
@@ -373,6 +383,7 @@
       cam.alpha += d * k * 0.8;
     }
     if (Math.floor(t * 12) !== Math.floor((t - engine.getDeltaTime() / 1000) * 12)) { drawEq(t); drawWall(t); }
+    if (exterior) exterior.update(t, cam);
     spots.forEach((s, i) => { s.direction.x = Math.sin(t * 0.7 + i * 1.7) * 0.7; s.direction.z = -0.3 + Math.cos(t * 0.5 + i) * 0.5; });
     tokens.forEach((tk, i) => { tk.ring.scaling.setAll(i === game.turn ? 1 + 0.12 * Math.sin(t * 6) : 1); });
   });
