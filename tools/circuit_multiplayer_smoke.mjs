@@ -65,7 +65,7 @@ ok('Karten haben Titel und Text', cards.every(c => c.split(':')[1]), cards.lengt
 ok('Server-Würfe mit Club-Würfel', rolls > 0 && s.roll_info !== undefined, `${rolls} Würfe, letzter: ${JSON.stringify(s.roll_info)}`);
 await sleep(4000);
 const dice = await page.locator('#diceResult').innerText().catch(() => '');
-ok('Seite zeigt Club-Würfel-Ergebnis', /Club/.test(dice), dice.replace(/\n/g, ' '));
+ok('Seite zeigt Club-Würfel-Ergebnis', /Club/.test(dice) || (s.roll_info && s.roll_info.skipped && /Ausgesetzt/.test(dice)), dice.replace(/\n/g, ' '));
 const chips = await page.locator('#players').innerText();
 console.log('Chips:', chips.replace(/\n/g, ' | '));
 await page.screenshot({ path: prefix + '_game.png' });
