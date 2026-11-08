@@ -469,6 +469,7 @@
     // Spielfiguren in Spielerfarbe, DJ hinterm Pult, Türsteher am Einlass, tanzende Menge.
     // Ein überspitzter Charakter für alle (club_character.glb, ca. 0,9 m modelliert),
     // unterschieden über Spielerfarbe, Hautton und eine wählbare Kopfbedeckung (club_hats_a/b.glb).
+    const HAT_LIFT = [0.73, 0.6726];   // Hüte liegen in der GLB auf dem Boden (Prüfung), hier zurück auf Kopfhöhe
     const HAT_ORDER = ['fischerhut', 'cap', 'kopfhoerer', 'beanie', 'gasmaske', 'aalmuetze', 'hasenohren', 'ledhelm'];
     const SKINS = ['#e9b493', '#a8704c', '#5a3624', '#d29a74', '#7b4a2e', '#f1c7a5'];
     const TOK_SCALE = 1.15, NPC_SCALE = 2.0;
@@ -488,10 +489,11 @@
     });
     // Hut-Instanz: nur die Gruppe HAT_<name> behalten
     const spawnHat = (hat, name) => {
-      const c = hatC.find(h => h && h.meshes.some(m => m.name.includes('HAT_' + hat))) ||
-                hatC.find(h => h && h.transformNodes.some(n => n.name === 'HAT_' + hat));
-      if (!c) return null;
+      const ci = hatC.findIndex(h => h && (h.transformNodes.some(n => n.name === 'HAT_' + hat) || h.meshes.some(m => m.name.includes('HAT_' + hat))));
+      if (ci < 0) return null;
+      const c = hatC[ci];
       const inst = c.instantiateModelsToScene(n => name + '_' + n, true);
+      inst.rootNodes.forEach(r => { r.position.y += HAT_LIFT[ci]; });
       inst.rootNodes.forEach(r => r.getChildren(null, true).forEach(ch => {
         if (ch.name && /HAT_/.test(ch.name) && !ch.name.endsWith('HAT_' + hat) && ch.getClassName() === 'TransformNode') ch.dispose(false, true);
       }));

@@ -230,6 +230,11 @@ def make_character():
             "shots": {"front34": ((-0.95, -1.75, 0.95), (0, 0, 0.45))}}
 
 
+# Hüte werden für die GLB-Prüfung (Ursprung am Boden) nach unten verschoben;
+# das Spiel hebt sie um denselben Wert wieder auf Kopfhöhe (club-circuit-scene.js, HAT_LIFT).
+HAT_LIFT = {"HATS_A": 0.73, "HATS_B": 0.6726}
+
+
 def make_hats(names=HATS, tag="HATS"):
     """Kopfbedeckungen in einer GLB, je Hut eine Gruppe HAT_<name> mit Ursprung 0."""
     parts, groups = [], {}
@@ -238,6 +243,12 @@ def make_hats(names=HATS, tag="HATS"):
         hat(k, name)
         parts += k.list()
         groups["HAT_" + name] = {"parent": None, "origin": (0.0, 0.0, 0.0)}
+    lift = HAT_LIFT.get(tag, 0.0)
+    if lift:
+        zmin = min(np.array(p.verts)[:, 2].min() for p in parts)
+        assert abs(zmin - lift) < 0.005, f"HAT_LIFT {tag} passt nicht: {zmin:.4f}"
+        for p in parts:
+            p.verts = [v - np.array([0.0, 0.0, lift]) for v in p.verts]
     return {"name": tag, "cabinet": None, "cutters": [], "parts": parts, "groups": groups, "bevel": 0.0,
             "dims": {"height": 0.3},
             "shots": {"front34": ((-0.55, -0.95, 1.2), (0, 0, 0.8))}}
