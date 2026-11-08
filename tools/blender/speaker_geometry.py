@@ -36,7 +36,7 @@ HORN_Z = Z0 + 0.490
 HORN_W, HORN_H = 0.215, 0.100  # halbe Mundoeffnung
 GRILLE_Y = YF - 0.016          # Gitterflaeche vor der Front
 
-UV_CAB = 1 / 0.20              # Kornstruktur: 256 px auf 20 cm
+UV_CAB = 1 / 0.10              # Kornstruktur: 256 px auf 10 cm
 UV_GRILLE = 1 / 0.024          # 4 x 4 Loecher pro 24 mm -> 6 mm Teilung
 
 

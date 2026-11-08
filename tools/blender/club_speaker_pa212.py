@@ -35,6 +35,7 @@ import assetlib  # noqa: E402
 import speaker_geometry as geo  # noqa: E402
 
 ASSET = "AYR212"
+TEXTURED = {"M_Cabinet", "M_Grille", "M_Cone"}
 
 
 def log(msg):
@@ -120,7 +121,7 @@ def make_materials(imgs):
     # Basisfarben linear. Bewusst nicht reines Schwarz (0.0), sonst wirkt PBR "tot".
     return {
         "M_Cabinet": make_material("M_Cabinet", (0.020, 0.020, 0.022), 0.0, 0.62,
-                                   imgs["grain_n"], 0.8),
+                                   imgs["grain_n"], 0.45),
         "M_Grille": make_material("M_Grille", (0.03, 0.03, 0.03), 0.35, 0.42,
                                   imgs["grille_n"], 1.0, color_img=imgs["grille_c"],
                                   alpha_from_image=True, double_sided=True),
@@ -140,9 +141,10 @@ def part_to_object(part, coll, material=None):
     verts = [tuple(v) for v in part.verts]
     me.from_pydata(verts, [], part.faces)
     me.polygons.foreach_set("use_smooth", part.smooth)
-    uv = me.uv_layers.new(name="UVMap")
-    uvs = part.box_uvs()
-    uv.data.foreach_set("uv", [c for xy in uvs for c in xy])
+    if material is None or part.material in TEXTURED:
+        uv = me.uv_layers.new(name="UVMap")
+        uvs = part.box_uvs()
+        uv.data.foreach_set("uv", [c for xy in uvs for c in xy])
     if material is not None:
         me.materials.append(material)
     me.update()
@@ -328,10 +330,10 @@ def render_previews(outdir, samples):
     floor_me.materials.append(fm)
 
     tgt = (0, 0, 0.5)
-    add_area("Key", (-1.6, -2.0, 2.0), tgt, 650, 1.2, (1.0, 0.95, 0.9))
-    add_area("Fill", (2.2, -1.2, 0.9), tgt, 140, 1.5, (0.85, 0.9, 1.0))
-    add_area("RimMagenta", (1.4, 1.8, 1.8), tgt, 450, 0.6, (1.0, 0.15, 0.7))
-    add_area("RimCyan", (-1.6, 1.4, 1.2), tgt, 320, 0.6, (0.1, 0.8, 1.0))
+    add_area("Key", (-1.6, -2.0, 2.0), tgt, 170, 1.2, (1.0, 0.95, 0.9))
+    add_area("Fill", (2.2, -1.2, 0.9), tgt, 35, 1.5, (0.85, 0.9, 1.0))
+    add_area("RimMagenta", (1.4, 1.8, 1.8), tgt, 160, 0.6, (1.0, 0.15, 0.7))
+    add_area("RimCyan", (-1.6, 1.4, 1.2), tgt, 110, 0.6, (0.1, 0.8, 1.0))
 
     cam_data = bpy.data.cameras.new("PreviewCam")
     cam_data.lens = 50
