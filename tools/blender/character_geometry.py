@@ -212,7 +212,7 @@ def hat(k, kind):
         ellipsoid(k["M_Plastic"], H + [0, 0.006, 0.014], (HR * 1.22, HR * 1.28, HR * 1.42), seg=28, rings=14)
         Mv = frame_matrix(H + [0, -0.088, 0.012], (1, 0, 0), (0, 1, 0), (0, 0, 1))
         rounded_box(k["M_LED"], Mv, (0.07, 0.012, 0.022), 0.01, seg=2)
-        tube(k["M_Accent"], H + [0, -0.04, top + 0.0], H + [0, 0.07, top - 0.03], 0.01, seg=8, caps=True)
+        tube(k["M_Accent"], (0, -0.04, top + 0.01), (0, 0.07, top - 0.02), 0.01, seg=8, caps=True)
     else:
         raise ValueError(kind)
 
