@@ -71,6 +71,14 @@ Mehrfach vorkommende Objekte (Lautsprecher-Stacks, Stühle) in Babylon instanzii
 4. Pushen. Die Action baut, prüft und committet GLB plus Vorschaubilder.
 5. Vorschaubilder im Repo ansehen (`assets/previews/*.jpg`), dann auf dem iPhone die Testseite öffnen.
 
+## Testen auf dem iPhone
+
+Das Repo hat kein GitHub Pages. Seiten laufen über raw.githack.com:
+
+`https://raw.githack.com/sascharobertschmitt-cpu/codex-programmierung/main/aal-you-ready/play/<seite>.html`
+
+githack cached einige Minuten. Für einen garantiert frischen Stand den Commit-Hash statt `main` einsetzen. Die Dateigröße per HEAD-Request kann dort fehlen (Prüfstand zeigt dann ⚠️, kein Modellfehler).
+
 ## Qualitätssicherung: was automatisch ist und was nicht
 
 | # | Prüfung | Wie | Art |
