@@ -84,7 +84,7 @@
   scene.fogMode = B.Scene.FOGMODE_EXP2; scene.fogDensity = 0.018; scene.fogColor = new B.Color3(0.02, 0.012, 0.04);
 
   const hemi = new B.HemisphericLight('hemi', new B.Vector3(0, 1, 0), scene);
-  hemi.intensity = 0.22; hemi.diffuse = new B.Color3(0.6, 0.5, 0.9); hemi.groundColor = new B.Color3(0.05, 0.03, 0.08);
+  hemi.intensity = 0.38; hemi.diffuse = new B.Color3(0.6, 0.5, 0.9); hemi.groundColor = new B.Color3(0.05, 0.03, 0.08);
   const glow = new B.GlowLayer('glow', scene, { mainTextureRatio: 0.4, blurKernelSize: 32 });
   glow.intensity = 0.85;
 
@@ -98,7 +98,7 @@
 
   // Raum: Betonboden, dunkle Ziegelwände, Säulen
   const floor = B.MeshBuilder.CreateGround('floor', { width: 30, height: 44 }, scene);
-  floor.material = pbr('concrete', '#1a1a20', 0, 0.55);
+  floor.material = pbr('concrete', '#24232b', 0, 0.42);
   floor.receiveShadows = true;
   const wallMat = pbr('brick', '#231a20', 0, 0.85);
   [[0, 22, 30, 0.4], [0, -22, 30, 0.4], [15, 0, 0.4, 44], [-15, 0, 0.4, 44]].forEach(([x, z, w, d], i) => {
@@ -265,7 +265,7 @@
   const spots = [];
   [[-4, '#bb38ff'], [4, '#29c6ff'], [-1.5, '#ff4fd8'], [1.5, '#2ee6b0']].forEach(([x, c], i) => {
     const sp = new B.SpotLight('spot' + i, new B.Vector3(x, 6.5, HL - 6), new B.Vector3(0, -1, -0.4), 0.7, 6, scene);
-    sp.diffuse = B.Color3.FromHexString(c); sp.intensity = 90; spots.push(sp);
+    sp.diffuse = B.Color3.FromHexString(c); sp.intensity = 170; spots.push(sp);
   });
   const key = new B.DirectionalLight('key', new B.Vector3(0.3, -1, 0.45), scene);
   key.position = new B.Vector3(-6, 14, -14); key.intensity = 0.55; key.diffuse = new B.Color3(0.85, 0.8, 1);
@@ -327,7 +327,7 @@
   const setOverview = (on) => {
     overview = on;
     $('#view').textContent = on ? 'Folgen' : 'Übersicht';
-    camGoal = on ? { target: new B.Vector3(0, 0, 0.5), radius: 34, beta: 0.62, alpha: -Math.PI / 2 } : { radius: 8.5, beta: 1.0 };
+    camGoal = on ? { target: new B.Vector3(0, 0, -1.5), radius: 40, beta: 0.55, alpha: -Math.PI / 2 } : { radius: 8.5, beta: 1.0 };
     autoCam = true;
   };
   $('#view').onclick = () => setOverview(!overview);
