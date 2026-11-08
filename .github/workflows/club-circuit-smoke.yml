@@ -1,0 +1,55 @@
+name: Club circuit smoke test
+
+# Testet die Rundkurs-Regeln (Node) und die 3D-Testseite (Headless-Chrome,
+# automatische Zuege) und legt einen Screenshot ins Repo.
+
+on:
+  push:
+    paths:
+      - 'aal-you-ready/play/club-circuit-*'
+      - 'tools/test_club_rules.js'
+      - 'tools/browser_smoke.mjs'
+      - '.github/workflows/club-circuit-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: club-circuit-smoke-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Rule tests
+        run: node tools/test_club_rules.js
+      - name: 3D page in headless Chrome (autoplay)
+        run: |
+          npm install --no-save --no-audit --no-fund playwright@1.49.1
+          (cd aal-you-ready/play && python3 -m http.server 8080 > /tmp/http.log 2>&1 &)
+          sleep 2
+          mkdir -p aal-you-ready/play/assets/previews
+          PW_CHANNEL=chrome node tools/browser_smoke.mjs \
+            "http://localhost:8080/club-circuit-test.html?autoplay=30" \
+            aal-you-ready/play/assets/previews/circuit_headless.png 150000 | tee /tmp/browser.log
+      - name: Commit screenshot
+        if: always()
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aal-you-ready/play/assets/previews/circuit_headless.png || true
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Circuit smoke test screenshot"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
