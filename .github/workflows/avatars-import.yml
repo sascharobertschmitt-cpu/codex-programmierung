@@ -54,7 +54,7 @@ jobs:
           git clone --depth 1 --filter=blob:none --no-checkout https://github.com/polygonalmind/100avatars build/100avatars
           cd build/100avatars
           git sparse-checkout init --no-cone
-          sed 's|^|/|' "../../$LIST" | git sparse-checkout set --no-cone --stdin
+          { sed 's|^|/|' "../../$LIST"; echo /CCLicense.md; } | git sparse-checkout set --no-cone --stdin
           git checkout
           ls -la $(head -3 "../../$LIST") || true
           head -40 CCLicense.md > ../../tools/avatars/LICENSE_100Avatars_CC-BY-4.0.md
