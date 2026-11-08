@@ -31,7 +31,7 @@
     // Smog glüht vom Stadtlicht: heller Dunst am Horizont, Silhouetten davor dunkel
     scene.clearColor = new B.Color4(0.03, 0.018, 0.04, 1);
     scene.fogMode = B.Scene.FOGMODE_EXP2;
-    scene.fogDensity = 0.0062;
+    scene.fogDensity = 0.0048;
     scene.fogColor = new B.Color3(0.30, 0.13, 0.15);
     const skyTex = new B.DynamicTexture('skyTex', { width: 16, height: 256 }, scene, false);
     { const g = skyTex.getContext(); const gr = g.createLinearGradient(0, 0, 0, 256);
@@ -169,7 +169,7 @@
     const towerMeshes = towerKinds.map((k, i) => {
       const m = B.MeshBuilder.CreateBox('towers' + i, { width: k.w, height: k.hgt, depth: k.d }, scene);
       const tm = new B.PBRMaterial('towerMat' + i, scene);
-      tm.albedoColor = new B.Color3(0.035, 0.032, 0.04); tm.metallic = 0.3; tm.roughness = 0.6;
+      tm.albedoColor = new B.Color3(0.012, 0.01, 0.016); tm.metallic = 0.3; tm.roughness = 0.6;
       tm.emissiveTexture = windowTex('win' + i, 11 + i * 7, Math.round(k.w / 0.9), Math.round(k.hgt / 1.6));
       tm.emissiveColor = new B.Color3(1, 1, 1); tm.emissiveIntensity = 1.7;
       m.material = tm;
@@ -313,7 +313,12 @@
       rain,
       update(t, camera) {
         updaters.forEach(f => f(t));
-        if (rain && camera) { rain.emitter.x = camera.target.x; rain.emitter.z = camera.target.z; rain.emitter.y = camera.target.y + 16; }
+        if (rain && camera) {
+          // Regen rund um die Kamera, leicht nach vorn versetzt (nicht als Säule in der Ferne)
+          const f = camera.getForwardRay(1).direction;
+          rain.emitter.x = camera.position.x + f.x * 14; rain.emitter.z = camera.position.z + f.z * 14;
+          rain.emitter.y = camera.position.y + 10;
+        }
       },
     };
   }
