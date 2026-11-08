@@ -1,17 +1,18 @@
 """
-Blender-Build fuer den Club-PA-Lautsprecher "AYR-212".
+Generischer Blender-Build fuer Club-Assets (Geometrie-Modul mit build()).
 
-Aufruf (headless, getestet fuer Blender 4.2 LTS):
+Aufruf (headless, Blender 4.2 LTS):
   blender -b --factory-startup --python-exit-code 1 \
-      -P tools/blender/club_speaker_pa212.py -- \
+      -P tools/blender/build_asset.py -- \
+      --geometry speaker_geometry \
       --out aal-you-ready/play/assets/club_speaker_pa212.glb \
       --tex-dir build/textures --preview-dir aal-you-ready/play/assets/previews \
-      --report build/club_speaker_pa212.report.json
+      --report aal-you-ready/play/assets/previews/ayr212_build_report.json
 
 Ablauf:
- 1. Texturen (Normal Maps, Lochblech mit Alpha) per numpy erzeugen, als PNG speichern
- 2. Geometrie aus speaker_geometry.py als Meshes anlegen (1 Mesh pro Material)
- 3. Gehaeuse: Bevel-Modifier (gehaertete Normalen) + Boolean-Ausschnitte, dann einfrieren
+ 1. Texturen (Normal Maps, Lochblech, Gebrauchsspuren) per numpy erzeugen, als PNG speichern
+ 2. Geometrie aus dem Geometrie-Modul als Meshes anlegen (1 Mesh pro Material)
+ 3. Gehaeuse: Bevel + Boolean-Ausschnitte + Weighted Normals, dann einfrieren
  4. PBR-Materialien (Principled BSDF, glTF-kompatibel) zuweisen
  5. GLB exportieren (Y oben, Front +Z, Ursprung Bodenmitte)
  6. Optional: Cycles-Vorschaubilder rendern
@@ -32,9 +33,11 @@ import numpy as np  # noqa: E402
 from mathutils import Vector  # noqa: E402
 
 import assetlib  # noqa: E402
-import speaker_geometry as geo  # noqa: E402
+import importlib  # noqa: E402
 
-ASSET = "AYR212"
+import speaker_geometry as family  # noqa: E402  (gemeinsame Konstanten: UV-Massstaebe)
+
+ASSET = "ASSET"   # wird in main() aus der Geometrie gesetzt
 TEXTURED = {"M_Cabinet", "M_Grille", "M_Cone"}
 
 
@@ -45,6 +48,7 @@ def log(msg):
 def parse_args():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     ap = argparse.ArgumentParser()
+    ap.add_argument("--geometry", required=True, help="Python-Modul mit build(), z. B. sub_geometry")
     ap.add_argument("--out", required=True)
     ap.add_argument("--tex-dir", default="build/textures")
     ap.add_argument("--preview-dir", default="")
@@ -65,14 +69,19 @@ def reset_scene():
 def make_textures(tex_dir):
     os.makedirs(tex_dir, exist_ok=True)
     paths = {
-        "grain_n": os.path.join(tex_dir, "ayr212_grain_normal.png"),
-        "grille_c": os.path.join(tex_dir, "ayr212_grille_color.png"),
-        "grille_n": os.path.join(tex_dir, "ayr212_grille_normal.png"),
+        "grain_n": os.path.join(tex_dir, f"{ASSET.lower()}_grain_normal.png"),
+        "grille_c": os.path.join(tex_dir, f"{ASSET.lower()}_grille_color.png"),
+        "grille_n": os.path.join(tex_dir, f"{ASSET.lower()}_grille_normal.png"),
     }
     assetlib.write_png(paths["grain_n"], assetlib.texture_grain_normal(256))
     color, normal = assetlib.texture_grille(256)
     assetlib.write_png(paths["grille_c"], color)
     assetlib.write_png(paths["grille_n"], normal)
+    orm, base = assetlib.texture_wear(512)
+    paths["wear_orm_n"] = os.path.join(tex_dir, f"{ASSET.lower()}_wear_orm.png")   # _n: Non-Color
+    paths["wear_base"] = os.path.join(tex_dir, f"{ASSET.lower()}_wear_base.png")
+    assetlib.write_png(paths["wear_orm_n"], orm)
+    assetlib.write_png(paths["wear_base"], base)
     imgs = {}
     for key, p in paths.items():
         img = bpy.data.images.load(p, check_existing=False)
@@ -84,8 +93,16 @@ def make_textures(tex_dir):
     return imgs
 
 
+def uv_node(nt, uv_name, loc):
+    n = nt.nodes.new("ShaderNodeUVMap")
+    n.uv_map = uv_name
+    n.location = loc
+    return n
+
+
 def make_material(name, base, metallic, roughness, normal_img=None, normal_strength=1.0,
-                  color_img=None, alpha_from_image=False, double_sided=False):
+                  color_img=None, alpha_from_image=False, double_sided=False,
+                  rough_img=None, wear_uv=None):
     m = bpy.data.materials.new(name)
     m.use_nodes = True
     m.use_backface_culling = not double_sided      # exportiert als glTF doubleSided
@@ -99,12 +116,24 @@ def make_material(name, base, metallic, roughness, normal_img=None, normal_stren
         tex.image = color_img
         tex.location = (-500, 300)
         nt.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+        if wear_uv:
+            nt.links.new(uv_node(nt, wear_uv, (-800, 300)).outputs["UV"], tex.inputs["Vector"])
         if alpha_from_image:
             nt.links.new(tex.outputs["Alpha"], bsdf.inputs["Alpha"])
             if hasattr(m, "surface_render_method"):
                 m.surface_render_method = "DITHERED"
             else:
                 m.blend_method = "CLIP"
+    if rough_img is not None:
+        tex = nt.nodes.new("ShaderNodeTexImage")
+        tex.image = rough_img
+        tex.location = (-700, 50)
+        sep = nt.nodes.new("ShaderNodeSeparateColor")
+        sep.location = (-400, 50)
+        nt.links.new(tex.outputs["Color"], sep.inputs["Color"])
+        nt.links.new(sep.outputs["Green"], bsdf.inputs["Roughness"])
+        if wear_uv:
+            nt.links.new(uv_node(nt, wear_uv, (-900, 50)).outputs["UV"], tex.inputs["Vector"])
     if normal_img is not None:
         tex = nt.nodes.new("ShaderNodeTexImage")
         tex.image = normal_img
@@ -121,7 +150,8 @@ def make_materials(imgs):
     # Basisfarben linear. Bewusst nicht reines Schwarz (0.0), sonst wirkt PBR "tot".
     return {
         "M_Cabinet": make_material("M_Cabinet", (0.020, 0.020, 0.022), 0.0, 0.62,
-                                   imgs["grain_n"], 0.45),
+                                   imgs["grain_n"], 0.45, color_img=imgs["wear_base"],
+                                   rough_img=imgs["wear_orm_n"], wear_uv="UVWear"),
         "M_Grille": make_material("M_Grille", (0.03, 0.03, 0.03), 0.35, 0.42,
                                   imgs["grille_n"], 1.0, color_img=imgs["grille_c"],
                                   alpha_from_image=True, double_sided=True),
@@ -153,11 +183,11 @@ def part_to_object(part, coll, material=None):
     return obj
 
 
-def box_uv_mesh(me, scale):
+def box_uv_mesh(me, scale, layer="UVMap"):
     """Box-Projektion direkt auf ein Mesh (erhaelt eigene Normalen)."""
-    if not me.uv_layers:
-        me.uv_layers.new(name="UVMap")
-    uv = me.uv_layers.active.data
+    if layer not in me.uv_layers:
+        me.uv_layers.new(name=layer)
+    uv = me.uv_layers[layer].data
     for poly in me.polygons:
         n = poly.normal
         ax = max(range(3), key=lambda i: abs(n[i]))
@@ -202,11 +232,12 @@ def build_cabinet(spec, coll, mat):
     dg = bpy.context.evaluated_depsgraph_get()
     ev = cab.evaluated_get(dg)
     me = bpy.data.meshes.new_from_object(ev, preserve_all_data_layers=True, depsgraph=dg)
-    me.name = "AYR212_Cabinet"
+    me.name = f"{ASSET}_Cabinet"
     me.materials.clear()
     me.materials.append(mat)
     me.polygons.foreach_set("material_index", [0] * len(me.polygons))
-    box_uv_mesh(me, geo.UV_CAB)
+    box_uv_mesh(me, family.UV_CAB)
+    box_uv_mesh(me, family.UV_WEAR, "UVWear")
     me.update()
 
     # Hilfsobjekte entfernen
@@ -219,7 +250,7 @@ def build_cabinet(spec, coll, mat):
         bpy.data.meshes.remove(m)
     bpy.data.collections.remove(cut_coll)
 
-    obj = bpy.data.objects.new("AYR212_Cabinet", me)
+    obj = bpy.data.objects.new(f"{ASSET}_Cabinet", me)
     coll.objects.link(obj)
     if len(me.polygons) < 50:
         raise RuntimeError("Gehaeuse nach Bevel/Boolean unerwartet leer")
@@ -230,8 +261,7 @@ def tri_count(obj):
     return sum(len(p.vertices) - 2 for p in obj.data.polygons)
 
 
-def build_asset(imgs):
-    spec = geo.build_speaker()
+def build_asset(imgs, spec):
     mats = make_materials(imgs)
     coll = bpy.data.collections.new(ASSET)
     bpy.context.scene.collection.children.link(coll)
@@ -290,7 +320,7 @@ def add_area(name, loc, target, power, size, color):
     return o
 
 
-def render_previews(outdir, samples):
+def render_previews(outdir, samples, shots):
     scene = bpy.context.scene
     os.makedirs(outdir, exist_ok=True)
     scene.render.engine = "CYCLES"
@@ -341,11 +371,7 @@ def render_previews(outdir, samples):
     scene.collection.objects.link(cam)
     scene.camera = cam
 
-    shots = {
-        "ayr212_front34.jpg": ((-1.35, -2.75, 1.05), (0, 0, 0.50)),
-        "ayr212_front_detail.jpg": ((-0.35, -1.25, 0.70), (0, -0.25, 0.62)),
-        "ayr212_rear34.jpg": ((1.6, 2.6, 1.1), (0, 0, 0.48)),
-    }
+    shots = {f"{ASSET.lower()}_{k}.jpg": v for k, v in shots.items()}
     out = []
     for fname, (loc, target) in shots.items():
         cam.location = loc
@@ -360,12 +386,15 @@ def render_previews(outdir, samples):
 
 # ---------------------------------------------------------------------------
 def main():
+    global ASSET
     args = parse_args()
     t0 = time.time()
     log(f"Blender {bpy.app.version_string}")
     reset_scene()
+    spec = importlib.import_module(args.geometry).build()
+    ASSET = spec["name"]
     imgs = make_textures(args.tex_dir)
-    root, objs, spec = build_asset(imgs)
+    root, objs, spec = build_asset(imgs, spec)
 
     stats = {o.name: {"triangles": tri_count(o), "vertices": len(o.data.vertices),
                       "material": o.data.materials[0].name if o.data.materials else None}
@@ -381,7 +410,7 @@ def main():
 
     previews = []
     if args.preview_dir:
-        previews = render_previews(args.preview_dir, args.samples)
+        previews = render_previews(args.preview_dir, args.samples, spec["shots"])
 
     if args.report:
         os.makedirs(os.path.dirname(os.path.abspath(args.report)), exist_ok=True)

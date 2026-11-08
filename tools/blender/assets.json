@@ -1,0 +1,20 @@
+[
+  {
+    "id": "ayr212",
+    "name": "Club-Topteil AYR-212 (2 x 12\" + Horn)",
+    "geometry": "speaker_geometry",
+    "glb": "club_speaker_pa212.glb",
+    "expect_size": [0.60, 0.995, 0.53],
+    "front_material": "M_Grille",
+    "mask_materials": "M_Grille"
+  },
+  {
+    "id": "ayr118",
+    "name": "Club-Subwoofer AYR-118 (1 x 18\")",
+    "geometry": "sub_geometry",
+    "glb": "club_sub_118.glb",
+    "expect_size": [0.677, 0.654, 0.815],
+    "front_material": "M_Grille",
+    "mask_materials": "M_Grille"
+  }
+]

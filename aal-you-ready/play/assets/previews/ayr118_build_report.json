@@ -1,0 +1,65 @@
+{
+  "asset": "AYR118",
+  "blender": "4.2.3 LTS",
+  "glb": "aal-you-ready/play/assets/club_sub_118.glb",
+  "glb_bytes": 695136,
+  "triangles_total": 17504,
+  "meshes": {
+    "AYR118_Cabinet": {
+      "triangles": 546,
+      "vertices": 275,
+      "material": "M_Cabinet"
+    },
+    "AYR118_Grille": {
+      "triangles": 2,
+      "vertices": 4,
+      "material": "M_Grille"
+    },
+    "AYR118_MetalDark": {
+      "triangles": 3376,
+      "vertices": 1911,
+      "material": "M_MetalDark"
+    },
+    "AYR118_Steel": {
+      "triangles": 5470,
+      "vertices": 3021,
+      "material": "M_Steel"
+    },
+    "AYR118_Rubber": {
+      "triangles": 4238,
+      "vertices": 2350,
+      "material": "M_Rubber"
+    },
+    "AYR118_Cone": {
+      "triangles": 1280,
+      "vertices": 704,
+      "material": "M_Cone"
+    },
+    "AYR118_DustCap": {
+      "triangles": 528,
+      "vertices": 289,
+      "material": "M_DustCap"
+    },
+    "AYR118_Horn": {
+      "triangles": 1632,
+      "vertices": 980,
+      "material": "M_Horn"
+    },
+    "AYR118_Panel": {
+      "triangles": 432,
+      "vertices": 218,
+      "material": "M_Panel"
+    }
+  },
+  "dims_m": {
+    "width": 0.6,
+    "depth": 0.72,
+    "height_total": 0.648
+  },
+  "previews": [
+    "aal-you-ready/play/assets/previews/ayr118_front34.jpg",
+    "aal-you-ready/play/assets/previews/ayr118_front_detail.jpg",
+    "aal-you-ready/play/assets/previews/ayr118_rear34.jpg"
+  ],
+  "seconds": 144.1
+}

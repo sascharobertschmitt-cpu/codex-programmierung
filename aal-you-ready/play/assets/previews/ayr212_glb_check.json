@@ -13,12 +13,12 @@
     {
       "name": "Sichtbare Geometrie vorhanden",
       "status": "PASS",
-      "detail": "18548 Dreiecke"
+      "detail": "21668 Dreiecke"
     },
     {
       "name": "Dreiecksbudget <= 40000",
       "status": "PASS",
-      "detail": "18548"
+      "detail": "21668"
     },
     {
       "name": "Draw Calls (Primitive) <= 16",
@@ -28,12 +28,12 @@
     {
       "name": "Dateigroesse <= 2.0 MB",
       "status": "PASS",
-      "detail": "608 KB"
+      "detail": "792 KB"
     },
     {
       "name": "Alle Bilder eingebettet",
       "status": "PASS",
-      "detail": "3 Bilder, extern: 0"
+      "detail": "5 Bilder, extern: 0"
     },
     {
       "name": "Materialien vorhanden",
@@ -62,9 +62,9 @@
     }
   ],
   "analysis": {
-    "file_bytes": 622112,
-    "triangles": 18548,
-    "vertices": 12213,
+    "file_bytes": 811492,
+    "triangles": 21668,
+    "vertices": 14471,
     "primitives": 9,
     "meshes": 9,
     "materials": [
@@ -73,15 +73,10 @@
         "alphaMode": "OPAQUE",
         "alphaCutoff": null,
         "doubleSided": false,
-        "baseColorFactor": [
-          0.019999999552965164,
-          0.019999999552965164,
-          0.02199999988079071,
-          1
-        ],
+        "baseColorFactor": null,
         "metallic": 0,
-        "roughness": 0.6200000047683716,
-        "baseColorTexture": false,
+        "roughness": 1.0,
+        "baseColorTexture": true,
         "normalTexture": true
       },
       {
@@ -217,6 +212,20 @@
         "bytes": 140511
       },
       {
+        "name": "ayr212_wear_base",
+        "mimeType": "image/png",
+        "embedded": true,
+        "uri": null,
+        "bytes": 11283
+      },
+      {
+        "name": "ayr212_wear_orm",
+        "mimeType": "image/png",
+        "embedded": true,
+        "uri": null,
+        "bytes": 90306
+      },
+      {
         "name": "ayr212_grille_normal",
         "mimeType": "image/png",
         "embedded": true,
@@ -231,7 +240,7 @@
         "bytes": 35997
       }
     ],
-    "textures": 4,
+    "textures": 6,
     "bounds_min": [
       -0.3007,
       0.0,
@@ -252,7 +261,7 @@
         "min": [
           -0.3007,
           0.032,
-          -0.2592
+          -0.2595
         ],
         "max": [
           0.3007,
@@ -288,7 +297,7 @@
         "min": [
           -0.278,
           0.006,
-          -0.2522
+          -0.2528
         ],
         "max": [
           0.278,
@@ -304,7 +313,7 @@
         ],
         "max": [
           0.235,
-          0.618,
+          0.877,
           0.256
         ]
       },

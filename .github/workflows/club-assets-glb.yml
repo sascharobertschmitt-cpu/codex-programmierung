@@ -1,0 +1,164 @@
+name: Build club assets GLB (Blender)
+
+# Baut alle Club-Assets aus tools/blender/assets.json per Blender-Python (headless),
+# prueft sie, rendert Vorschaubilder, testet die Babylon.js-Seite im
+# Headless-Browser und committet GLBs + Vorschauen ins Repository.
+
+on:
+  push:
+    paths:
+      - 'tools/blender/**'
+      - 'tools/glb_check.py'
+      - 'tools/browser_smoke.mjs'
+      - 'aal-you-ready/play/speaker-glb-test.html'
+      - '.github/workflows/club-assets-glb.yml'
+  workflow_dispatch:
+    inputs:
+      only:
+        description: 'Nur dieses Asset bauen (id aus assets.json, leer = alle)'
+        default: ''
+      samples:
+        description: 'Cycles-Samples fuer Vorschaubilder'
+        default: '64'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: club-assets-glb-${{ github.ref }}
+  cancel-in-progress: false
+
+defaults:
+  run:
+    shell: bash   # aktiviert pipefail
+
+env:
+  BLENDER_VERSION: '4.2.3'
+  BLENDER_SERIES: '4.2'
+  ASSET_DIR: aal-you-ready/play/assets
+  PREVIEW_DIR: aal-you-ready/play/assets/previews
+  ONLY: ${{ github.event.inputs.only || '' }}
+  SAMPLES: ${{ github.event.inputs.samples || '64' }}
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Blender
+        uses: actions/cache@v4
+        with:
+          path: ~/blender
+          key: blender-${{ env.BLENDER_VERSION }}-linux-x64
+
+      - name: Install Blender ${{ env.BLENDER_VERSION }} (LTS)
+        timeout-minutes: 10
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libxi6 libxxf86vm1 libxfixes3 libxrender1 libgl1 \
+            libxkbcommon0 libsm6 libice6 libegl1 > /dev/null
+          if [ ! -x "$HOME/blender/blender" ]; then
+            url="https://download.blender.org/release/Blender${BLENDER_SERIES}/blender-${BLENDER_VERSION}-linux-x64.tar.xz"
+            curl -fL --retry 3 --retry-delay 5 -o /tmp/blender.tar.xz "$url"
+            mkdir -p "$HOME/blender"
+            tar -xf /tmp/blender.tar.xz -C "$HOME/blender" --strip-components=1
+          fi
+          "$HOME/blender/blender" --version | head -1
+
+      - name: List assets
+        run: |
+          python3 - <<'PY' > build_assets.tsv
+          import json, os
+          only = os.environ.get("ONLY", "").strip()
+          for a in json.load(open("tools/blender/assets.json")):
+              if only and a["id"] != only:
+                  continue
+              print("\t".join([a["id"], a["geometry"], a["glb"], " ".join(map(str, a["expect_size"])),
+                               a["front_material"], a["mask_materials"]]))
+          PY
+          cat build_assets.tsv
+          test -s build_assets.tsv
+
+      - name: Build models with Blender (headless)
+        timeout-minutes: 35
+        run: |
+          mkdir -p build "$PREVIEW_DIR"
+          while IFS=$'\t' read -r id geom glb expect front mask; do
+            echo "::group::Blender $id"
+            "$HOME/blender/blender" -b --factory-startup --python-exit-code 1 \
+              -P tools/blender/build_asset.py -- \
+              --geometry "$geom" --out "$ASSET_DIR/$glb" \
+              --tex-dir "build/textures_$id" --preview-dir "$PREVIEW_DIR" \
+              --samples "$SAMPLES" --report "$PREVIEW_DIR/${id}_build_report.json" \
+              2>&1 | tee "build/blender_$id.log"
+            test -s "$ASSET_DIR/$glb"
+            echo "::endgroup::"
+          done < build_assets.tsv
+
+      - name: Validate GLBs (own checks, sets grille alpha to MASK)
+        run: |
+          while IFS=$'\t' read -r id geom glb expect front mask; do
+            python3 tools/glb_check.py "$ASSET_DIR/$glb" \
+              --mask-materials "$mask" --alpha-cutoff 0.45 \
+              --front-material "$front" \
+              --expect-size $expect --size-tolerance 0.03 \
+              --max-tris 40000 --max-primitives 16 --max-bytes 2000000 \
+              --json-out "$PREVIEW_DIR/${id}_glb_check.json" \
+              --summary "$GITHUB_STEP_SUMMARY" | tee "build/glb_check_$id.log"
+          done < build_assets.tsv
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Validate GLBs (Khronos glTF-Validator)
+        run: |
+          npm install --no-save --no-audit --no-fund gltf-validator playwright@1.49.1
+          while IFS=$'\t' read -r id geom glb expect front mask; do
+            node -e '
+              const fs = require("fs"); const v = require("gltf-validator");
+              v.validateBytes(new Uint8Array(fs.readFileSync(process.argv[1]))).then(r => {
+                const i = r.issues;
+                console.log(`Khronos-Validator ${process.argv[1]}: ${i.numErrors} Fehler, ${i.numWarnings} Warnungen`);
+                for (const m of i.messages.slice(0, 30)) console.log(` [${m.severity}] ${m.code} ${m.pointer || ""} ${m.message}`);
+                fs.appendFileSync(process.env.GITHUB_STEP_SUMMARY,
+                  `\nKhronos glTF-Validator ${process.argv[1]}: **${i.numErrors} Fehler**, ${i.numWarnings} Warnungen\n`);
+                process.exit(i.numErrors > 0 ? 1 : 0);
+              }).catch(e => { console.error(e); process.exit(1); });
+            ' "$ASSET_DIR/$glb" | tee "build/khronos_$id.log"
+          done < build_assets.tsv
+
+      - name: Babylon.js test page in headless Chrome
+        continue-on-error: true
+        timeout-minutes: 8
+        run: |
+          (cd aal-you-ready/play && python3 -m http.server 8080 > /tmp/http.log 2>&1 &)
+          sleep 2
+          while IFS=$'\t' read -r id geom glb expect front mask; do
+            exp=$(echo "$expect" | tr ' ' ',')
+            PW_CHANNEL=chrome node tools/browser_smoke.mjs \
+              "http://localhost:8080/speaker-glb-test.html?file=$glb&expect=$exp&front=$front" \
+              "$PREVIEW_DIR/${id}_babylon_headless.png" 90000 | tee "build/browser_$id.log" || true
+          done < build_assets.tsv
+
+      - name: Upload logs and previews
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: club-assets-build
+          path: |
+            build/
+            ${{ env.PREVIEW_DIR }}/
+
+      - name: Commit models and previews
+        timeout-minutes: 3
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$ASSET_DIR"/*.glb "$PREVIEW_DIR"
+          if git diff --cached --quiet; then echo "Keine Aenderungen"; exit 0; fi
+          git commit -m "Build club assets GLB (Blender ${BLENDER_VERSION})"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

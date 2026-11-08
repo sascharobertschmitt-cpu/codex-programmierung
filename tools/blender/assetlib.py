@@ -110,6 +110,68 @@ def texture_grille(size=256, cols=4, hole_frac=0.38, edge_px=5.0):
     return color, normal
 
 
+def _draw_segments(field, segs, value, rng_w):
+    """Periodisch umbrechende, weiche Linien in ein Feld (min-Blend) zeichnen."""
+    size = field.shape[0]
+    for (x0, y0, x1, y1, w) in segs:
+        pad = int(w * 3) + 2
+        xa, xb = int(min(x0, x1)) - pad, int(max(x0, x1)) + pad
+        ya, yb = int(min(y0, y1)) - pad, int(max(y0, y1)) + pad
+        ys, xs = np.mgrid[ya:yb, xa:xb] + 0.5
+        dx, dy = x1 - x0, y1 - y0
+        L2 = dx * dx + dy * dy + 1e-9
+        t = np.clip(((xs - x0) * dx + (ys - y0) * dy) / L2, 0, 1)
+        d = np.hypot(xs - (x0 + t * dx), ys - (y0 + t * dy))
+        a = np.clip(1.0 - d / w, 0, 1) ** 1.5
+        # Kratzer laufen an den Enden aus
+        a *= np.clip(np.minimum(t, 1 - t) * 6, 0, 1)
+        iy = np.mod(np.arange(ya, yb), size)
+        ix = np.mod(np.arange(xa, xb), size)
+        sub = field[np.ix_(iy, ix)]
+        field[np.ix_(iy, ix)] = sub * (1 - a) + value * a
+
+
+def texture_wear(size=512, seed=11):
+    """Gebrauchsspuren fuer Gehaeuselack: liefert (roughness_orm_rgb, base_rgb).
+
+    ORM nach glTF: R = Occlusion (1), G = Roughness, B = Metallic (0).
+    Abrieb: glattere Flecken (Haende, Transport). Kratzer: helle, glatte Linien,
+    ueberwiegend waagerecht (Schieben, Stapeln).
+    """
+    rng = np.random.default_rng(seed)
+    rough = 0.64 + 0.035 * periodic_noise(size, 10, rng)
+    patch = periodic_noise(size, 30, rng)
+    rubbed = np.clip((patch - 0.9) / 0.9, 0, 1)
+    rough = rough * (1 - rubbed * 0.6) + 0.54 * rubbed * 0.6
+    shade = np.zeros((size, size))
+    shade += rubbed * 0.004
+
+    segs = []
+    for _ in range(28):
+        x0, y0 = rng.uniform(0, size, 2)
+        ang = rng.normal(0, 0.35) + (np.pi if rng.random() < 0.5 else 0)
+        if rng.random() < 0.2:
+            ang = rng.uniform(0, np.pi)
+        ln = rng.uniform(15, 140)
+        segs.append((x0, y0, x0 + ln * np.cos(ang), y0 + ln * np.sin(ang), rng.uniform(0.7, 1.6)))
+    _draw_segments(rough, segs, 0.46, rng)
+    sc = np.zeros((size, size))
+    _draw_segments(sc, segs, 1.0, rng)
+    shade += sc * 0.014
+
+    # quantisieren, damit PNG gut komprimiert
+    g = (np.round(np.clip(rough, 0, 1) * 255 / 2) * 2).clip(0, 255).astype(np.uint8)
+    orm = np.zeros((size, size, 3), dtype=np.uint8)
+    orm[..., 0] = 255
+    orm[..., 1] = g
+    # Basisfarbe: Lack ~0.020 linear (sRGB ~ 40/255 nach Umrechnung erledigt Blender)
+    lin = 0.020 + shade
+    srgb = np.where(lin <= 0.0031308, lin * 12.92, 1.055 * np.power(lin, 1 / 2.4) - 0.055)
+    b8 = np.round(srgb * 255).clip(0, 255).astype(np.uint8)
+    base = np.stack([b8, b8, np.clip(b8.astype(int) + 1, 0, 255).astype(np.uint8)], -1)
+    return orm, base
+
+
 # ---------------------------------------------------------------------------
 # Mesh-Builder
 # ---------------------------------------------------------------------------

@@ -1,0 +1,370 @@
+{
+  "checks": [
+    {
+      "name": "GLB-Container glTF 2.0 lesbar",
+      "status": "PASS",
+      "detail": "Khronos glTF Blender I/O v4.2.70"
+    },
+    {
+      "name": "alphaMode MASK gesetzt",
+      "status": "PASS",
+      "detail": "geaendert: ['M_Grille']; fehlend: -"
+    },
+    {
+      "name": "Sichtbare Geometrie vorhanden",
+      "status": "PASS",
+      "detail": "17504 Dreiecke"
+    },
+    {
+      "name": "Dreiecksbudget <= 40000",
+      "status": "PASS",
+      "detail": "17504"
+    },
+    {
+      "name": "Draw Calls (Primitive) <= 16",
+      "status": "PASS",
+      "detail": "9"
+    },
+    {
+      "name": "Dateigroesse <= 2.0 MB",
+      "status": "PASS",
+      "detail": "679 KB"
+    },
+    {
+      "name": "Alle Bilder eingebettet",
+      "status": "PASS",
+      "detail": "5 Bilder, extern: 0"
+    },
+    {
+      "name": "Materialien vorhanden",
+      "status": "PASS",
+      "detail": "9"
+    },
+    {
+      "name": "Ursprung am Boden (min Y ~ 0)",
+      "status": "PASS",
+      "detail": "min Y = 0.0"
+    },
+    {
+      "name": "Ursprung horizontal mittig",
+      "status": "PASS",
+      "detail": "Mitte X = 0.000, Z = -0.029"
+    },
+    {
+      "name": "Masse plausibel",
+      "status": "PASS",
+      "detail": "ist [0.677, 0.6542, 0.8147] m, erwartet [0.677, 0.654, 0.815] m (Toleranz 0.03)"
+    },
+    {
+      "name": "Front zeigt nach +Z",
+      "status": "PASS",
+      "detail": "M_Grille max Z = 0.376, Gesamt max Z = 0.3787"
+    }
+  ],
+  "analysis": {
+    "file_bytes": 695156,
+    "triangles": 17504,
+    "vertices": 11407,
+    "primitives": 9,
+    "meshes": 9,
+    "materials": [
+      {
+        "name": "M_Cabinet",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": null,
+        "metallic": 0,
+        "roughness": 1.0,
+        "baseColorTexture": true,
+        "normalTexture": true
+      },
+      {
+        "name": "M_Cone",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.02800000086426735,
+          0.02800000086426735,
+          0.029999999329447746,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.8799999952316284,
+        "baseColorTexture": false,
+        "normalTexture": true
+      },
+      {
+        "name": "M_DustCap",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.019999999552965164,
+          0.019999999552965164,
+          0.02199999988079071,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.2199999988079071,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_Grille",
+        "alphaMode": "MASK",
+        "alphaCutoff": 0.45,
+        "doubleSided": true,
+        "baseColorFactor": null,
+        "metallic": 0.3499999940395355,
+        "roughness": 0.41999998688697815,
+        "baseColorTexture": true,
+        "normalTexture": true
+      },
+      {
+        "name": "M_Horn",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": true,
+        "baseColorFactor": [
+          0.01600000075995922,
+          0.01600000075995922,
+          0.017999999225139618,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.36000001430511475,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_MetalDark",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.04500000178813934,
+          0.04500000178813934,
+          0.05000000074505806,
+          1
+        ],
+        "metallic": 0.8500000238418579,
+        "roughness": 0.3799999952316284,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_Panel",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.4000000059604645,
+          0.4000000059604645,
+          0.41999998688697815,
+          1
+        ],
+        "metallic": 1.0,
+        "roughness": 0.44999998807907104,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_Rubber",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.014000000432133675,
+          0.014000000432133675,
+          0.014000000432133675,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.550000011920929,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_Steel",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.6200000047683716,
+          0.6200000047683716,
+          0.6399999856948853,
+          1
+        ],
+        "metallic": 1.0,
+        "roughness": 0.2800000011920929,
+        "baseColorTexture": false,
+        "normalTexture": false
+      }
+    ],
+    "images": [
+      {
+        "name": "ayr118_grain_normal",
+        "mimeType": "image/png",
+        "embedded": true,
+        "uri": null,
+        "bytes": 140511
+      },
+      {
+        "name": "ayr118_wear_base",
+        "mimeType": "image/png",
+        "embedded": true,
+        "uri": null,
+        "bytes": 11283
+      },
+      {
+        "name": "ayr118_wear_orm",
+        "mimeType": "image/png",
+        "embedded": true,
+        "uri": null,
+        "bytes": 90306
+      },
+      {
+        "name": "ayr118_grille_normal",
+        "mimeType": "image/png",
+        "embedded": true,
+        "uri": null,
+        "bytes": 12748
+      },
+      {
+        "name": "ayr118_grille_color",
+        "mimeType": "image/png",
+        "embedded": true,
+        "uri": null,
+        "bytes": 35997
+      }
+    ],
+    "textures": 6,
+    "bounds_min": [
+      -0.3385,
+      0.0,
+      -0.436
+    ],
+    "bounds_max": [
+      0.3385,
+      0.6542,
+      0.3787
+    ],
+    "size_m": [
+      0.677,
+      0.6542,
+      0.8147
+    ],
+    "material_bounds": {
+      "M_Steel": {
+        "min": [
+          -0.3385,
+          0.028,
+          -0.402
+        ],
+        "max": [
+          0.3385,
+          0.6542,
+          0.3787
+        ]
+      },
+      "M_Rubber": {
+        "min": [
+          -0.257,
+          0.0,
+          -0.436
+        ],
+        "max": [
+          0.257,
+          0.6525,
+          0.3787
+        ]
+      },
+      "M_Panel": {
+        "min": [
+          -0.1,
+          0.386,
+          -0.364
+        ],
+        "max": [
+          0.1,
+          0.51,
+          -0.359
+        ]
+      },
+      "M_MetalDark": {
+        "min": [
+          -0.304,
+          0.026,
+          -0.414
+        ],
+        "max": [
+          0.304,
+          0.6515,
+          0.376
+        ]
+      },
+      "M_Horn": {
+        "min": [
+          -0.255,
+          0.036,
+          -0.373
+        ],
+        "max": [
+          0.255,
+          0.478,
+          0.366
+        ]
+      },
+      "M_Grille": {
+        "min": [
+          -0.262,
+          0.042,
+          0.376
+        ],
+        "max": [
+          0.262,
+          0.614,
+          0.376
+        ]
+      },
+      "M_DustCap": {
+        "min": [
+          -0.069,
+          0.304,
+          0.282
+        ],
+        "max": [
+          0.069,
+          0.442,
+          0.3075
+        ]
+      },
+      "M_Cone": {
+        "min": [
+          -0.1665,
+          0.2065,
+          0.282
+        ],
+        "max": [
+          0.1665,
+          0.5395,
+          0.366
+        ]
+      },
+      "M_Cabinet": {
+        "min": [
+          -0.3,
+          0.008,
+          -0.36
+        ],
+        "max": [
+          0.3,
+          0.648,
+          0.36
+        ]
+      }
+    }
+  }
+}

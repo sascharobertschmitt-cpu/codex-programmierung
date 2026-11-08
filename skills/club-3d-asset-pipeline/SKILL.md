@@ -18,12 +18,14 @@ Claude schreibt Python  →  GitHub Actions (Ubuntu)  →  Blender 4.2 LTS headl
 | Pfad | Zweck |
 |---|---|
 | `tools/blender/assetlib.py` | Reines numpy: Mesh-Builder (Lathe, Loft, Rounded Box, Zylinder), kachelbare Texturen, PNG-Writer. Ohne Blender testbar. |
-| `tools/blender/<asset>_geometry.py` | Geometrie eines Assets als Daten (ohne bpy). |
-| `tools/blender/<asset>.py` | Blender-Teil: Materialien, Modifier (Bevel, Boolean, Weighted Normal), Export, Vorschau. |
+| `tools/blender/speaker_geometry.py` | Topteil AYR-212 und **gemeinsame Bauteile der Familie**: `add_woofer(scale)`, `add_grille`, `bar_handle`, `connector_panel`, `round_port`, `rigging_point`, `screw_head`. |
+| `tools/blender/sub_geometry.py` | Subwoofer AYR-118, nutzt die gemeinsamen Bauteile. |
+| `tools/blender/build_asset.py` | Generischer Blender-Teil: Texturen, Materialien, Bevel/Boolean/Weighted Normal, Export, Vorschau. `--geometry <modul>` |
+| `tools/blender/assets.json` | Liste aller Assets mit GLB-Name, erwarteten Maßen, Front-Material. |
 | `tools/glb_check.py` | GLB-Prüfung (stdlib). Setzt bei Bedarf `alphaMode: MASK`. |
 | `tools/browser_smoke.mjs` | Lädt eine Testseite in Headless-Chrome, liest `window.TEST_RESULT`, macht Screenshot. |
-| `.github/workflows/club-<asset>-glb.yml` | Build, Prüfung, Commit. |
-| `aal-you-ready/play/<asset>-glb-test.html` | Prüfstand für Babylon.js/iPhone. Generisch über `?file=…&front=…&expect=x,y,z`. |
+| `.github/workflows/club-assets-glb.yml` | Baut alle Assets aus `assets.json` (oder eins per `only`), prüft, committet. |
+| `aal-you-ready/play/speaker-glb-test.html` | Prüfstand für Babylon.js/iPhone. `?file=…&front=…&expect=x,y,z`, Stack: `?file=club_speaker_pa212.glb&under=club_sub_118.glb`. |
 | `aal-you-ready/play/assets/<asset>.glb` | Ergebnis (wird von der Action committet). |
 | `aal-you-ready/play/assets/previews/` | Cycles-Renderings, Prüfberichte, Headless-Screenshot. |
 
@@ -65,11 +67,13 @@ Mehrfach vorkommende Objekte (Lautsprecher-Stacks, Stühle) in Babylon instanzii
 
 ## Neues Asset anlegen
 
-1. `tools/blender/<asset>_geometry.py` nach Vorbild `speaker_geometry.py` schreiben. Maße als Konstanten oben.
-2. Lokal ohne Blender prüfen: `python3 tools/blender/<asset>_geometry.py` (Dreiecke je Material).
-3. Blender-Skript nach Vorbild `club_speaker_pa212.py`, Workflow kopieren und Pfade/`--expect-size` anpassen.
-4. Pushen. Die Action baut, prüft und committet GLB plus Vorschaubilder.
-5. Vorschaubilder im Repo ansehen (`assets/previews/*.jpg`), dann auf dem iPhone die Testseite öffnen.
+1. `tools/blender/<name>_geometry.py` mit `build()` schreiben (Vorbild `sub_geometry.py`). Rückgabe: `name`, `cabinet` (Part mit geteilten Vertices), `cutters`, `parts`, `bevel`, `dims`, `shots`. Gemeinsame Bauteile aus `speaker_geometry` wiederverwenden.
+2. Lokal ohne Blender prüfen: `python3 tools/blender/<name>_geometry.py` (Dreiecke, Maße in glTF-Achsen).
+3. Eintrag in `assets.json` mit den Maßen aus Schritt 2.
+4. Pushen. Die Action baut, prüft und committet GLB plus Vorschaubilder (`assets/previews/<id>_*.jpg`).
+5. Vorschaubilder ansehen, dann auf dem iPhone die Testseite öffnen.
+
+Gemeinsame Bauteile nie still ändern: vorher Geometrie aller Assets als Referenz speichern und nach dem Umbau vergleichen.
 
 ## Testen auf dem iPhone
 
@@ -93,6 +97,8 @@ githack cached einige Minuten. Für einen garantiert frischen Stand den Commit-H
 | 8 | Dateigröße | Budget in `glb_check.py` | automatisch |
 | 9 | Optik | Cycles-Renderings im Repo | **manuell ansehen** |
 | 10 | iPhone | Testseite auf echtem Gerät | **manuell** |
+
+Gebrauchsspuren: `texture_wear()` (Rauheit + Kratzer, zweite UV `UVWear`, 60 cm Kachel). Dezent halten, sonst wirkt es wie ein Muster.
 
 Ein Asset gilt erst als fertig, wenn 9 und 10 von einem Menschen bestätigt sind.
 
