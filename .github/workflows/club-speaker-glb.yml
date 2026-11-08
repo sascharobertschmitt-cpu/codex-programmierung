@@ -94,7 +94,7 @@ jobs:
 
       - name: Validate GLB (Khronos glTF-Validator)
         run: |
-          npm install --no-save --silent gltf-validator@2 playwright@1.49.1
+          npm install --no-save --no-audit --no-fund gltf-validator playwright@1.49.1
           node -e '
             const fs = require("fs"); const v = require("gltf-validator");
             v.validateBytes(new Uint8Array(fs.readFileSync(process.argv[1]))).then(r => {
