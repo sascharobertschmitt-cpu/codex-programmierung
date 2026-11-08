@@ -16,11 +16,14 @@ for (const [w, h, tag] of [[430, 932, 'hoch'], [932, 430, 'quer']]) {
       return `${el.tagName.toLowerCase()}${el.id ? '#' + el.id : ''}${el.className && typeof el.className === 'string' ? '.' + el.className.trim().split(/\s+/).join('.') : ''} z=${cs.zIndex} bg=${cs.backgroundColor} op=${cs.opacity} bf=${cs.backdropFilter} sh=${cs.boxShadow.slice(0, 40)} rect=${JSON.stringify(el.getBoundingClientRect().toJSON(), (k, v) => typeof v === 'number' ? Math.round(v) : v)}`;
     };
     const pts = [[0.5, 0.5], [0.5, 0.35], [0.2, 0.7]];
-    return { body: document.body.className, phase: snapshot?.phase,
+    const veils = [...document.querySelectorAll('*')].filter(e => { const cs = getComputedStyle(e); return cs.display !== 'none' && cs.visibility !== 'hidden' && e.getClientRects().length && /\d{3,}px/.test(cs.boxShadow.split(',')[0] || ''); }).map(desc);
+    const covers = [...document.querySelectorAll('*')].filter(e => { const r = e.getBoundingClientRect(); const cs = getComputedStyle(e); return cs.display !== 'none' && r.width >= innerWidth * 0.9 && r.height >= innerHeight * 0.9 && !/^(HTML|BODY|MAIN|CANVAS)$/.test(e.tagName) && cs.backgroundColor !== 'rgba(0, 0, 0, 0)'; }).map(desc);
+    return { veils, covers, body: document.body.className, phase: snapshot?.phase,
       stacks: pts.map(([x, y]) => document.elementsFromPoint(innerWidth * x, innerHeight * y).slice(0, 9).map(desc)) };
   });
   console.log('=====', tag, 'body:', info.body, 'phase:', info.phase);
-  info.stacks.forEach((s, i) => { console.log('-- Punkt', i); s.forEach(l => console.log('   ', l)); });
+  console.log('-- Schleier-Kandidaten (großer Schatten):'); info.veils.forEach(l => console.log('   V', l));
+  console.log('-- Vollflächige Elemente mit Hintergrund:'); info.covers.forEach(l => console.log('   C', l));
   await page.screenshot({ path: shot.replace('.png', '_' + tag + '.png') });
   await page.close();
 }
