@@ -37,6 +37,7 @@
   // ?n=6 Anzahl Figuren (GLB-Spielfiguren), ?lineup=1 alle nebeneinander ab Feld 2
   const N = Math.max(1, Math.min(8, Number(Q.get('n') || 3)));
   const players = Array.from({ length: N }, (_, i) => ({ id: 'p' + i, position: Q.get('lineup') ? 2 + i : [0, 3, 9, 14, 20, 27, 33, 40][i], lap: 0 }));
+  if (Q.get('pos')) players[0].position = Number(Q.get('pos'));
   let turn = 0;
   try {
     const t0 = performance.now();
@@ -51,7 +52,9 @@
       const p = players[turn], d = ClubRules.rollDice(), from = p.lap * 64 + p.position, to = from + d.total;
       p.lap = Math.floor(to / 64); p.position = to % 64;
       setView('follow');
+      if (sc.rollDice) await sc.rollDice(turn, d.white, d.club, 0);
       await sc.walk(turn, from, to);
+      if (sc.landPulse) await sc.landPulse(turn);
       turn = (turn + 1) % players.length; sc.sync(players, turn);
     };
     const ms = Math.round(performance.now() - t0);
@@ -61,6 +64,8 @@
     if (Q.get('walk')) { for (let i = 0; i < Number(Q.get('walk')); i++) await document.querySelector('#walk').onclick(); }
     await Promise.race([sc.avatarsReady, new Promise(r => setTimeout(r, 60000))]);
     await new Promise(r => setTimeout(r, 3000));
+    // ?dice=1: Würfel laufen gerade, Ergebnis-Schild sichtbar im Screenshot
+    if (Q.get('dice')) { setView('follow'); sc.rollDice(0, 4, '+5', 3); await new Promise(r => setTimeout(r, 1700)); }
     window.TEST_RESULT = { ok: sc.paLoaded && sc.rigLoaded, checks: [
       { name: 'Szene geladen', ok: true, detail: ms + ' ms' },
       { name: 'PA-Stacks', ok: sc.paLoaded },
@@ -68,6 +73,7 @@
       { name: 'Spielfiguren + DJ + Türsteher', ok: sc.figuresLoaded },
       { name: 'Tanzende Menge', ok: sc.crowdLoaded },
       { name: 'Kartenstapel', ok: typeof sc.drawCard === 'function' },
+      { name: 'Würfel + Landemoment', ok: typeof sc.rollDice === 'function' && typeof sc.landPulse === 'function' },
     ], stats: { fps: Math.round(sc.engine.getFps()) } };
   } catch (e) {
     console.error(e); info.textContent = 'Fehler: ' + e.message;

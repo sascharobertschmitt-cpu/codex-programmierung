@@ -242,6 +242,31 @@
       glow.addExcludedMesh(sign);
     }
 
+    // VIP-Treppe: goldene Stufen an Feld 20 und 44, Bogen zum Feld +6
+    const goldM = new B.StandardMaterial('vipGold', scene); goldM.diffuseColor = B.Color3.FromHexString('#ffcf4a'); goldM.emissiveColor = B.Color3.FromHexString('#8a5a00');
+    const arcM = new B.StandardMaterial('vipArc', scene); arcM.disableLighting = true; arcM.emissiveColor = B.Color3.FromHexString('#ffcf4a'); arcM.alpha = 0.75;
+    for (const n of [20, 44]) {
+      const t = tiles[n], u = tiles[(n + 6) % 64], nx = -Math.sin(t.ang), nz = Math.cos(t.ang);
+      const out = (nx * t.x + nz * t.z) >= 0 ? 1 : -1;
+      const base = new B.Vector3(t.x + out * nx * 0.95, 0, t.z + out * nz * 0.95);
+      for (let k = 0; k < 4; k++) {
+        const st = B.MeshBuilder.CreateBox('vipStep' + n + '_' + k, { width: 0.42, height: 0.12 + k * 0.14, depth: 0.16 }, scene);
+        st.position.set(base.x - out * nx * k * 0.15, (0.12 + k * 0.14) / 2, base.z - out * nz * k * 0.15);
+        st.rotation.y = -t.ang; st.material = goldM;
+      }
+      const p0 = new B.Vector3(t.x, t.h + 0.25, t.z), p2 = new B.Vector3(u.x, u.h + 0.25, u.z);
+      const mid = p0.add(p2).scale(0.5); mid.y += 1.6;
+      const pts = []; for (let k = 0; k <= 24; k++) { const f = k / 24; pts.push(p0.scale((1 - f) * (1 - f)).add(mid.scale(2 * f * (1 - f))).add(p2.scale(f * f))); }
+      const arc = B.MeshBuilder.CreateTube('vipArc' + n, { path: pts, radius: 0.03, tessellation: 6 }, scene); arc.material = arcM;
+      const tx = new B.DynamicTexture('vipTex' + n, { width: 256, height: 96 }, scene, true);
+      const g = tx.getContext(); g.fillStyle = '#1a1206'; g.fillRect(0, 0, 256, 96); g.strokeStyle = '#ffcf4a'; g.lineWidth = 6; g.strokeRect(4, 4, 248, 88);
+      g.fillStyle = '#ffcf4a'; g.font = 'bold 40px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('⭐ VIP +6', 128, 50); tx.update();
+      const sign = B.MeshBuilder.CreatePlane('vipSign' + n, { width: 0.9, height: 0.34, sideOrientation: B.Mesh.DOUBLESIDE }, scene);
+      sign.position.copyFrom(mid); sign.position.y += 0.25; sign.billboardMode = B.Mesh.BILLBOARDMODE_Y;
+      const sm = new B.StandardMaterial('vipSignM' + n, scene); sm.disableLighting = true; sm.emissiveTexture = tx; sign.material = sm;
+      glow.addExcludedMesh(sign);
+    }
+
     // Einlass-Tor (Start/Ziel) über Feld 0
     const gateRoot = new B.TransformNode('gate', scene);
     gateRoot.position.set(tiles[0].x, 0, tiles[0].z);
@@ -743,7 +768,8 @@
       const overview = viewMode !== 'follow' || !tok;
       const goalTarget = overview ? goal.target : tok.root.position.add(new B.Vector3(0, 0.4, 0));
       cam.target = B.Vector3.Lerp(cam.target, goalTarget, k);
-      cam.radius += (goal.radius - cam.radius) * k;
+      const zr = (!overview && performance.now() < zoomUntil) ? 0.62 : 1;
+      cam.radius += (goal.radius * zr - cam.radius) * k;
       if (autoCam) {
         if (goal.beta !== undefined) cam.beta += (goal.beta - cam.beta) * k * 0.6;
         const p = tok ? tok.root.position : B.Vector3.Zero();
@@ -764,6 +790,87 @@
     });
     engine.runRenderLoop(() => scene.render());
 
+    let zoomUntil = 0;
+    // Billboard-Schild mit Text (Würfelergebnis, Schrittzähler)
+    const label = (name, text, col, size) => {
+      const tx = new B.DynamicTexture(name + 'Tex', { width: 256, height: 128 }, scene, true);
+      tx.hasAlpha = true;
+      const draw = (t, c) => {
+        const g = tx.getContext(); g.clearRect(0, 0, 256, 128);
+        g.fillStyle = 'rgba(8,6,16,0.82)'; g.beginPath(); g.roundRect ? g.roundRect(8, 8, 240, 112, 26) : g.rect(8, 8, 240, 112); g.fill();
+        g.strokeStyle = c || '#f5ecff'; g.lineWidth = 7; g.stroke();
+        g.fillStyle = '#fff'; g.font = 'bold 74px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(t), 128, 68);
+        tx.update();
+      };
+      draw(text, col);
+      const pl = B.MeshBuilder.CreatePlane(name, { width: size || 0.9, height: (size || 0.9) / 2 }, scene);
+      pl.billboardMode = B.Mesh.BILLBOARDMODE_ALL;
+      const m = new B.StandardMaterial(name + 'Mat', scene); m.disableLighting = true; m.emissiveTexture = tx; m.opacityTexture = tx; m.backFaceCulling = false;
+      pl.material = m; glow.addExcludedMesh(pl);
+      return { mesh: pl, draw, dispose() { pl.dispose(); m.dispose(); tx.dispose(); } };
+    };
+    // Würfel-Würfel: zwei Würfel wirbeln über der Figur, dann erscheint das Ergebnis
+    const pipTex = (() => {
+      const t = new B.DynamicTexture('pipTex', { width: 128, height: 128 }, scene, true);
+      const g = t.getContext(); g.fillStyle = '#f4f1ff'; g.fillRect(0, 0, 128, 128); g.fillStyle = '#16121f';
+      [[32, 32], [96, 96], [64, 64], [96, 32], [32, 96]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 12, 0, 7); g.fill(); });
+      t.update(); return t;
+    })();
+    const clubTex = (() => {
+      const t = new B.DynamicTexture('clubDieTex', { width: 128, height: 128 }, scene, true);
+      const g = t.getContext(); g.fillStyle = '#1a0f2e'; g.fillRect(0, 0, 128, 128); g.strokeStyle = '#ff4fd8'; g.lineWidth = 10; g.strokeRect(8, 8, 112, 112);
+      g.fillStyle = '#ff4fd8'; g.font = 'bold 44px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('CLUB', 64, 68);
+      t.update(); return t;
+    })();
+    const dieMat = (name, tex, emi) => { const m = new B.StandardMaterial(name, scene); m.diffuseTexture = tex; m.emissiveTexture = tex; m.emissiveColor = new B.Color3(emi, emi, emi); return m; };
+    const pipMat = dieMat('pipMat', pipTex, 0.55), clubMat = dieMat('clubDieMat', clubTex, 0.9);
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+    const animate = (ms, fn) => new Promise(res => {
+      const start = performance.now();
+      const obs = scene.onBeforeRenderObservable.add(() => {
+        const f = Math.min(1, (performance.now() - start) / ms);
+        fn(f);
+        if (f >= 1) { scene.onBeforeRenderObservable.remove(obs); res(); }
+      });
+    });
+    const rollDice = async (idx, white, club, turbo) => {
+      const tk = tokens[idx]; if (!tk) return;
+      follow = idx; autoCam = true;
+      const base = tk.root.position.add(new B.Vector3(0, 1.55, 0));
+      const dice = [[pipMat, -0.28], [clubMat, 0.28]].concat(turbo ? [[pipMat, 0]] : []).map(([m, off], j) => {
+        const b = B.MeshBuilder.CreateBox('rollDie' + j, { size: 0.3 }, scene);
+        b.material = m; glow.addExcludedMesh(b);
+        b.position.copyFrom(base); b.position.x += off; b.position.y += (j === 2 ? 0.38 : 0);
+        b.rotationQuaternion = null; b.metadata = { sp: new B.Vector3(7 + j * 3, 9 - j * 2, 5 + j), off };
+        return b;
+      });
+      await animate(1150, f => {
+        const slow = Math.pow(1 - f, 2);
+        dice.forEach((b, j) => {
+          const sp = b.metadata.sp;
+          b.rotation.x += sp.x * 0.016 * slow; b.rotation.y += sp.y * 0.016 * slow; b.rotation.z += sp.z * 0.016 * slow;
+          b.position.y = base.y + (j === 2 ? 0.38 : 0) + Math.abs(Math.sin(f * Math.PI * 3)) * 0.22 * (1 - f);
+        });
+      });
+      const txt = white + ' + ' + club + (turbo ? ' + ' + turbo : '');
+      const l = label('rollLabel', txt, '#ff4fd8', 1.1);
+      l.mesh.position.copyFrom(base).addInPlace(new B.Vector3(0, 0.55, 0));
+      l.mesh.scaling.setAll(0.2);
+      await animate(260, f => l.mesh.scaling.setAll(0.2 + 0.8 * Math.sin(f * Math.PI / 2) * (1 + 0.15 * Math.sin(f * Math.PI))));
+      await sleep(900);
+      dice.forEach(b => b.dispose()); l.dispose();
+    };
+    // Landemoment: Feld leuchtet auf, Kamera fährt kurz heran
+    const landPulse = async (idx) => {
+      const tk = tokens[idx]; if (!tk) return;
+      zoomUntil = performance.now() + 1500;
+      const ring = B.MeshBuilder.CreateTorus('landRing', { diameter: 0.9, thickness: 0.05, tessellation: 40 }, scene);
+      const m = new B.StandardMaterial('landRingMat', scene); m.disableLighting = true; m.emissiveColor = B.Color3.FromHexString(COLORS[idx % COLORS.length]); ring.material = m;
+      ring.position.copyFrom(tk.root.position); ring.position.y += 0.03;
+      await animate(900, f => { ring.scaling.setAll(1 + f * 1.6); m.alpha = 1 - f; });
+      ring.dispose(); m.dispose();
+      await sleep(350);
+    };
     const hop = (tok, from, to, ms) => new Promise(res => {
       const start = performance.now();
       const obs = scene.onBeforeRenderObservable.add(() => {
@@ -778,7 +885,7 @@
     await scene.whenReadyAsync();
 
     return {
-      scene, engine, paLoaded, rigLoaded, tiles, drawCard, avatarsReady,
+      scene, engine, paLoaded, rigLoaded, tiles, drawCard, avatarsReady, rollDice, landPulse,
       get figuresLoaded() { return figuresLoaded; }, get crowdLoaded() { return crowdLoaded; },
       sync(players, active) {
         while (tokens.length < players.length) tokens.push(makeToken(tokens.length, players));
@@ -795,10 +902,15 @@
         tk.walking = true;
         const dir = toAbs > fromAbs ? 1 : -1, steps = Math.min(40, Math.abs(toAbs - fromAbs));
         let cur = fromAbs;
+        const cnt = label('stepLabel' + idx, steps, dir > 0 ? '#2ee6b0' : '#ff668c', 0.6);
+        const follow1 = scene.onBeforeRenderObservable.add(() => { cnt.mesh.position.copyFrom(tk.root.position); cnt.mesh.position.y += 1.35; });
         for (let k = 0; k < steps; k++) {
           cur += dir;
-          await hop(tk, tk.root.position.clone(), slotPos(cur, idx), steps > 14 ? 150 : 230);
+          await hop(tk, tk.root.position.clone(), slotPos(cur, idx), steps > 14 ? 190 : 320);
+          cnt.draw(steps - k - 1, dir > 0 ? '#2ee6b0' : '#ff668c');
+          await sleep(steps > 14 ? 20 : 70);
         }
+        scene.onBeforeRenderObservable.remove(follow1); cnt.dispose();
         tk.walking = false;
         tk.body.rotation.y = restYaw(cur);
       },
