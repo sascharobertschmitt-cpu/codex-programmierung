@@ -24,6 +24,20 @@ for (const [w, h, tag] of [[430, 932, 'hoch'], [932, 430, 'quer']]) {
   console.log('=====', tag, 'body:', info.body, 'phase:', info.phase);
   console.log('-- Schleier-Kandidaten (großer Schatten):'); info.veils.forEach(l => console.log('   V', l));
   console.log('-- Vollflächige Elemente mit Hintergrund:'); info.covers.forEach(l => console.log('   C', l));
+  const ov = await page.evaluate(() => {
+    const ids = ['.hud-brand', '#updateInLobby', '#turnlabel', '#status', '#players', '#circuitView', '#diceResult', '#roll', '#reopenPopup', '.exit-game', '#notice'];
+    const vis = ids.map(q => [q, document.querySelector(q)]).filter(([, e]) => e && getComputedStyle(e).display !== 'none' && !e.classList.contains('hide') && e.getClientRects().length && e.getBoundingClientRect().width > 0)
+      .map(([q, e]) => [q, e.getBoundingClientRect()]);
+    const hits = [];
+    for (let i = 0; i < vis.length; i++) for (let j = i + 1; j < vis.length; j++) {
+      const [qa, a] = vis[i], [qb, b] = vis[j];
+      const w = Math.min(a.right, b.right) - Math.max(a.left, b.left), h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+      if (w > 2 && h > 2) hits.push(`${qa} x ${qb} (${Math.round(w)}x${Math.round(h)})`);
+    }
+    return { rects: vis.map(([q, r]) => `${q} ${Math.round(r.left)},${Math.round(r.top)} ${Math.round(r.width)}x${Math.round(r.height)}`), hits };
+  });
+  console.log('-- HUD-Elemente:'); ov.rects.forEach(l => console.log('   R', l));
+  console.log('-- Überlappungen:', ov.hits.length ? '' : 'keine'); ov.hits.forEach(l => console.log('   X', l));
   await page.screenshot({ path: shot.replace('.png', '_' + tag + '.png') });
   await page.close();
 }
