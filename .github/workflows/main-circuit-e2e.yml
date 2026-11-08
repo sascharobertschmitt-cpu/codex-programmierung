@@ -55,5 +55,10 @@ jobs:
           git add aal-you-ready/play/assets/previews/main_circuit_*.png || true
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Main circuit e2e screenshots"
-          git pull --rebase origin "${GITHUB_REF_NAME}"
-          git push origin "HEAD:${GITHUB_REF_NAME}"
+          # Parallel laufende Workflows committen ebenfalls: bis zu 5 Versuche, Screenshot-Konflikte zugunsten des neuesten Standes
+          for i in 1 2 3 4 5; do
+            git pull --rebase -X theirs origin "${GITHUB_REF_NAME}" || { git rebase --abort 2>/dev/null; sleep 3; continue; }
+            git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            sleep $((i * 4))
+          done
+          echo "::warning::Screenshots konnten nicht gepusht werden (Tests selbst sind durchgelaufen)"
