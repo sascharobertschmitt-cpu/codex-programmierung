@@ -1,0 +1,66 @@
+{
+  "asset": "AYR212",
+  "blender": "4.2.3 LTS",
+  "glb": "aal-you-ready/play/assets/club_speaker_pa212.glb",
+  "glb_bytes": 813260,
+  "triangles_total": 18548,
+  "meshes": {
+    "AYR212_Cabinet": {
+      "triangles": 708,
+      "vertices": 356,
+      "material": "M_Cabinet"
+    },
+    "AYR212_Grille": {
+      "triangles": 2,
+      "vertices": 4,
+      "material": "M_Grille"
+    },
+    "AYR212_MetalDark": {
+      "triangles": 3622,
+      "vertices": 2127,
+      "material": "M_MetalDark"
+    },
+    "AYR212_Steel": {
+      "triangles": 4824,
+      "vertices": 2668,
+      "material": "M_Steel"
+    },
+    "AYR212_Rubber": {
+      "triangles": 2592,
+      "vertices": 1494,
+      "material": "M_Rubber"
+    },
+    "AYR212_Cone": {
+      "triangles": 2560,
+      "vertices": 1408,
+      "material": "M_Cone"
+    },
+    "AYR212_DustCap": {
+      "triangles": 1056,
+      "vertices": 578,
+      "material": "M_DustCap"
+    },
+    "AYR212_Horn": {
+      "triangles": 2752,
+      "vertices": 1524,
+      "material": "M_Horn"
+    },
+    "AYR212_Panel": {
+      "triangles": 432,
+      "vertices": 218,
+      "material": "M_Panel"
+    }
+  },
+  "dims_m": {
+    "width_front": 0.6,
+    "width_rear": 0.4,
+    "depth": 0.5,
+    "height_total": 0.988
+  },
+  "previews": [
+    "aal-you-ready/play/assets/previews/ayr212_front34.jpg",
+    "aal-you-ready/play/assets/previews/ayr212_front_detail.jpg",
+    "aal-you-ready/play/assets/previews/ayr212_rear34.jpg"
+  ],
+  "seconds": 207.9
+}
