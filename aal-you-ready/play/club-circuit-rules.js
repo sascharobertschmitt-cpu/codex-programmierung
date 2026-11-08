@@ -109,7 +109,25 @@
     return { path, events };
   }
 
+  // Club-Würfel (zweiter Würfel, Mario-Party-Prinzip). Normaler W6 + Club-Würfel.
+  const CLUB_DIE = [
+    { face: '0', value: 0, name: 'Stromausfall', text: 'Stromausfall: nur der normale Würfel zählt' },
+    { face: '2', value: 2 },
+    { face: '3', value: 3 },
+    { face: '5', value: 5 },
+    { face: '7', value: 7, name: 'Bass Drop', text: 'Bass Drop: +7' },
+    { face: '×2', double: true, name: 'Doppelzeit', text: 'Doppelzeit: normaler Würfel zählt doppelt' },
+  ];
+
+  function rollDice(rng) {
+    rng = rng || Math.random;
+    const white = 1 + Math.floor(rng() * 6);
+    const club = CLUB_DIE[Math.floor(rng() * CLUB_DIE.length)];
+    const total = club.double ? white * 2 : white + club.value;
+    return { white, club, total };
+  }
+
   const LABELS = { gate: 'Einlass', activity: 'Aktion', slf: 'Stadt-Land-Fluss', special: 'Spezial', event: 'Ereignis' };
 
-  return { FIELDS, DEFAULTS, LABELS, fieldType, newGame, nextTurn, move };
+  return { FIELDS, DEFAULTS, LABELS, CLUB_DIE, fieldType, newGame, nextTurn, move, rollDice };
 }));

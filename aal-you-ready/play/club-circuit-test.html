@@ -434,10 +434,19 @@
     const p = nt.player, idx = p.id;
     follow = idx; autoCam = true; if (overview) setOverview(false);
     $('#status').textContent = `${p.name} würfelt …`;
-    const dice = Array.from({ length: DICE }, () => 1 + Math.floor(Math.random() * 6));
-    const roll = dice.reduce((a, b) => a + b, 0);
-    $('#dice').textContent = dice.join(' + ');
-    await sleep(350);
+    let roll;
+    if (DICE === 2) {                                   // W6 + Club-Würfel
+      const d = R.rollDice();
+      roll = d.total;
+      $('#dice').textContent = d.white + ' · ' + d.club.face;
+      await sleep(350);
+      if (d.club.name) await toast(d.club.text, d.club.double ? '#ffb627' : d.club.value ? '#ff4fd8' : '#ff668c');
+    } else {
+      const dice = Array.from({ length: DICE }, () => 1 + Math.floor(Math.random() * 6));
+      roll = dice.reduce((a, b) => a + b, 0);
+      $('#dice').textContent = dice.join(' + ');
+      await sleep(350);
+    }
     const res = R.move(game, roll);
     for (const field of res.path) {
       await hop(tokens[idx], tokens[idx].root.position.clone(), slotPos(field, idx));

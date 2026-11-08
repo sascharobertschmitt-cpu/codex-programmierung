@@ -61,4 +61,14 @@ t('komplettes Spiel endet immer', () => {
     assert.strictEqual(g.players[g.winner].lap, 3);
   }
 });
+t('Club-Wuerfel: Werte und Doppelzeit', () => {
+  const seq = (arr) => { let i = 0; return () => arr[i++]; };
+  assert.deepStrictEqual(R.rollDice(seq([0.5, 0.0])).total, 4);           // W6=4, Stromausfall
+  assert.deepStrictEqual(R.rollDice(seq([0.99, 4.5 / 6])).total, 13);     // W6=6, Bass Drop
+  const d = R.rollDice(seq([0.4, 0.99]));                                  // W6=3, Doppelzeit
+  assert.strictEqual(d.club.double, true); assert.strictEqual(d.total, 6);
+  let sum = 0, N = 60000;
+  for (let i = 0; i < N; i++) { const r = R.rollDice(); assert.ok(r.total >= 1 && r.total <= 13); sum += r.total; }
+  assert.ok(Math.abs(sum / N - 6.917) < 0.08, 'Mittelwert ' + sum / N);
+});
 console.log(`${n} Tests bestanden`);
