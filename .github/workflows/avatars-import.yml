@@ -1,0 +1,87 @@
+name: Import avatars (100Avatars, Blender)
+
+# Laedt ausgewaehlte Avatare aus polygonalmind/100avatars (CC BY 4.0), normalisiert sie in Blender
+# und rendert ein Uebersichtsbild. Kandidaten: nur Bild + Bericht. selected.txt: GLBs ins Spiel.
+
+on:
+  push:
+    paths:
+      - 'tools/avatars/**'
+      - '.github/workflows/avatars-import.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: avatars-import-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BLENDER_VERSION: '4.2.3'
+  BLENDER_SERIES: '4.2'
+
+jobs:
+  import:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Cache Blender
+        uses: actions/cache@v4
+        with:
+          path: ~/blender
+          key: blender-${{ env.BLENDER_VERSION }}-linux-x64
+
+      - name: Install Blender
+        timeout-minutes: 10
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libxi6 libxxf86vm1 libxfixes3 libxrender1 libgl1 \
+            libxkbcommon0 libsm6 libice6 libegl1 > /dev/null
+          if [ ! -x "$HOME/blender/blender" ]; then
+            url="https://download.blender.org/release/Blender${BLENDER_SERIES}/blender-${BLENDER_VERSION}-linux-x64.tar.xz"
+            curl -fL --retry 3 --retry-delay 5 -o /tmp/blender.tar.xz "$url"
+            mkdir -p "$HOME/blender"
+            tar -xf /tmp/blender.tar.xz -C "$HOME/blender" --strip-components=1
+          fi
+          "$HOME/blender/blender" --version | head -1
+
+      - name: Fetch selected VRM files (sparse)
+        run: |
+          if [ -s tools/avatars/selected.txt ]; then LIST=tools/avatars/selected.txt; MODE=final; else LIST=tools/avatars/candidates.txt; MODE=candidates; fi
+          echo "LIST=$LIST" >> "$GITHUB_ENV"; echo "MODE=$MODE" >> "$GITHUB_ENV"
+          git clone --depth 1 --filter=blob:none --no-checkout https://github.com/polygonalmind/100avatars build/100avatars
+          cd build/100avatars
+          git sparse-checkout init --no-cone
+          sed 's|^|/|' "../../$LIST" | git sparse-checkout set --no-cone --stdin
+          git checkout
+          ls -la $(head -3 "../../$LIST") || true
+          head -40 CCLicense.md > ../../tools/avatars/LICENSE_100Avatars_CC-BY-4.0.md
+
+      - name: Import, normalize, export, render sheet
+        timeout-minutes: 40
+        run: |
+          OUT=build/avatars_out
+          [ "$MODE" = final ] && OUT=aal-you-ready/play/assets/avatars
+          mkdir -p "$OUT" aal-you-ready/play/assets/previews
+          "$HOME/blender/blender" -b --factory-startup --python-exit-code 1 \
+            -P tools/avatars/import_avatars.py -- --src build/100avatars --list "$LIST" \
+            --out "$OUT" --sheet "aal-you-ready/play/assets/previews/avatars_${MODE}.jpg" 2>&1 | tee build/avatars.log | grep -E "^\[AV\]|Error|Traceback"
+          cp "$OUT/avatars.json" "aal-you-ready/play/assets/previews/avatars_${MODE}.json"
+          du -sh "$OUT"
+
+      - name: Commit
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add aal-you-ready/play/assets/previews/avatars_* tools/avatars/LICENSE_100Avatars_CC-BY-4.0.md
+          [ "$MODE" = final ] && git add aal-you-ready/play/assets/avatars
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Avatars import ($MODE)"
+          for i in 1 2 3 4 5; do
+            git pull --rebase -X theirs origin "${GITHUB_REF_NAME}" || { git rebase --abort 2>/dev/null; sleep 3; continue; }
+            git push origin "HEAD:${GITHUB_REF_NAME}" && exit 0
+            sleep $((i * 4))
+          done
+          echo "::warning::Push fehlgeschlagen"
