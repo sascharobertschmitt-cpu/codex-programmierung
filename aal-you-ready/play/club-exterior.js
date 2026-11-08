@@ -108,11 +108,16 @@
 
     // Dachfachwerk ohne Dachhaut (Obergurt, Untergurt, Pfosten), dazu ein paar Längsträger
     const trussMats = [];
-    for (let z = -hl; z <= hl + 0.01; z += 4) {
-      trussMats.push(M(0, h + 1.2, z, hw * 2, 0.16, 0.16), M(0, h, z, hw * 2, 0.12, 0.12));
-      for (let x = -hw; x <= hw + 0.01; x += hw / 5) trussMats.push(M(x, h + 0.6, z, 0.08, 1.2, 0.08));
-    }
-    [-hw / 2, 0, hw / 2].forEach(x => trussMats.push(M(x, h + 1.2, 0, 0.14, 0.14, hl * 2)));
+    const truss = (z, x0, x1) => {
+      const cx = (x0 + x1) / 2, w = x1 - x0;
+      trussMats.push(M(cx, h + 1.2, z, w, 0.16, 0.16), M(cx, h, z, w, 0.12, 0.12));
+      for (let x = x0; x <= x1 + 0.01; x += hw / 5) trussMats.push(M(x, h + 0.6, z, 0.08, 1.2, 0.08));
+    };
+    // Dach weitgehend eingestürzt: nur Endfelder stehen noch, zwei halbe Träger hängen in der Mitte
+    [-hl, -hl + 4, hl - 4, hl].forEach(z => truss(z, -hw, hw));
+    truss(-hl + 12, -hw, -hw + 6);
+    truss(hl - 14, hw - 5, hw);
+    trussMats.push(M(-hw, h + 1.2, 0, 0.14, 0.14, hl * 2), M(hw, h + 1.2, 0, 0.14, 0.14, hl * 2));
     // eingestürzter Träger, schräg in der Halle
     const fallen = B.MeshBuilder.CreateBox('fallenBeam', { width: 0.2, height: 0.2, depth: 9 }, scene);
     fallen.material = rust; fallen.position.set(hw - 2.2, 4.4, -hl + 9); fallen.rotation.set(0.9, 0.25, 0);

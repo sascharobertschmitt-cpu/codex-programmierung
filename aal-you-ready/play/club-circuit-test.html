@@ -355,14 +355,14 @@
   const cam = new B.ArcRotateCamera('cam', -Math.PI / 2, 1.02, 10, new B.Vector3(0, 0.4, -HL + 2), scene);
   cam.attachControl(canvas, true);
   cam.minZ = 0.1; cam.lowerRadiusLimit = 3; cam.upperRadiusLimit = 42;
-  cam.lowerBetaLimit = 0.25; cam.upperBetaLimit = 1.38;
+  cam.lowerBetaLimit = 0.25; cam.upperBetaLimit = 1.45;
   cam.wheelPrecision = 25; cam.pinchPrecision = 60; cam.panningSensibility = 0;
   let follow = 0, overview = false, autoCam = true, camGoal = { target: cam.target.clone(), radius: 8.5, beta: 1.0 };
   canvas.addEventListener('pointerdown', () => { autoCam = false; });
   const setOverview = (on) => {
     overview = on;
     $('#view').textContent = on ? 'Folgen' : 'Übersicht';
-    camGoal = on ? { target: new B.Vector3(0, 0.8, -0.5), radius: 34, beta: 1.0, alpha: -Math.PI / 2 - 0.35 } : { radius: 8.5, beta: 1.0 };
+    camGoal = on ? { target: new B.Vector3(0, 2.0, 1.5), radius: 31, beta: 1.16, alpha: -Math.PI / 2 - 0.35 } : { radius: 8.5, beta: 1.0 };
     autoCam = true;
   };
   $('#view').onclick = () => setOverview(!overview);
