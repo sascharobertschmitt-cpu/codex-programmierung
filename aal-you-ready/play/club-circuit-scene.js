@@ -496,7 +496,7 @@
       inst.rootNodes.forEach(r => { r.position.y += HAT_LIFT[ci]; });
       // Gruppen liegen unter __root__ / HATS_x / HAT_<name>: alle fremden Hut-Gruppen samt Inhalt entfernen
       inst.rootNodes.forEach(r => r.getDescendants(false, n => n.getClassName() === 'TransformNode' && /HAT_[a-z]+$/.test(n.name))
-        .filter(n => !n.name.endsWith('HAT_' + hat)).forEach(n => n.dispose(false, true)));
+        .filter(n => !n.name.endsWith('HAT_' + hat)).forEach(n => n.dispose(false, false)));   // Material teilen sich alle Hüte: nicht mitlöschen
       return inst.rootNodes;
     };
     const spawnFig = (name, scale, hex, hat, skin) => {
