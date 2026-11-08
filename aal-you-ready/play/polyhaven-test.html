@@ -34,7 +34,10 @@ const resolveIncluded=(relative)=>{
   return new URL(relative,root).href;
 };
 for(const img of gltfJson.images||[])if(img.uri)img.uri=resolveIncluded(img.uri);
-for(const buf of gltfJson.buffers||[])if(buf.uri)buf.uri=resolveIncluded(buf.uri);
+// Binary buffers belong to the selected 1k glTF package. The API include
+// map can point to a different resolution (e.g. 4k), so don't use it for .bin.
+for(const buf of gltfJson.buffers||[])if(buf.uri&&!/^data:|^https?:/i.test(buf.uri))buf.uri=new URL(buf.uri,root).href;
+write('Binärdateien: '+(gltfJson.buffers||[]).map(b=>b.uri).join(', '));
 const blobUrl=URL.createObjectURL(new Blob([JSON.stringify(gltfJson)],{type:'model/gltf+json'}));
 let result;
 try{result=await B.SceneLoader.ImportMeshAsync('','',blobUrl,scene,undefined,'.gltf')}
