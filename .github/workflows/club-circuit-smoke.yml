@@ -44,12 +44,15 @@ jobs:
           PW_CHANNEL=chrome node tools/browser_smoke.mjs \
             "http://localhost:8080/club-circuit-test.html?autoplay=14" \
             aal-you-ready/play/assets/previews/circuit_headless.png 240000 | tee /tmp/browser.log
+          PW_CHANNEL=chrome node tools/browser_smoke.mjs \
+            "http://localhost:8080/club-circuit-test.html?view=city" \
+            aal-you-ready/play/assets/previews/circuit_city.png 240000 | tee -a /tmp/browser.log
       - name: Commit screenshot
         if: always()
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add aal-you-ready/play/assets/previews/circuit_headless.png || true
+          git add aal-you-ready/play/assets/previews/circuit_headless.png aal-you-ready/play/assets/previews/circuit_city.png || true
           if git diff --cached --quiet; then exit 0; fi
           git commit -m "Circuit smoke test screenshot"
           git pull --rebase origin "${GITHUB_REF_NAME}"

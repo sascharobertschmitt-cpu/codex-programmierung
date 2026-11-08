@@ -359,13 +359,24 @@
   cam.wheelPrecision = 25; cam.pinchPrecision = 60; cam.panningSensibility = 0;
   let follow = 0, overview = false, autoCam = true, camGoal = { target: cam.target.clone(), radius: 8.5, beta: 1.0 };
   canvas.addEventListener('pointerdown', () => { autoCam = false; });
-  const setOverview = (on) => {
-    overview = on;
-    $('#view').textContent = on ? 'Folgen' : 'Übersicht';
-    camGoal = on ? { target: new B.Vector3(0, 2.0, 1.5), radius: 31, beta: 1.16, alpha: -Math.PI / 2 - 0.35 } : { radius: 8.5, beta: 1.0 };
+  // Kameramodi: Folgen -> Übersicht -> Stadt -> Folgen
+  const VIEWS = {
+    follow: { radius: 8.5, beta: 1.0 },
+    overview: { target: new B.Vector3(0, 2.0, 1.5), radius: 31, beta: 1.16, alpha: -Math.PI / 2 - 0.35 },
+    city: { target: new B.Vector3(0, 14, 10), radius: 62, beta: 1.42, alpha: -Math.PI / 2 - 0.55 },
+  };
+  const NEXT = { follow: 'overview', overview: 'city', city: 'follow' };
+  const LABEL = { follow: 'Übersicht', overview: 'Stadt', city: 'Folgen' };
+  let viewMode = 'follow';
+  const setView = (mode) => {
+    viewMode = mode; overview = mode !== 'follow';
+    $('#view').textContent = LABEL[mode];
+    camGoal = VIEWS[mode];
+    cam.upperRadiusLimit = mode === 'city' ? 120 : 42;
     autoCam = true;
   };
-  $('#view').onclick = () => setOverview(!overview);
+  const setOverview = (on) => setView(on ? 'overview' : 'follow');
+  $('#view').onclick = () => setView(NEXT[viewMode]);
 
   let t0 = performance.now();
   scene.onBeforeRenderObservable.add(() => {
@@ -459,6 +470,7 @@
   // FPS-Anzeige
   setInterval(() => { $('#dbg').textContent = engine.getFps().toFixed(0) + ' fps'; }, 1000);
 
+  if (Q.get('view') && VIEWS[Q.get('view')]) { setView(Q.get('view')); await new Promise(r => setTimeout(r, 2500)); }
   if (AUTOPLAY > 0) {
     for (let i = 0; i < AUTOPLAY && game.winner === null; i++) await playTurn();
     check('Automatische Züge ohne Fehler', true, `${turns} Züge, ${gateEvents} Einlass-Ereignisse, Sieger: ${game.winner === null ? '–' : game.players[game.winner].name}`);
