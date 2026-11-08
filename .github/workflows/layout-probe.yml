@@ -1,5 +1,9 @@
 name: Layout probe
 on:
+  push:
+    paths:
+      - 'tools/layout_probe.mjs'
+      - '.github/workflows/layout-probe.yml'
   workflow_dispatch:
 permissions:
   contents: write
