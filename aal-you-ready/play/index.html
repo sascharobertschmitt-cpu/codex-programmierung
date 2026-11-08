@@ -559,10 +559,10 @@ function circuitOnSnapshot(prev,s){
  circEnqueue(async()=>{
   if(circ.busy>1||document.hidden){moves.forEach(m=>sc.release&&sc.release(m.i,m.b));return}
   if(newRoll&&mi>=0&&moves.some(m=>m.mover))await fxDice(s.players[mi].name,ri.white,ri.club,ri.turbo||0,ri.total);
-  for(const m of moves.filter(m=>m.mover)){if(m.land!==null){await sc.walk(m.i,m.a,m.land);await sc.walk(m.i,m.land,m.b)}else await sc.walk(m.i,m.a,m.b);if(newRoll){const [t,c]=landText(s,ri);await Promise.all([sc.landPulse?sc.landPulse(m.i):0,fxBanner(t,c,2600)])}else if(sc.landPulse)await sc.landPulse(m.i)}
+  for(const m of moves.filter(m=>m.mover)){if(m.land!==null){await sc.walk(m.i,m.a,m.land);await sc.walk(m.i,m.land,m.b)}else await sc.walk(m.i,m.a,m.b);if(newRoll){const [t,c]=landText(s,ri);await Promise.all([sc.landPulse?sc.landPulse(m.i):0,fxBanner(t,c,ri.player===s.your_id?6000:2600)])}else if(sc.landPulse)await sc.landPulse(m.i)}
   for(const m of moves.filter(m=>!m.mover))await sc.walk(m.i,m.a,m.b);
   if(newCard&&sc.drawCard){await sc.drawCard(ri.card.deck,ri.card.title);await fxSleep(900)}
-  if(turnChanged&&next&&s.phase==='ready'){await fxSleep(500);await fxBanner('👉 '+esc(next.name)+' ist dran','#f5ecff',1800)}
+  if(turnChanged&&next&&s.phase==='ready'){await fxSleep(500);await fxBanner(next.id===s.your_id?'👉 Du bist dran':'👉 '+esc(next.name)+' ist dran',COLORS[(s.turn%s.players.length)%8],next.id===s.your_id?4000:1800)}
  });
 }
 function circuitCardHtml(card,extra){const au=card.deck==='aufgabe';return '<div class="cardx '+(au?'au':'ev')+'"><small>'+(au?'★ AUFGABENKARTE · +'+esc(card.value)+' CASH':'⚡ EREIGNISKARTE')+'</small><b>'+esc(card.title)+'</b><span>'+esc(card.body)+'</span>'+(extra?'<span>'+extra+'</span>':'')+'</div>'}
