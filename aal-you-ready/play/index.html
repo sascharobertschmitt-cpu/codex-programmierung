@@ -529,7 +529,9 @@ function circuitOnSnapshot(prev,s){
  if(newRoll)circ.lastRoll=rollKey;if(newCard)circ.lastCard=cardKey;
  if(!moves.length&&!newRoll&&!newCard)return;
  const mi=s.players.findIndex(p=>p.id===ri.player);
+ moves.forEach(m=>sc.freeze&&sc.freeze(m.i,m.a));
  circEnqueue(async()=>{
+  if(circ.busy>1||document.hidden){moves.forEach(m=>sc.release&&sc.release(m.i,m.b));return}
   if(newRoll&&mi>=0&&moves.some(m=>m.mover)&&sc.rollDice)await sc.rollDice(mi,ri.white,ri.club,ri.turbo||0);
   for(const m of moves.filter(m=>m.mover)){if(m.land!==null){await sc.walk(m.i,m.a,m.land);await sc.walk(m.i,m.land,m.b)}else await sc.walk(m.i,m.a,m.b);if(sc.landPulse)await sc.landPulse(m.i)}
   for(const m of moves.filter(m=>!m.mover))await sc.walk(m.i,m.a,m.b);

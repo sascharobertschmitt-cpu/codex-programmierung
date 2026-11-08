@@ -897,10 +897,13 @@
         });
         if (typeof active === 'number' && active !== follow) { follow = active; autoCam = true; }
       },
+      // Figur bis zu ihrem Zug in der Warteschlange auf dem alten Feld halten
+      freeze(idx, abs) { const tk = tokens[idx]; if (!tk) return; if (!tk.walking) { tk.root.position.copyFrom(slotPos(abs, idx)); tk.body.rotation.y = restYaw(abs); } tk.walking = true; },
+      release(idx, abs) { const tk = tokens[idx]; if (!tk) return; tk.walking = false; tk.root.position.copyFrom(slotPos(abs, idx)); tk.body.rotation.y = restYaw(abs); },
       async walk(idx, fromAbs, toAbs) {
         const tk = tokens[idx]; if (!tk || fromAbs === toAbs) return;
         follow = idx; autoCam = true; if (viewMode !== 'follow') this.setView('follow');
-        tk.walking = true;
+        tk.walking = true; tk.root.position.copyFrom(slotPos(fromAbs, idx));
         const dir = toAbs > fromAbs ? 1 : -1, steps = Math.min(40, Math.abs(toAbs - fromAbs));
         let cur = fromAbs;
         const cnt = label('stepLabel' + idx, steps, dir > 0 ? '#2ee6b0' : '#ff668c', 0.6);
