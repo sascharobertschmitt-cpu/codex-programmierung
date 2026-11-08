@@ -323,13 +323,15 @@
     // ------------------------------------------------- Figuren (eigene GLBs)
     // Spielfiguren in Spielerfarbe, DJ hinterm Pult, Türsteher am Einlass, tanzende Menge.
     const FIG_ORDER = ['raver', 'dj', 'aal', 'robo', 'gasmaske', 'tuersteher'];
-    const TOK_SCALE = 0.85, NPC_SCALE = 2.15;
+    const TOK_SCALE = 1.1, NPC_SCALE = 2.15;
     const figs = {};
     const npcs = [];
     let figuresLoaded = false, crowdLoaded = false;
     const crowd = { meshes: [], dancers: [] };
+    const tameGlow = (mt) => { if (mt && mt.name.includes('M_Glow')) mt.emissiveIntensity = 1.1; };
     const tint = (meshes, hex, glowScale) => meshes.forEach(m => {
       const mt = m.material;
+      tameGlow(mt);
       if (mt && mt.name.includes('M_Accent')) {
         mt.albedoColor = B.Color3.FromHexString(hex).toLinearSpace();
         mt.emissiveColor = B.Color3.FromHexString(hex).scale(glowScale);
@@ -355,20 +357,20 @@
       const dj = spawnFig('dj', 'npcDJ', NPC_SCALE * 1.1, '#29c6ff');
       if (dj) { dj.position.set(0, 0.6, HL - 3.95); dj.rotation.y = Math.PI; npcs.push({ node: dj, kind: 'dj', y: 0.6 }); }
       // Türsteher innen neben dem Einlass, schaut den ankommenden Figuren entgegen
-      const bo = spawnFig('tuersteher', 'npcBouncer', NPC_SCALE * 1.08, '#ff4fd8');
-      if (bo) { bo.position.set(tiles[0].x + 0.9, 0, tiles[0].z + 1.55); bo.rotation.y = -Math.PI / 2 - 0.35; npcs.push({ node: bo, kind: 'bouncer', y: 0 }); }
+      const bo = spawnFig('tuersteher', 'npcBouncer', NPC_SCALE, '#ff4fd8');
+      if (bo) { bo.position.set(tiles[0].x + 1.5, 0, tiles[0].z + 2.7); bo.rotation.y = -Math.PI / 2 - 0.6; npcs.push({ node: bo, kind: 'bouncer', y: 0 }); }
     } catch (e) { console.warn('Figuren nicht geladen', e); }
     try {
       const cc = await B.SceneLoader.LoadAssetContainerAsync(o.assetBase, 'club_crowd.glb', scene, null, '.glb');
       const inst = cc.instantiateModelsToScene(n => 'crowd_' + n, false);
       const all = inst.rootNodes[0].getChildMeshes(false).filter(m => m.getTotalVertices() > 0);
-      const CROWD_COLS = ['#bb38ff', '#29c6ff', '#ff4fd8', '#2ee6b0', '#ffb627', '#8e83ff', '#3a3a48', '#5a5a6a', '#20202a', '#d8d0e8'];
+      const CROWD_COLS = ['#bb38ff', '#29c6ff', '#ff4fd8', '#2ee6b0', '#ffb627', '#8e83ff', '#4a4a5c', '#6a6a7e', '#d8d0e8'];
       ['A', 'B'].forEach((tag, pi) => {
         const parts = all.filter(m => m.name.includes('CROWD_' + tag + '_'));
         if (!parts.length) return;
         const mesh = B.Mesh.MergeMeshes(parts, true, true, undefined, false, true);
         mesh.name = 'crowd' + tag;
-        (mesh.material && mesh.material.subMaterials ? mesh.material.subMaterials : [mesh.material]).forEach(mt => { if (mt) mt.backFaceCulling = false; });
+        (mesh.material && mesh.material.subMaterials ? mesh.material.subMaterials : [mesh.material]).forEach(mt => { if (mt) { mt.backFaceCulling = false; tameGlow(mt); } });
         mesh.alwaysSelectAsActiveMesh = true;
         mesh.receiveShadows = true;
         crowd.meshes[pi] = mesh;
