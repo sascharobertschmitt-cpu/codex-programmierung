@@ -30,7 +30,7 @@ for(let row=0;row<17;row++)for(let col=0;col<23;col++){let x=-8+col*.72+(row%2)*
 for(const x of [-7.5,-3.8,3.8,7.5]){box('wall column'+x,.44,6.4,.42,x,2.5,8.62,black);box('column cyan band'+x,.48,.12,.45,x,1.5,8.35,cyan);box('column pink band'+x,.48,.12,.45,x,4,8.35,purple)}
 for(const x of [-6,-3,0,3,6]){box('rig chain'+x,.07,1.5,.07,x,5.8,7.7,steel);box('stage spotlight'+x,.48,.34,.5,x,5.0,7.65,black);sphere('light lens'+x,.12,x,4.75,7.4,x%2?cyan:purple)}
 box('roof truss',16.5,.34,.45,0,6.6,7.8,steel);
-const neonLine=(n,x1,y1,z1,x2,y2,z2,m,thick=.055)=>{const v1=new B.Vector3(x1,y1,z1),v2=new B.Vector3(x2,y2,z2),mid=v1.add(v2).scale(.5),mesh=B.MeshBuilder.CreateCylinder(n,{diameter:thick,height:B.Vector3.Distance(v1,v2),tessellation:8},scene);mesh.position=mid;mesh.rotationQuaternion=B.Quaternion.FromUnitVectorsToRef(B.Axis.Y,v2.subtract(v1).normalize(),new B.Quaternion());mesh.material=m;return mesh};
+const neonLine=(n,x1,y1,z1,x2,y2,z2,m,thick=.055)=>{const mesh=B.MeshBuilder.CreateTube(n,{path:[new B.Vector3(x1,y1,z1),new B.Vector3(x2,y2,z2)],radius:thick/2,tessellation:8},scene);mesh.material=m;return mesh};
 neonLine('triangle left',-.95,3.2,8.65,0,1.55,8.65,purple,.09);neonLine('triangle right',0,1.55,8.65,.95,3.2,8.65,purple,.09);neonLine('triangle top',-.95,3.2,8.65,.95,3.2,8.65,purple,.09);
 // Elevated DJ booth sits beyond the play path.
 box('DJ stage',5,.55,1.5,0,.08,7.1,black);box('DJ stage front led',4.8,.12,.09,0,.26,6.32,purple);
