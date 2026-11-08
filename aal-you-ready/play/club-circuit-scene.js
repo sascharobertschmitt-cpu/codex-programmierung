@@ -469,7 +469,7 @@
     // Alle Avatare sind auf 1 m Höhe normalisiert, Blick +Z, Mixamo-Skelett. Animation per Knochen-Posen.
     const AV = {
       players: ['002', '027', '038', '052', '046', '079', '086', '088', '087', '120', '160', '093'],
-      dj: '069', bouncer: '018', crowd: ['003', '012', '102', '053', '054', '060', '070', '072'],
+      dj: '069', bouncer: '018', crowd: ['003', '012', '079', '053', '054', '060', '070', '072'],
     };
     const TOK_SCALE = 0.95;
     const avCache = {};
