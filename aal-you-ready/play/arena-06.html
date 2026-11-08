@@ -1,0 +1,103 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Aal You Ready? – 3D-Arena-Labor</title><style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080b13;color:#f5f5ff;font-family:system-ui,Arial,sans-serif}#stage{position:absolute;inset:0;width:100%;height:100%;touch-action:none;outline:0}header{position:absolute;top:env(safe-area-inset-top,0px);left:0;right:0;padding:12px 16px;pointer-events:none;text-shadow:0 2px 8px #000}h1{font-size:16px;margin:0;letter-spacing:.07em}small{color:#8ff6f6}#tools{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);left:12px;right:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}button{border:1px solid #56c9d1;border-radius:20px;background:#121b2d;color:white;padding:11px 14px;font-weight:700}#status{position:absolute;top:67px;left:14px;right:14px;color:#d4f5ff;font-size:12px;pointer-events:none}#error{position:absolute;top:30%;left:8%;right:8%;padding:15px;background:#4b1026;border-radius:10px;display:none;white-space:pre-wrap}
+</style></head><body><canvas id="stage"></canvas><header><h1>AAL YOU READY? <small>ARENA LAB 0.6 · CLUB ROUTE</small></h1><small>Eigenständiger 3D-Prototyp · ohne Multiplayer</small></header><div id="status">Initialisiere 3D …</div><div id="error"></div><div id="tools"><button id="overview">Übersicht</button><button id="angle">Perspektive</button><button id="walk">Weg prüfen</button><button id="stop">Stopp</button></div><script src="https://cdn.babylonjs.com/babylon.js"></script><script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script><script>
+'use strict';
+const $=id=>document.getElementById(id),status=$('status'),error=$('error');
+// Four widely spaced serpentine runs. The gaps remain traversable, not a filled spiral.
+const PATH=(()=>{const p=[];for(let lane=0;lane<4;lane++){for(let step=0;step<16;step++){const n=lane%2===0?step:15-step;const x=-6.45+n*.86;const z=[-5.1,-2.35,.4,3.15][lane]+Math.sin(n*Math.PI/15)*(.22*(lane%2?1:-1));p.push([x,z]);}}return p})();
+const checks={count:PATH.length===64,unique:new Set(PATH.map(p=>p.map(n=>n.toFixed(2)).join(','))).size===64,adjacent:PATH.every((p,i)=>i===63||Math.hypot(p[0]-PATH[i+1][0],p[1]-PATH[i+1][1])<3.2)};
+checks.passed=Object.values(checks).every(Boolean);window.ARENA_DIAGNOSTICS={version:'0.6',path:PATH,checks};if(!checks.passed)throw Error('Wegprüfung fehlgeschlagen '+JSON.stringify(checks));
+function boot(){if(!window.BABYLON){error.style.display='block';error.textContent='Babylon.js konnte nicht geladen werden.';return}
+try{
+const B=BABYLON,canvas=$('stage'),engine=new B.Engine(canvas,true,{stencil:false,antialias:true}),scene=new B.Scene(engine);
+engine.setHardwareScalingLevel(Math.max(1,(window.devicePixelRatio||1)/1.7));
+scene.clearColor=new B.Color4(.013,.008,.026,1);scene.imageProcessingConfiguration.toneMappingEnabled=false;
+const camera=new B.ArcRotateCamera('cinematic',-Math.PI/2,.92,19,new B.Vector3(0,.5,1.1),scene);
+camera.lowerRadiusLimit=9;camera.upperRadiusLimit=32;camera.lowerBetaLimit=.22;camera.upperBetaLimit=1.28;camera.panningSensibility=0;camera.wheelPrecision=40;camera.attachControl(canvas,true);
+const hemi=new B.HemisphericLight('softAmbient',new B.Vector3(0,1,0),scene);hemi.intensity=.92;hemi.groundColor=new B.Color3(.19,.13,.28);
+const key=new B.DirectionalLight('overhead',new B.Vector3(-.4,-1,.2),scene);key.intensity=.52;
+const glow=new B.GlowLayer('glow',scene,{blurKernelSize:42});glow.intensity=.53;
+const mat=(n,hex,em=0)=>{const m=new B.StandardMaterial(n,scene);m.diffuseColor=B.Color3.FromHexString(hex);m.emissiveColor=m.diffuseColor.scale(em);m.specularColor=new B.Color3(.45,.45,.55);m.specularPower=100;return m};
+const black=mat('black lacquer','#14121c'),floor=mat('dark reflective concrete','#252431'),steel=mat('aged steel','#45434f'),brick=mat('brick','#31202c'),purple=mat('violet neon','#f040ff',1.1),cyan=mat('ice blue neon','#04dfff',1.1),amber=mat('amber neon','#ffb32c',1.1),pink=mat('pink neon','#ff247e',1.1),white=mat('white neon','#f3f2ff',.7),gold=mat('brass','#a67a45'),sofa=mat('black leather','#1e1524');
+const box=(n,w,h,d,x,y,z,m)=>{const o=B.MeshBuilder.CreateBox(n,{width:w,height:h,depth:d},scene);o.position.set(x,y,z);o.material=m;return o};
+const cyl=(n,r,h,x,y,z,m)=>{const o=B.MeshBuilder.CreateCylinder(n,{diameter:r*2,height:h,tessellation:24},scene);o.position.set(x,y,z);o.material=m;return o};
+const sphere=(n,r,x,y,z,m)=>{const o=B.MeshBuilder.CreateSphere(n,{diameter:r*2,segments:12},scene);o.position.set(x,y,z);o.material=m;return o};
+box('entire club floor',17,.35,19,0,-.34,1.1,floor);
+for(let i=-8;i<=8;i++)box('floor seam X'+i,16.8,.006,.012,0,-.157,i,steel);
+for(let i=-7;i<=7;i++)box('floor seam Z'+i,.012,.006,18,i,-.157,1.1,steel);
+// Deep club backdrop: visible brick, trusses, wall sconces and large backlit triangle.
+box('brick back wall',17,7,.25,0,2.65,9.1,brick);
+for(let row=0;row<17;row++)for(let col=0;col<23;col++){let x=-8+col*.72+(row%2)*.35;if(x>8)continue;box('brick '+row+' '+col,.68,.32,.025,x,-.5+row*.35,8.95,row%5===0?steel:brick)}
+for(const x of [-7.5,-3.8,3.8,7.5]){box('wall column'+x,.44,6.4,.42,x,2.5,8.62,black);box('column cyan band'+x,.48,.12,.45,x,1.5,8.35,cyan);box('column pink band'+x,.48,.12,.45,x,4,8.35,purple)}
+for(const x of [-6,-3,0,3,6]){box('rig chain'+x,.07,1.5,.07,x,5.8,7.7,steel);box('stage spotlight'+x,.48,.34,.5,x,5.0,7.65,black);sphere('light lens'+x,.12,x,4.75,7.4,x%2?cyan:purple)}
+box('roof truss',16.5,.34,.45,0,6.6,7.8,steel);
+const neonLine=(n,x1,y1,z1,x2,y2,z2,m,thick=.055)=>{const mesh=B.MeshBuilder.CreateTube(n,{path:[new B.Vector3(x1,y1,z1),new B.Vector3(x2,y2,z2)],radius:thick/2,tessellation:8},scene);mesh.material=m;return mesh};
+neonLine('triangle left',-.95,3.2,8.65,0,1.55,8.65,purple,.09);neonLine('triangle right',0,1.55,8.65,.95,3.2,8.65,purple,.09);neonLine('triangle top',-.95,3.2,8.65,.95,3.2,8.65,purple,.09);
+// Elevated DJ booth sits beyond the play path.
+box('DJ stage',5,.55,1.5,0,.08,7.1,black);box('DJ stage front led',4.8,.12,.09,0,.26,6.32,purple);
+box('DJ desk',3.3,.82,.65,0,1.0,7.2,black);box('DJ equalizer panel',3,.45,.07,0,1.05,6.82,steel);
+for(let i=0;i<23;i++)box('equalizer'+i,.065,.08+(i*7%13)*.027,.015,-1.39+i*.125,1.01,6.77,i%2?cyan:purple);
+for(const x of [-1.15,1.15]){cyl('turntable'+x,.3,.07,x,1.47,7.18,steel);cyl('record'+x,.22,.08,x,1.52,7.18,black)}
+// Metallic disco ball.
+const mirror=mat('mirror ball','#9299bb',.45);sphere('disco ball',.63,0,5.3,4.1,mirror);
+for(let i=0;i<10;i++)for(let j=0;j<16;j++){const th=(i+.5)*Math.PI/10,ph=j*Math.PI/8;const r=.645;const dot=box('mirror facet'+i+' '+j,.14,.11,.02,Math.sin(th)*Math.cos(ph)*r,5.3+Math.cos(th)*r,4.1+Math.sin(th)*Math.sin(ph)*r,i%2?cyan:mirror);dot.lookAt(new B.Vector3(0,5.3,4.1));}
+// Lounge corners, tables, palms, and illuminated pillars frame the board.
+for(const side of [-1,1]){
+const x=side*7.5;
+// GLB lounge furniture is loaded below, after the room geometry.
+for(const z of [-3.5,2]){cyl('lounge table'+side+z,.45,.08,side*6.1,.5,z,black);cyl('table pedestal'+side+z,.07,.5,side*6.1,.2,z,gold);cyl('table candle'+side+z,.09,.22,side*6.1,.66,z,amber)}
+for(const z of [-5.5,5.5]){cyl('club column'+side+z,.32,4,x,1.7,z,black);for(const y of [.4,1.5,2.6]){const ring=B.MeshBuilder.CreateTorus('column neon'+side+z+y,{diameter:.72,thickness:.065,tessellation:20},scene);ring.rotation.x=Math.PI/2;ring.position.set(x,y,z);ring.material=side===1?cyan:purple}}
+for(const z of [-1,4.6]){cyl('plant pot'+side+z,.36,.65,side*6.8,.2,z,steel);cyl('palm trunk'+side+z,.07,1.5,side*6.8,1.1,z,gold);for(let i=0;i<7;i++){const angle=i*Math.PI*2/7;const leaf=box('palm leaf'+side+z+i,.12,.055,1.25,side*6.8+Math.sin(angle)*.46,1.9,z+Math.cos(angle)*.46,mat('leaf'+side+z+i,'#1b5948'));leaf.rotation.y=angle;leaf.rotation.x=.35}}
+}
+// Genuine CC0 Poly Haven sofa, packaged in this repository as one GLB.
+const sofaSpots=[[-7.55,-4.2,Math.PI/2],[-7.55,1.6,Math.PI/2],[7.55,-4.2,-Math.PI/2],[7.55,1.6,-Math.PI/2]];
+window.ARENA_DIAGNOSTICS.sofa={state:'loading',count:0};
+B.SceneLoader.ImportMeshAsync('','./assets/','sofa_02.glb',scene).then(result=>{
+  const visible=result.meshes.filter(m=>m.getTotalVertices&&m.getTotalVertices()>0);
+  if(!visible.length)throw Error('Sofa GLB enthält keine Geometrie');
+  let low=new B.Vector3(Infinity,Infinity,Infinity),high=new B.Vector3(-Infinity,-Infinity,-Infinity);
+  for(const mesh of visible){mesh.computeWorldMatrix(true);const bounds=mesh.getBoundingInfo().boundingBox;low=B.Vector3.Minimize(low,bounds.minimumWorld);high=B.Vector3.Maximize(high,bounds.maximumWorld)}
+  const center=low.add(high).scale(.5),width=Math.max(high.x-low.x,high.z-low.z,.01),scale=1.85/width;
+  const root=new B.TransformNode('lounge sofa master',scene);
+  for(const mesh of result.meshes.filter(m=>!m.parent))mesh.parent=root;
+  root.scaling.setAll(scale);root.position.set(-center.x*scale,-low.y*scale-.12,-center.z*scale);
+  for(let i=0;i<sofaSpots.length;i++){
+    const spot=sofaSpots[i],holder=new B.TransformNode('real leather sofa '+i,scene);
+    holder.position.set(spot[0],0,spot[1]);holder.rotation.y=spot[2];
+    if(i===0){root.parent=holder}else{
+      const instanceRoot=root.clone('sofa clone '+i,holder,false);
+      // Babylon's TransformNode.clone clones the complete child mesh hierarchy.
+      if(!instanceRoot)throw Error('Sofa konnte nicht geklont werden');
+    }
+  }
+  window.ARENA_DIAGNOSTICS.sofa={state:'ready',count:sofaSpots.length,meshes:visible.length};
+  status.textContent+=' · 4 echte GLB-Sofas';
+}).catch(err=>{console.error('Sofa GLB',err);window.ARENA_DIAGNOSTICS.sofa={state:'error',message:String(err)};status.textContent+=' · Sofa-Ladefehler';});
+// 64 tiles on four broad, offset serpentine runs with illuminated connecting bridges.
+const at=i=>({x:PATH[i][0],z:PATH[i][1]});
+for(let i=0;i<63;i++){const p=at(i),q=at(i+1),distance=Math.hypot(q.x-p.x,q.z-p.z);if(distance>1.05){const bridge=B.MeshBuilder.CreateTube('route bridge '+i,{path:[new B.Vector3(p.x,.23,p.z),new B.Vector3(q.x,.23,q.z)],radius:.055,tessellation:10},scene);bridge.material=i%2?cyan:purple;}}
+const type=i=>i===0?'START':i===63?'ZIEL':i%9===0?'SLF':i%7===0?'SPECIAL':i%3===0?'MALEN':'QUIZ';
+const color=t=>t==='START'?white:t==='ZIEL'?amber:t==='SLF'?cyan:t==='SPECIAL'?amber:t==='MALEN'?purple:pink;
+for(let i=0;i<64;i++){const p=at(i),t=type(i),c=color(t);
+box('tile riser'+i,.91,.29,.91,p.x,.02,p.z,black);
+box('tile neon trim'+i,.94,.045,.94,p.x,.175,p.z,c);
+box('tile surface'+i,.83,.025,.83,p.x,.208,p.z,steel);
+const dt=new B.DynamicTexture('tile label'+i,{width:256,height:256},scene,true),ctx=dt.getContext();ctx.clearRect(0,0,256,256);ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillStyle='#fff';ctx.font='900 100px Arial';ctx.fillText(i===0?'⚑':i===63?'★':String(i+1),128,105);ctx.font='bold 30px Arial';ctx.fillText(t,128,197);dt.hasAlpha=true;dt.update();const m=new B.StandardMaterial('tile icon'+i,scene);m.diffuseTexture=dt;m.opacityTexture=dt;m.emissiveColor=new B.Color3(1,1,1);m.disableLighting=true;m.backFaceCulling=false;
+const plane=B.MeshBuilder.CreatePlane('label '+i,{size:.76},scene);plane.rotation.x=Math.PI/2;plane.position.set(p.x,.233,p.z);plane.material=m;
+if(i<63){const q=at(i+1);if(p.x!==q.x)box('walking connector '+i,.23,.045,.10,(p.x+q.x)/2,.18,p.z,c);else box('walking connector '+i,.10,.045,.23,p.x,.18,(p.z+q.z)/2,c)}
+}
+const avMat=mat('player outfit','#18131c'),skin=mat('skin','#d9a589'),player=B.MeshBuilder.CreateCapsule('test walker',{height:.65,radius:.16},scene);player.material=avMat;
+const head=sphere('player head',.13,0,0,0,skin);let walking=false,started=0,angle=0;
+$('overview').onclick=()=>{camera.alpha=-Math.PI/2;camera.beta=.92;camera.radius=19;camera.setTarget(new B.Vector3(0,.5,1.1))};
+$('angle').onclick=()=>{angle=(angle+1)%3;camera.beta=[.92,.58,1.12][angle];camera.radius=[19,23,16][angle]};
+$('walk').onclick=()=>{walking=true;started=performance.now()};
+$('stop').onclick=()=>{walking=false;player.setEnabled(false);head.setEnabled(false)};
+player.setEnabled(false);head.setEnabled(false);
+engine.runRenderLoop(()=>{if(walking){const progress=((performance.now()-started)/520)%64,i=Math.floor(progress),f=progress-i,p=at(i),q=at(Math.min(i+1,63));player.setEnabled(true);head.setEnabled(true);player.position.set(p.x+(q.x-p.x)*f,.65,p.z+(q.z-p.z)*f);head.position.set(player.position.x,1.08,player.position.z)}scene.render()});
+window.addEventListener('resize',()=>engine.resize());
+status.textContent='64 Felder · geschwungener Parcours · Start → Ziel · '+scene.meshes.length+' Meshes';
+window.ARENA_DIAGNOSTICS.ready=true;window.ARENA_DIAGNOSTICS.meshes=scene.meshes.length;
+}catch(e){error.style.display='block';error.textContent='3D-Fehler: '+e.message;console.error(e)}
+}
+window.addEventListener('load',boot);
+</script></body></html>
