@@ -868,11 +868,11 @@
     // Landemoment: Feld leuchtet auf, Kamera fährt kurz heran
     const landPulse = async (idx) => {
       const tk = tokens[idx]; if (!tk) return;
-      zoomUntil = performance.now() + 1500;
+      zoomUntil = performance.now() + 2600;
       const ring = B.MeshBuilder.CreateTorus('landRing', { diameter: 0.9, thickness: 0.05, tessellation: 40 }, scene);
       const m = new B.StandardMaterial('landRingMat', scene); m.disableLighting = true; m.emissiveColor = B.Color3.FromHexString(COLORS[idx % COLORS.length]); ring.material = m;
       ring.position.copyFrom(tk.root.position); ring.position.y += 0.03;
-      await animate(900, f => { ring.scaling.setAll(1 + f * 1.6); m.alpha = 1 - f; });
+      await animate(1400, f => { ring.scaling.setAll(1 + f * 1.6); m.alpha = 1 - f; });
       ring.dispose(); m.dispose();
       await sleep(350);
     };
@@ -914,9 +914,9 @@
         const follow1 = scene.onBeforeRenderObservable.add(() => { cnt.mesh.position.copyFrom(tk.root.position); cnt.mesh.position.y += 1.7; const sc0 = cnt.mesh.scaling.x; cnt.mesh.scaling.setAll(1 + (sc0 - 1) * 0.85); });
         for (let k = 0; k < steps; k++) {
           cur += dir;
-          await hop(tk, tk.root.position.clone(), slotPos(cur, idx), steps > 14 ? 190 : 320);
+          await hop(tk, tk.root.position.clone(), slotPos(cur, idx), steps > 14 ? 260 : 430);
           cnt.draw(steps - k - 1, dir > 0 ? '#2ee6b0' : '#ff668c'); cnt.mesh.scaling.setAll(1.5);
-          await sleep(steps > 14 ? 20 : 70);
+          await sleep(steps > 14 ? 60 : 140);
         }
         scene.onBeforeRenderObservable.remove(follow1); cnt.dispose();
         tk.walking = false;

@@ -503,11 +503,11 @@ const fxSleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function fxDice(name,white,club,turbo,total){const fx=$('fx');const face=n=>['','⚀','⚁','⚂','⚃','⚄','⚅'][n]||n;
  const dice='<div class="fxdice"><div class="fxdie" id="fxw">🎲</div><div class="fxdie club" id="fxc">🎲</div>'+(turbo?'<div class="fxdie turbo" id="fxt">🎲</div>':'')+'</div>';
  fx.innerHTML='<div class="fxsub">'+esc(name)+' würfelt</div>'+dice;fx.classList.remove('hide');
- const t0=Date.now();while(Date.now()-t0<850){$('fxw').textContent=face(1+Math.floor(Math.random()*6));$('fxc').textContent=['+0','+2','+3','+5','+7','×2'][Math.floor(Math.random()*6)];if(turbo)$('fxt').textContent=face(1+Math.floor(Math.random()*6));await fxSleep(80)}
+ const t0=Date.now();while(Date.now()-t0<1400){$('fxw').textContent=face(1+Math.floor(Math.random()*6));$('fxc').textContent=['+0','+2','+3','+5','+7','×2'][Math.floor(Math.random()*6)];if(turbo)$('fxt').textContent=face(1+Math.floor(Math.random()*6));await fxSleep(80)}
  $('fxw').textContent=face(white);$('fxc').textContent=String(club);if(turbo)$('fxt').textContent=face(turbo);
- await fxSleep(650);
+ await fxSleep(1100);
  fx.insertAdjacentHTML('beforeend','<div class="fxsum">'+total+'</div><div class="fxsub">Felder vor</div>');
- await fxSleep(1100);fx.classList.add('hide');fx.innerHTML=''}
+ await fxSleep(1700);fx.classList.add('hide');fx.innerHTML='';await fxSleep(350)}
 async function fxBanner(text,color,ms){const fx=$('fx');fx.innerHTML='<div class="fxbanner" style="--c:'+(color||'#ff4fd8')+'">'+text+'</div>';fx.classList.remove('hide');await fxSleep(ms||1500);fx.classList.add('hide');fx.innerHTML=''}
 function landText(s,ri){const c=ri.card;let t,col;
  if(s.phase==='choice'){t='⭐ VIP-TREPPE';col='#ffcf4a'}
@@ -523,7 +523,7 @@ function landText(s,ri){const c=ri.card;let t,col;
  if(c&&c.blocked)t+='<br><small>🛡️ VIP-Bändchen schützt dich</small>';
  return [t,col]}
 function circBusy(){return circ.busy>0||Date.now()<circ.calmUntil}
-function circEnqueue(fn){circ.busy++;circ.queue=circ.queue.then(fn).catch(e=>console.warn('Anim',e)).then(()=>{circ.busy--;if(!circ.busy){circ.calmUntil=Date.now()+1200;if(snapshot)render(snapshot);setTimeout(()=>{if(snapshot&&!circBusy())render(snapshot)},1250)}})}
+function circEnqueue(fn){circ.busy++;circ.queue=circ.queue.then(fn).catch(e=>console.warn('Anim',e)).then(()=>{circ.busy--;if(!circ.busy){circ.calmUntil=Date.now()+1800;if(snapshot)render(snapshot);setTimeout(()=>{if(snapshot&&!circBusy())render(snapshot)},1850)}})}
 const CIRC_VIEWS={follow:'overview',overview:'city',city:'follow'},CIRC_LABEL={follow:'👁 Übersicht',overview:'🌆 Stadt',city:'🎯 Folgen'};
 function circuitCycleView(){if(!circ.scene)return;const v=circ.scene.setView(CIRC_VIEWS[circ.scene.view]);$('circuitView').textContent=CIRC_LABEL[v]}
 function circAbs(p){return (p.lap||0)*CF()+(p.position||0)}
@@ -532,7 +532,7 @@ function paintCircuit(){
  $('circuitView').classList.remove('hide');
  const s=snapshot,turn=s.players.length?s.turn%s.players.length:0;
  $('cameraHud').textContent='3D · CLUB-RUNDKURS · '+(s.laps||2)+' RUNDEN';
- if(circ.scene){circ.scene.resize();circ.scene.sync(s.players,turn);return}
+ if(circ.scene){circ.scene.resize();circ.scene.sync(s.players,circBusy()?undefined:turn);return}
  if(circ.loading||circ.failed)return;
  if(!window.BABYLON||!window.ClubCircuitScene||!window.ClubRules){$('cameraHud').textContent='3D lädt …';setTimeout(()=>{if(!circ.scene)paintCircuit()},700);return}
  circ.loading=true;
@@ -552,14 +552,17 @@ function circuitOnSnapshot(prev,s){
  const newRoll=rollKey&&rollKey!==circ.lastRoll,newCard=cardKey&&cardKey!==circ.lastCard&&(s.phase==='event'||s.phase==='task');
  if(newRoll)circ.lastRoll=rollKey;if(newCard)circ.lastCard=cardKey;
  if(!moves.length&&!newRoll&&!newCard)return;
- const mi=s.players.findIndex(p=>p.id===ri.player);
+const mi=s.players.findIndex(p=>p.id===ri.player);
+ const turnChanged=prev.turn!==s.turn&&s.status==='playing',next=s.players[s.turn%s.players.length];
+ if(mi>=0)circ.moverName=s.players[mi].name;
  moves.forEach(m=>sc.freeze&&sc.freeze(m.i,m.a));
  circEnqueue(async()=>{
   if(circ.busy>1||document.hidden){moves.forEach(m=>sc.release&&sc.release(m.i,m.b));return}
   if(newRoll&&mi>=0&&moves.some(m=>m.mover))await fxDice(s.players[mi].name,ri.white,ri.club,ri.turbo||0,ri.total);
-  for(const m of moves.filter(m=>m.mover)){if(m.land!==null){await sc.walk(m.i,m.a,m.land);await sc.walk(m.i,m.land,m.b)}else await sc.walk(m.i,m.a,m.b);if(newRoll){const [t,c]=landText(s,ri);await Promise.all([sc.landPulse?sc.landPulse(m.i):0,fxBanner(t,c,1600)])}else if(sc.landPulse)await sc.landPulse(m.i)}
+  for(const m of moves.filter(m=>m.mover)){if(m.land!==null){await sc.walk(m.i,m.a,m.land);await sc.walk(m.i,m.land,m.b)}else await sc.walk(m.i,m.a,m.b);if(newRoll){const [t,c]=landText(s,ri);await Promise.all([sc.landPulse?sc.landPulse(m.i):0,fxBanner(t,c,2600)])}else if(sc.landPulse)await sc.landPulse(m.i)}
   for(const m of moves.filter(m=>!m.mover))await sc.walk(m.i,m.a,m.b);
-  if(newCard&&sc.drawCard)await sc.drawCard(ri.card.deck,ri.card.title);
+  if(newCard&&sc.drawCard){await sc.drawCard(ri.card.deck,ri.card.title);await fxSleep(900)}
+  if(turnChanged&&next&&s.phase==='ready'){await fxSleep(500);await fxBanner('👉 '+esc(next.name)+' ist dran','#f5ecff',1800)}
  });
 }
 function circuitCardHtml(card,extra){const au=card.deck==='aufgabe';return '<div class="cardx '+(au?'au':'ev')+'"><small>'+(au?'★ AUFGABENKARTE · +'+esc(card.value)+' CASH':'⚡ EREIGNISKARTE')+'</small><b>'+esc(card.title)+'</b><span>'+esc(card.body)+'</span>'+(extra?'<span>'+extra+'</span>':'')+'</div>'}
