@@ -212,7 +212,7 @@ async function entryAction(fn,args){if(acting)return;if(!args.p_name){notice('Bi
 async function doAction(a){if(acting||!session)return;acting=true;revision++;notice('');$('roll').disabled=$('start').disabled=$('eventnext').disabled=true;const before=snapshot;try{const s=await rpc('party_action',{p_code:session.code,p_token:session.token,p_host_token:session.host_token||null,p_action:a});if(a==='roll'&&before){const mover=before.players[before.turn%before.players.length];const moved=s.players.find(p=>p.id===mover.id);lastMove={name:mover.name,dice:s.roll,from:mover.position,to:moved?.position??mover.position,turn:s.turn,at:Date.now(),id:mover.id};beginWalk(lastMove);boardPage=Math.floor((moved?.position??mover.position)/8);autoFollow=false;}render(s)}catch(e){notice('Aktion: '+e.message)}finally{acting=false;if(snapshot)render(snapshot);setTimeout(()=>refresh(true),250)}}
 async function refresh(force=false){if(!session||polling||acting)return;polling=true;const requestRevision=revision;const requestCode=session.code;try{const s=await rpc('party_snapshot',{p_code:session.code,p_token:session.token});if(session&&session.code===requestCode&&requestRevision===revision&&!acting)render(s);if(pollFailures)notice('');pollFailures=0}catch(e){pollFailures++;if(pollFailures>=2)notice('Verbindung: '+e.message+' · Erneuter Versuch läuft.')}finally{polling=false}}
 function leave(){if(!confirm('Spiel auf diesem Gerät verlassen?'))return;revision++;session=null;snapshot=null;save();$('entry').classList.remove('hide');$('lobby').classList.add('hide');$('game').classList.add('hide');notice('');history.replaceState(null,'',location.pathname)}
-const BUILD_VERSION='7.8';
+const BUILD_VERSION='7.9';
 const STABLE_GAME_URL='https://raw.githack.com/sascharobertschmitt-cpu/codex-programmierung/master/aal-you-ready/play/index.html';
 const LATEST_SOURCE_URL='https://raw.githubusercontent.com/sascharobertschmitt-cpu/codex-programmierung/refs/heads/master/aal-you-ready/play/index.html';
 async function updateInsideLobby(){
@@ -325,23 +325,23 @@ club.engine=new B.Engine(canvas,true,{preserveDrawingBuffer:false,stencil:false,
 club.engine.setHardwareScalingLevel(Math.max(1,Math.min(1.5,(window.devicePixelRatio||1)/1.7)));
 club.scene=new B.Scene(club.engine);
 club.scene.clearColor=new B.Color4(.003,.002,.011,1);
-club.scene.fogMode=B.Scene.FOGMODE_EXP2;club.scene.fogDensity=.004;club.scene.fogColor=new B.Color3(.009,.004,.025);
+club.scene.fogMode=B.Scene.FOGMODE_NONE; // Keep the full 64-tile board visible.
 club.scene.imageProcessingConfiguration.toneMappingEnabled=true;
-club.scene.imageProcessingConfiguration.exposure=1.14;club.scene.imageProcessingConfiguration.contrast=1.48;
-club.camera=new B.FreeCamera('clubCinematicCamera',new B.Vector3(8.5,13,-15),club.scene);
-club.camera.fov=.92;club.camera.minZ=.12;club.camera.maxZ=120;club.camera.setTarget(new B.Vector3(0,0,0));club.scene.activeCamera=club.camera;
+club.scene.imageProcessingConfiguration.exposure=1.4;club.scene.imageProcessingConfiguration.contrast=1.12;
+club.camera=new B.FreeCamera('clubCinematicCamera',new B.Vector3(9,14,-13),club.scene);
+club.camera.fov=.84;club.camera.minZ=.12;club.camera.maxZ=120;club.camera.setTarget(new B.Vector3(0,0,0));club.scene.activeCamera=club.camera;
 const ambient=new B.HemisphericLight('clubAmbient',new B.Vector3(0,1,0),club.scene);
-ambient.intensity=.68;ambient.diffuse=new B.Color3(.52,.47,.93);ambient.groundColor=new B.Color3(.12,.035,.3);
-const key=new B.DirectionalLight('clubKey',new B.Vector3(-.4,-1,.3),club.scene);key.intensity=.7;key.diffuse=new B.Color3(.5,.74,1);
-try{const glow=new B.GlowLayer('neonBloom',club.scene,{blurKernelSize:48});glow.intensity=.55;club.glow=glow;}catch(e){console.warn('Glow fallback',e)}
-const concrete=mat('charcoalConcrete','#080811'),steel=mat('brushedGunmetal','#191a30'),black=mat('obsidian','#03030a'),wall=mat('brick','#130d20'),sofa=mat('sofaLeather','#170e24'),leather=mat('leatherShine','#261331');
+ambient.intensity=1.25;ambient.diffuse=new B.Color3(.52,.47,.93);ambient.groundColor=new B.Color3(.12,.035,.3);
+const key=new B.DirectionalLight('clubKey',new B.Vector3(-.4,-1,.3),club.scene);key.intensity=1.05;key.diffuse=new B.Color3(.5,.74,1);
+try{const glow=new B.GlowLayer('neonBloom',club.scene,{blurKernelSize:48});glow.intensity=.32;club.glow=glow;}catch(e){console.warn('Glow fallback',e)}
+const concrete=mat('charcoalConcrete','#151326'),steel=mat('brushedGunmetal','#28243b'),black=mat('obsidian','#03030a'),wall=mat('brick','#130d20'),sofa=mat('sofaLeather','#170e24'),leather=mat('leatherShine','#261331');
 const cyan=mat('clubCyan','#00edff',1.1),pink=mat('clubMagenta','#ff19ed',1.1),violet=mat('clubViolet','#8c37ff',1.05),gold=mat('clubGold','#ffb900',1.0);
 box3('foundation',12,.5,12,0,-.48,0,black);
 box3('concreteDancefloor',11.2,.08,11.2,0,-.17,0,concrete);
 for(let i=-5;i<=5;i++){box3('floorLineX'+i,10.9,.003,.012,0,-.124,i,steel);box3('floorLineZ'+i,.012,.003,10.9,i,-.124,0,steel)}
 const colors={activity:'#ff20ef',slf:'#00f5ff',special:'#ffce00',event:'#337dff',start:'#ffffff',finish:'#ffba00'};
-const mats={activity:mat('purpleTile','#15071f',.16),slf:mat('cyanTile','#041c29',.16),special:mat('goldTile','#251602',.16),event:mat('eventTile','#07142e',.16),start:mat('startTile','#111529',.16),finish:mat('finishTile','#281605',.16)};
-const borderMats={};for(const [k,v] of Object.entries(colors))borderMats[k]=mat('neonEdge'+k,v,1.7);
+const mats={activity:mat('purpleTile','#411452',.5),slf:mat('cyanTile','#064656',.5),special:mat('goldTile','#58400b',.5),event:mat('eventTile','#13385b',.5),start:mat('startTile','#30334b',.5),finish:mat('finishTile','#5b3309',.5)};
+const borderMats={};for(const [k,v] of Object.entries(colors))borderMats[k]=mat('neonEdge'+k,v,1.35);
 const categories=['MALEN','ERKLÄREN','PANTOMIME'];
 const glyphs=['✎','▢','♙'];
 for(let n=0;n<64;n++){
@@ -352,12 +352,12 @@ box3('tileTop'+n,.875,.06,.875,p.x,.235,p.z,mats[type]);
 const dt=new B.DynamicTexture('tileIcon'+n,{width:512,height:512},club.scene,true);
 dt.hasAlpha=true;const ctx=dt.getContext();ctx.clearRect(0,0,512,512);ctx.textAlign='center';ctx.textBaseline='middle';
 ctx.fillStyle=colors[type];ctx.globalAlpha=.4;ctx.fillRect(32,34,448,3);ctx.globalAlpha=1;
-ctx.fillStyle='#c9c9df';ctx.font='600 59px Arial';ctx.fillText(String(n),256,82);
+ctx.fillStyle='#ffffff';ctx.font='bold 73px Arial';ctx.fillText(String(n),256,82);
 const symbol=type==='activity'?glyphs[n%3]:type==='slf'?'SLF':type==='special'?'✦':type==='event'?'ϟ':type==='finish'?'★':'⚑';
-ctx.shadowColor=colors[type];ctx.shadowBlur=16;ctx.fillStyle=colors[type];ctx.font=(symbol==='SLF'?'bold 116px':'155px')+' Arial';ctx.fillText(symbol,256,265);ctx.shadowBlur=0;
-ctx.fillStyle='#f1eafa';ctx.font='bold 34px Arial';
+ctx.shadowColor=colors[type];ctx.shadowBlur=5;ctx.fillStyle=colors[type];ctx.font=(symbol==='SLF'?'bold 116px':'155px')+' Arial';ctx.fillText(symbol,256,265);ctx.shadowBlur=0;
+ctx.fillStyle='#ffffff';ctx.font='bold 40px Arial';
 ctx.fillText(type==='activity'?categories[n%3]:type==='slf'?'STADT LAND':type==='special'?'SPECIAL':type==='event'?'EREIGNIS':type==='finish'?'ZIEL':'START',256,421);dt.update();
-const lm=new B.StandardMaterial('tileIconMat'+n,club.scene);lm.diffuseTexture=dt;lm.opacityTexture=dt;lm.disableLighting=true;lm.emissiveColor=new B.Color3(.7,.7,.7);lm.backFaceCulling=false;
+const lm=new B.StandardMaterial('tileIconMat'+n,club.scene);lm.diffuseTexture=dt;lm.opacityTexture=dt;lm.disableLighting=true;lm.emissiveColor=new B.Color3(1,1,1);lm.backFaceCulling=false;
 const plane=B.MeshBuilder.CreatePlane('tileIconPlane'+n,{size:.85},club.scene);plane.rotation.x=Math.PI/2;plane.position.set(p.x,.269,p.z);plane.material=lm;
 }
 const stepGlow=mat('pathLighting','#d128ff',1.2);
@@ -380,8 +380,8 @@ box3('sideNeonRail'+x,.055,.045,10.7,x,.54,0,blueLaser);
 box3('sideNeonRailUpper'+x,.05,.035,10.7,x,2.12,0,magentaLaser);
 }
 // Club walls, glowing architectural accents and illuminated columns
-for(const z of [-5.75,5.75]){box3('backWall'+z,12,2.7,.28,0,1.15,z,wall);box3('wallStrip'+z,11.5,.04,.33,0,1.8,z,z<0?pink:cyan)}
-for(const x of [-5.75,5.75]){box3('sideWall'+x,.28,2.7,11.5,x,1.15,0,wall);box3('sideStrip'+x,.32,.04,11.2,x,1.8,0,x<0?violet:cyan)}
+for(const z of [5.75]){box3('backWall'+z,12,2.7,.28,0,1.15,z,wall);box3('wallStrip'+z,11.5,.04,.33,0,1.8,z,cyan)} // No front wall: it used to obscure the camera.
+for(const x of [-5.75,5.75]){box3('sideWall'+x,.28,2.0,10.2,x,.9,.45,wall);box3('sideStrip'+x,.32,.04,10.2,x,1.8,.45,x<0?violet:cyan)}
 for(const x of [-5.15,5.15])for(const z of [-5.15,5.15]){
 box3('column'+x+z,.32,2.6,.32,x,1.18,z,steel);
 for(const y of [.5,1.65,2.2])box3('columnRing'+x+z+y,.38,.06,.38,x,y,z,(x<0?pink:cyan));
@@ -398,7 +398,7 @@ for(const z of [-4.4,4.4]){box3('truss'+z,9.8,.09,.09,0,2.5,z,steel)}
 box3('neonSignBack',2.4,.72,.08,-2.6,1.55,5.57,black);
 box3('neonSignTop',2.1,.04,.1,-2.6,1.84,5.51,signage);
 box3('neonSignBottom',2.1,.04,.1,-2.6,1.27,5.51,signage);
-const booth=mat('djBooth','#141324'),consoleMat=mat('djConsole','#32364d');
+const booth=mat('djBooth','#21142d',.3),consoleMat=mat('djConsole','#32364d');
 box3('djStage',3.1,.3,1.4,0,-.01,4.85,steel);
 box3('djConsole',2.7,.65,.65,0,.43,4.85,booth);
 box3('djDesk',2.8,.08,.8,0,.79,4.85,consoleMat);
@@ -408,7 +408,7 @@ const center=B.MeshBuilder.CreateCylinder('deckCenter'+x,{diameter:.1,height:.04
 }
 for(let i=0;i<24;i++){const h=.12+.32*(.5+.5*Math.sin(i*.83));box3('eq'+i,.048,h,.014,-.98+i*.085,.34,4.51,i%2?pink:cyan)}
 // hanging mirrored disco ball
-const mirror=mat('mirrorDisco','#8c93b9',.16);mirror.specularColor=new B.Color3(.9,.9,1);mirror.specularPower=90;
+const mirror=mat('mirrorDisco','#9ca9e1',.55);mirror.specularColor=new B.Color3(.9,.9,1);mirror.specularPower=90;
 const disco=B.MeshBuilder.CreateSphere('discoBall',{diameter:.88,segments:20},club.scene);disco.position.set(0,2.32,3.25);disco.material=mirror;club.disco=disco;
 box3('discoCable',.018,.45,.018,0,2.97,3.25,steel);
 for(const [i,x,z,c] of [[0,-4.2,-4.6,pink],[1,4.2,-4.6,cyan],[2,-4.2,4.5,violet],[3,4.2,4.5,pink]]){
@@ -462,8 +462,8 @@ focus=new BABYLON.Vector3(x,0,z);
 if(progress>=1){club.walking=null;club.walkFinishedAt=now+700}
 }
 const aspect=club.engine.getRenderWidth()/Math.max(1,club.engine.getRenderHeight());
-const overview=new BABYLON.Vector3(8.5,aspect<.8?17:13,aspect<.8?-15:-14);
-const desired=focus?new BABYLON.Vector3(focus.x+2.4,5.1,focus.z-7.5):overview;
+const overview=new BABYLON.Vector3(8.7,aspect<.8?13.5:12.5,aspect<.8?-12.5:-12);
+const desired=focus?new BABYLON.Vector3(focus.x+2.8,6.5,focus.z-6.5):overview;
 club.camera.position=BABYLON.Vector3.Lerp(club.camera.position,desired,focus?.095:.04);
 const target=focus?new BABYLON.Vector3(focus.x,.15,focus.z):new BABYLON.Vector3(0,.2,0);
 club.camera.setTarget(target);
