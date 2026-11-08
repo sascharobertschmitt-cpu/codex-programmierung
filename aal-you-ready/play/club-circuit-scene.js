@@ -235,34 +235,38 @@
       const g = tx.getContext(); g.fillStyle = '#07060c'; g.fillRect(0, 0, 128, 128);
       g.strokeStyle = '#f5ecff'; g.lineWidth = 6; g.strokeRect(5, 5, 118, 118);
       g.fillStyle = '#fff'; g.font = 'bold 66px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(n), 64, 68); tx.update();
-      const sign = B.MeshBuilder.CreatePlane('numSign' + n, { size: 0.62, sideOrientation: B.Mesh.DOUBLESIDE }, scene);
-      sign.position.set(pos.x, hgt + 0.3, pos.z);
+      const sign = B.MeshBuilder.CreatePlane('numSign' + n, { size: 0.38, sideOrientation: B.Mesh.DOUBLESIDE }, scene);
+      sign.position.set(pos.x, hgt + 0.2, pos.z);
       sign.billboardMode = B.Mesh.BILLBOARDMODE_Y;
       const sm2 = new B.StandardMaterial('numM' + n, scene); sm2.disableLighting = true; sm2.emissiveTexture = tx; sign.material = sm2;
       glow.addExcludedMesh(sign);
     }
 
     // VIP-Treppe: goldene Stufen an Feld 20 und 44, Bogen zum Feld +6
-    const goldM = new B.StandardMaterial('vipGold', scene); goldM.diffuseColor = B.Color3.FromHexString('#ffcf4a'); goldM.emissiveColor = B.Color3.FromHexString('#8a5a00');
+    const goldM = new B.StandardMaterial('vipGold', scene); goldM.diffuseColor = B.Color3.FromHexString('#ffcf4a'); goldM.emissiveColor = B.Color3.FromHexString('#c08a10');
     const arcM = new B.StandardMaterial('vipArc', scene); arcM.disableLighting = true; arcM.emissiveColor = B.Color3.FromHexString('#ffcf4a'); arcM.alpha = 0.75;
     for (const n of [20, 44]) {
       const t = tiles[n], u = tiles[(n + 6) % 64], nx = -Math.sin(t.ang), nz = Math.cos(t.ang);
       const out = (nx * t.x + nz * t.z) >= 0 ? 1 : -1;
       const base = new B.Vector3(t.x + out * nx * 0.95, 0, t.z + out * nz * 0.95);
-      for (let k = 0; k < 4; k++) {
-        const st = B.MeshBuilder.CreateBox('vipStep' + n + '_' + k, { width: 0.42, height: 0.12 + k * 0.14, depth: 0.16 }, scene);
-        st.position.set(base.x - out * nx * k * 0.15, (0.12 + k * 0.14) / 2, base.z - out * nz * k * 0.15);
-        st.rotation.y = -t.ang; st.material = goldM;
+      // goldenes Tor über dem Feld
+      const GH = 1.5, GW = 0.75;
+      for (const sd of [-1, 1]) {
+        const pil = B.MeshBuilder.CreateBox('vipPil' + n + sd, { width: 0.1, height: GH, depth: 0.1 }, scene);
+        pil.position.set(t.x + nx * GW * sd, t.h + GH / 2, t.z + nz * GW * sd); pil.material = goldM;
       }
+      const beam = B.MeshBuilder.CreateBox('vipBeam' + n, { width: 0.12, height: 0.12, depth: GW * 2 + 0.1 }, scene);
+      beam.position.set(t.x, t.h + GH, t.z); beam.material = goldM;
+      beam.rotation.y = Math.atan2(nx, nz);
       const p0 = new B.Vector3(t.x, t.h + 0.25, t.z), p2 = new B.Vector3(u.x, u.h + 0.25, u.z);
       const mid = p0.add(p2).scale(0.5); mid.y += 1.6;
       const pts = []; for (let k = 0; k <= 24; k++) { const f = k / 24; pts.push(p0.scale((1 - f) * (1 - f)).add(mid.scale(2 * f * (1 - f))).add(p2.scale(f * f))); }
       const arc = B.MeshBuilder.CreateTube('vipArc' + n, { path: pts, radius: 0.03, tessellation: 6 }, scene); arc.material = arcM;
       const tx = new B.DynamicTexture('vipTex' + n, { width: 256, height: 96 }, scene, true);
       const g = tx.getContext(); g.fillStyle = '#1a1206'; g.fillRect(0, 0, 256, 96); g.strokeStyle = '#ffcf4a'; g.lineWidth = 6; g.strokeRect(4, 4, 248, 88);
-      g.fillStyle = '#ffcf4a'; g.font = 'bold 40px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('⭐ VIP +6', 128, 50); tx.update();
-      const sign = B.MeshBuilder.CreatePlane('vipSign' + n, { width: 0.9, height: 0.34, sideOrientation: B.Mesh.DOUBLESIDE }, scene);
-      sign.position.copyFrom(mid); sign.position.y += 0.25; sign.billboardMode = B.Mesh.BILLBOARDMODE_Y;
+      g.fillStyle = '#ffcf4a'; g.font = 'bold 30px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText('⭐ VIP-TREPPE +6', 128, 50); tx.update();
+      const sign = B.MeshBuilder.CreatePlane('vipSign' + n, { width: 1.6, height: 0.6, sideOrientation: B.Mesh.DOUBLESIDE }, scene);
+      sign.position.set(t.x, t.h + GH + 0.42, t.z); sign.billboardMode = B.Mesh.BILLBOARDMODE_Y;
       const sm = new B.StandardMaterial('vipSignM' + n, scene); sm.disableLighting = true; sm.emissiveTexture = tx; sign.material = sm;
       glow.addExcludedMesh(sign);
     }
@@ -906,12 +910,12 @@
         tk.walking = true; tk.root.position.copyFrom(slotPos(fromAbs, idx));
         const dir = toAbs > fromAbs ? 1 : -1, steps = Math.min(40, Math.abs(toAbs - fromAbs));
         let cur = fromAbs;
-        const cnt = label('stepLabel' + idx, steps, dir > 0 ? '#2ee6b0' : '#ff668c', 0.6);
-        const follow1 = scene.onBeforeRenderObservable.add(() => { cnt.mesh.position.copyFrom(tk.root.position); cnt.mesh.position.y += 1.35; });
+        const cnt = label('stepLabel' + idx, steps, dir > 0 ? '#2ee6b0' : '#ff668c', 1.1);
+        const follow1 = scene.onBeforeRenderObservable.add(() => { cnt.mesh.position.copyFrom(tk.root.position); cnt.mesh.position.y += 1.7; const sc0 = cnt.mesh.scaling.x; cnt.mesh.scaling.setAll(1 + (sc0 - 1) * 0.85); });
         for (let k = 0; k < steps; k++) {
           cur += dir;
           await hop(tk, tk.root.position.clone(), slotPos(cur, idx), steps > 14 ? 190 : 320);
-          cnt.draw(steps - k - 1, dir > 0 ? '#2ee6b0' : '#ff668c');
+          cnt.draw(steps - k - 1, dir > 0 ? '#2ee6b0' : '#ff668c'); cnt.mesh.scaling.setAll(1.5);
           await sleep(steps > 14 ? 20 : 70);
         }
         scene.onBeforeRenderObservable.remove(follow1); cnt.dispose();
