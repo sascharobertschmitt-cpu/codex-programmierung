@@ -31,7 +31,7 @@ await sleep(4000);
 ok('Lobby sichtbar mit 2 Spielern', await page.locator('#members').innerText().then(t => t.includes('CI Host') && t.includes('CI Gast')));
 
 let s = await rpc('party_action', { p_code: A.code, p_token: A.token, p_host_token: A.host_token, p_action: 'start_circuit' });
-ok('Server: Rundkurs gestartet', s.board_mode === 'circuit' && s.laps === 2);
+ok('Server: Rundkurs gestartet', s.board_mode === 'circuit' && s.laps === 3);
 await sleep(9000);
 const hud = await page.locator('#cameraHud').innerText();
 ok('Seite zeigt Rundkurs-Szene', hud.includes('RUNDKURS'), hud);
