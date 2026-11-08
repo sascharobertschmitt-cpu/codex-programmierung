@@ -212,7 +212,7 @@ async function entryAction(fn,args){if(acting)return;if(!args.p_name){notice('Bi
 async function doAction(a){if(acting||!session)return;acting=true;revision++;notice('');$('roll').disabled=$('start').disabled=$('eventnext').disabled=true;const before=snapshot;try{const s=await rpc('party_action',{p_code:session.code,p_token:session.token,p_host_token:session.host_token||null,p_action:a});if(a==='roll'&&before){const mover=before.players[before.turn%before.players.length];const moved=s.players.find(p=>p.id===mover.id);lastMove={name:mover.name,dice:s.roll,from:mover.position,to:moved?.position??mover.position,turn:s.turn,at:Date.now(),id:mover.id};beginWalk(lastMove);boardPage=Math.floor((moved?.position??mover.position)/8);autoFollow=false;}render(s)}catch(e){notice('Aktion: '+e.message)}finally{acting=false;if(snapshot)render(snapshot);setTimeout(()=>refresh(true),250)}}
 async function refresh(force=false){if(!session||polling||acting)return;polling=true;const requestRevision=revision;const requestCode=session.code;try{const s=await rpc('party_snapshot',{p_code:session.code,p_token:session.token});if(session&&session.code===requestCode&&requestRevision===revision&&!acting)render(s);if(pollFailures)notice('');pollFailures=0}catch(e){pollFailures++;if(pollFailures>=2)notice('Verbindung: '+e.message+' · Erneuter Versuch läuft.')}finally{polling=false}}
 function leave(){if(!confirm('Spiel auf diesem Gerät verlassen?'))return;revision++;session=null;snapshot=null;save();$('entry').classList.remove('hide');$('lobby').classList.add('hide');$('game').classList.add('hide');notice('');history.replaceState(null,'',location.pathname)}
-const BUILD_VERSION='7.9';
+const BUILD_VERSION='8.0';
 const STABLE_GAME_URL='https://raw.githack.com/sascharobertschmitt-cpu/codex-programmierung/master/aal-you-ready/play/index.html';
 const LATEST_SOURCE_URL='https://raw.githubusercontent.com/sascharobertschmitt-cpu/codex-programmierung/refs/heads/master/aal-you-ready/play/index.html';
 async function updateInsideLobby(){
@@ -311,8 +311,8 @@ function followTurn(){autoFollow=true;if(snapshot)boardPage=Math.floor(snapshot.
 
 
 const club={mode:'fixed3d',scene:null,engine:null,camera:null,avatars:[],walking:null,walkFinishedAt:0,ready:false,failed:false};
-const SPIRAL_PATH=(()=>{const result=[];let left=0,right=7,top=0,bottom=7;while(left<=right&&top<=bottom){for(let x=left;x<=right;x++)result.push([x,top]);top++;for(let y=top;y<=bottom;y++)result.push([right,y]);right--;if(top<=bottom){for(let x=right;x>=left;x--)result.push([x,bottom]);bottom--}if(left<=right){for(let y=bottom;y>=top;y--)result.push([left,y]);left++}}return result})();
-// Continuous 64-tile winding club path, starting at the front and finishing near the DJ stage
+// 64 connected squares, one closed Hamiltonian circuit. No dead ends.
+const SPIRAL_PATH=(()=>{const p=[[0,0]];for(let x=1;x<8;x++)p.push([x,0]);for(let y=1;y<8;y++){if(y%2)for(let x=7;x>=1;x--)p.push([x,y]);else for(let x=1;x<8;x++)p.push([x,y]);}for(let y=7;y>=1;y--)p.push([0,y]);return p})();
 function tileXY(n){const p=SPIRAL_PATH[Math.max(0,Math.min(63,n))];return {x:p[0]-3.5,z:3.5-p[1]}}
 function mat(name,color,emissive=0){const m=new BABYLON.StandardMaterial(name,club.scene);m.diffuseColor=BABYLON.Color3.FromHexString(color);m.emissiveColor=m.diffuseColor.scale(emissive);m.specularColor=new BABYLON.Color3(.22,.2,.3);return m}
 function box3(name,w,h,d,x,y,z,material){const m=BABYLON.MeshBuilder.CreateBox(name,{width:w,height:h,depth:d},club.scene);m.position.set(x,y,z);m.material=material;return m}
@@ -334,95 +334,75 @@ const ambient=new B.HemisphericLight('clubAmbient',new B.Vector3(0,1,0),club.sce
 ambient.intensity=1.25;ambient.diffuse=new B.Color3(.52,.47,.93);ambient.groundColor=new B.Color3(.12,.035,.3);
 const key=new B.DirectionalLight('clubKey',new B.Vector3(-.4,-1,.3),club.scene);key.intensity=1.05;key.diffuse=new B.Color3(.5,.74,1);
 try{const glow=new B.GlowLayer('neonBloom',club.scene,{blurKernelSize:48});glow.intensity=.32;club.glow=glow;}catch(e){console.warn('Glow fallback',e)}
-const concrete=mat('charcoalConcrete','#151326'),steel=mat('brushedGunmetal','#28243b'),black=mat('obsidian','#03030a'),wall=mat('brick','#130d20'),sofa=mat('sofaLeather','#170e24'),leather=mat('leatherShine','#261331');
-const cyan=mat('clubCyan','#00edff',1.1),pink=mat('clubMagenta','#ff19ed',1.1),violet=mat('clubViolet','#8c37ff',1.05),gold=mat('clubGold','#ffb900',1.0);
-box3('foundation',12,.5,12,0,-.48,0,black);
-box3('concreteDancefloor',11.2,.08,11.2,0,-.17,0,concrete);
-for(let i=-5;i<=5;i++){box3('floorLineX'+i,10.9,.003,.012,0,-.124,i,steel);box3('floorLineZ'+i,.012,.003,10.9,i,-.124,0,steel)}
-const colors={activity:'#ff20ef',slf:'#00f5ff',special:'#ffce00',event:'#337dff',start:'#ffffff',finish:'#ffba00'};
-const mats={activity:mat('purpleTile','#411452',.5),slf:mat('cyanTile','#064656',.5),special:mat('goldTile','#58400b',.5),event:mat('eventTile','#13385b',.5),start:mat('startTile','#30334b',.5),finish:mat('finishTile','#5b3309',.5)};
-const borderMats={};for(const [k,v] of Object.entries(colors))borderMats[k]=mat('neonEdge'+k,v,1.35);
-const categories=['MALEN','ERKLÄREN','PANTOMIME'];
-const glyphs=['✎','▢','♙'];
+// Industrial dystopian bunker, 64 readable raised steel tiles and a closed route.
+const metal=mat('blackenedSteel','#252936'),floor=mat('wetAsphalt','#10151e'),dark=mat('deepBlack','#080b12'),rust=mat('rust','#543027'),hazard=mat('hazardYellow','#e4a324',.35),red=mat('emergencyRed','#ff2444',1.6),cyan=mat('coldCyan','#00e8ff',1.6),magenta=mat('acidMagenta','#ff27e8',1.45),amber=mat('amberSignal','#ff9c18',1.5);
+metal.specularColor=new B.Color3(.65,.72,.82);metal.specularPower=96;
+floor.specularColor=new B.Color3(.48,.52,.65);floor.specularPower=110;
+box3('undergroundFoundation',13,.55,13,0,-.53,0,dark);
+box3('reflectiveWarehouseFloor',12,.09,12,0,-.22,0,floor);
+for(let i=-5;i<=5;i++){box3('floorSeamX'+i,11.8,.004,.012,0,-.168,i,metal);box3('floorSeamZ'+i,.012,.004,11.8,i,-.168,0,metal)}
+const tileKinds={activity:'#ff315b',slf:'#00dcff',special:'#ffc238',event:'#a24dff',start:'#ffffff',finish:'#ff4a25'};
+const tileFaces={activity:mat('paintedRedSteel','#3c192a',.27),slf:mat('paintedBlueSteel','#0c3443',.27),special:mat('paintedAmberSteel','#4b3616',.27),event:mat('paintedPurpleSteel','#271b3e',.27),start:mat('startSteel','#343946',.2),finish:mat('finishSteel','#59251c',.3)};
+const rim={};for(const [k,v] of Object.entries(tileKinds))rim[k]=mat('luminousTileRim'+k,v,1.4);
+const drawIcon=(n,type)=>{
+const dt=new B.DynamicTexture('engravedGlyph'+n,{width:512,height:512},club.scene,true),ctx=dt.getContext();dt.hasAlpha=true;
+ctx.clearRect(0,0,512,512);ctx.textAlign='center';ctx.textBaseline='middle';
+ctx.fillStyle='#e8edf8';ctx.font='bold 79px Arial';ctx.fillText(String(n),256,84);
+const symbol=type==='activity'?['✎','☏','◉'][n%3]:type==='slf'?'SLF':type==='special'?'★':type==='event'?'ϟ':type==='finish'?'🏆':'⚑';
+ctx.fillStyle=tileKinds[type];ctx.shadowColor=tileKinds[type];ctx.shadowBlur=12;ctx.font=(symbol==='SLF'?'bold 124px':'166px')+' Arial';ctx.fillText(symbol,256,271);ctx.shadowBlur=0;
+ctx.fillStyle='#f5f6fb';ctx.font='bold 36px Arial';ctx.fillText(type==='activity'?['MALEN','REDEN','PANTOMIME'][n%3]:type==='slf'?'STADT LAND FLUSS':type==='special'?'SPECIAL':type==='event'?'EREIGNIS':type==='finish'?'ZIEL':'START',256,420);dt.update();
+const m=new B.StandardMaterial('engravedGlyphMaterial'+n,club.scene);m.diffuseTexture=dt;m.opacityTexture=dt;m.emissiveColor=new B.Color3(1,1,1);m.disableLighting=true;m.backFaceCulling=false;
+const plane=B.MeshBuilder.CreatePlane('engravedGlyphPlane'+n,{size:.79},club.scene);plane.rotation.x=Math.PI/2;plane.position.set(tileXY(n).x,.334,tileXY(n).z);plane.material=m;
+};
 for(let n=0;n<64;n++){
 const p=tileXY(n),type=n===0?'start':n===63?'finish':ACTIVITIES.includes(n)?'activity':SLF_FIELDS.includes(n)?'slf':SPECIAL_FIELDS.includes(n)?'special':'event';
-box3('tileShadow'+n,.99,.37,.99,p.x,-.07,p.z,black);
-box3('tileRim'+n,.975,.105,.975,p.x,.16,p.z,borderMats[type]);
-box3('tileTop'+n,.875,.06,.875,p.x,.235,p.z,mats[type]);
-const dt=new B.DynamicTexture('tileIcon'+n,{width:512,height:512},club.scene,true);
-dt.hasAlpha=true;const ctx=dt.getContext();ctx.clearRect(0,0,512,512);ctx.textAlign='center';ctx.textBaseline='middle';
-ctx.fillStyle=colors[type];ctx.globalAlpha=.4;ctx.fillRect(32,34,448,3);ctx.globalAlpha=1;
-ctx.fillStyle='#ffffff';ctx.font='bold 73px Arial';ctx.fillText(String(n),256,82);
-const symbol=type==='activity'?glyphs[n%3]:type==='slf'?'SLF':type==='special'?'✦':type==='event'?'ϟ':type==='finish'?'★':'⚑';
-ctx.shadowColor=colors[type];ctx.shadowBlur=5;ctx.fillStyle=colors[type];ctx.font=(symbol==='SLF'?'bold 116px':'155px')+' Arial';ctx.fillText(symbol,256,265);ctx.shadowBlur=0;
-ctx.fillStyle='#ffffff';ctx.font='bold 40px Arial';
-ctx.fillText(type==='activity'?categories[n%3]:type==='slf'?'STADT LAND':type==='special'?'SPECIAL':type==='event'?'EREIGNIS':type==='finish'?'ZIEL':'START',256,421);dt.update();
-const lm=new B.StandardMaterial('tileIconMat'+n,club.scene);lm.diffuseTexture=dt;lm.opacityTexture=dt;lm.disableLighting=true;lm.emissiveColor=new B.Color3(1,1,1);lm.backFaceCulling=false;
-const plane=B.MeshBuilder.CreatePlane('tileIconPlane'+n,{size:.85},club.scene);plane.rotation.x=Math.PI/2;plane.position.set(p.x,.269,p.z);plane.material=lm;
+box3('heavySteelBase'+n,.99,.35,.99,p.x,.005,p.z,dark);
+box3('paintedHazardUnderlip'+n,.98,.055,.98,p.x,.145,p.z,n%4===0?hazard:metal);
+box3('neonMetalEdge'+n,.95,.075,.95,p.x,.247,p.z,rim[type]);
+box3('individualTileFace'+n,.855,.047,.855,p.x,.295,p.z,tileFaces[type]);
+for(const dx of [-.405,.405])for(const dz of [-.405,.405]){
+const rivet=B.MeshBuilder.CreateSphere('cornerRivet'+n+'_'+dx+'_'+dz,{diameter:.045,segments:6},club.scene);rivet.position.set(p.x+dx,.334,p.z+dz);rivet.material=metal;
 }
-const stepGlow=mat('pathLighting','#d128ff',1.2);
-// Fine illuminated borders and dark inset tile faces, like the approved club concept
-for(let n=0;n<64;n++){const p=tileXY(n);const kind=n===0?'start':n===63?'finish':ACTIVITIES.includes(n)?'activity':SLF_FIELDS.includes(n)?'slf':SPECIAL_FIELDS.includes(n)?'special':'event';const glow=borderMats[kind];for(const d of [-.47,.47]){box3('tileGlowX'+n+d,.91,.025,.025,p.x,.275,p.z+d,glow);box3('tileGlowZ'+n+d,.025,.025,.91,p.x+d,.275,p.z,glow)}}
-
-for(let n=0;n<63;n++){const a=tileXY(n),b=tileXY(n+1);if(Math.abs(a.x-b.x)>.1)box3('joinX'+n,.07,.025,.035,(a.x+b.x)/2,.2,a.z,stepGlow);else box3('joinZ'+n,.035,.025,.07,a.x,.2,(a.z+b.z)/2,stepGlow)}
-// Vivid neon venue: illuminated floor channels, laser rails and luminous DJ stage
-const magentaLaser=mat('laserHotPink','#ff00d9',1.9),blueLaser=mat('laserElectricBlue','#00dfff',1.9);
-for(let i=-5;i<=5;i+=2){
-box3('floorNeonStripX'+i,10.8,.012,.028,0,-.105,i,i%4===0?magentaLaser:blueLaser);
-box3('floorNeonStripZ'+i,.028,.012,10.8,i,-.104,0,i%4===0?blueLaser:magentaLaser);
+drawIcon(n,type);
 }
-for(const z of [-5.46,5.46]){
-box3('wallNeonRail'+z,10.7,.045,.055,0,.54,z,magentaLaser);
-box3('wallNeonRailUpper'+z,10.7,.035,.05,0,2.12,z,blueLaser);
+for(let n=0;n<64;n++){
+const p=tileXY(n),q=tileXY((n+1)%64),x=(p.x+q.x)/2,z=(p.z+q.z)/2;
+if(Math.abs(p.x-q.x)+Math.abs(p.z-q.z)===1){
+if(p.x!==q.x)box3('routeConnectorX'+n,.12,.035,.045,x,.25,z,n%2?red:cyan);
+else box3('routeConnectorZ'+n,.045,.035,.12,x,.25,z,n%2?red:cyan);
 }
-for(const x of [-5.46,5.46]){
-box3('sideNeonRail'+x,.055,.045,10.7,x,.54,0,blueLaser);
-box3('sideNeonRailUpper'+x,.05,.035,10.7,x,2.12,0,magentaLaser);
 }
-// Club walls, glowing architectural accents and illuminated columns
-for(const z of [5.75]){box3('backWall'+z,12,2.7,.28,0,1.15,z,wall);box3('wallStrip'+z,11.5,.04,.33,0,1.8,z,cyan)} // No front wall: it used to obscure the camera.
-for(const x of [-5.75,5.75]){box3('sideWall'+x,.28,2.0,10.2,x,.9,.45,wall);box3('sideStrip'+x,.32,.04,10.2,x,1.8,.45,x<0?violet:cyan)}
+// Dystopian industrial backdrop, placed outside playable 8x8 route.
+box3('rearBunkerWall',12,3.6,.28,0,1.45,5.7,metal);
+for(const x of [-5.6,5.6])box3('sideBunkerWall'+x,.24,2.3,10.8,x,.88,.2,metal);
+for(const x of [-5.25,-2.6,0,2.6,5.25]){
+box3('verticalIndustrialPipe'+x,.14,2.8,.16,x,1.32,5.46,rust);
+box3('pipeEmergencyTube'+x,.055,1.85,.07,x,1.2,5.28,x%2?red:cyan);
+}
+for(const z of [-5.2,5.2]){
+box3('upperCeilingTruss'+z,11.4,.13,.14,0,2.75,z,metal);
+box3('redWarningRail'+z,11.3,.035,.055,0,2.6,z,red);
+}
 for(const x of [-5.15,5.15])for(const z of [-5.15,5.15]){
-box3('column'+x+z,.32,2.6,.32,x,1.18,z,steel);
-for(const y of [.5,1.65,2.2])box3('columnRing'+x+z+y,.38,.06,.38,x,y,z,(x<0?pink:cyan));
+box3('warehousePillar'+x+z,.34,2.7,.34,x,1.15,z,metal);
+for(const y of [.35,1.5,2.3])box3('pillarSafetyBand'+x+z+y,.38,.075,.38,x,y,z,y===1.5?cyan:red);
 }
-for(const x of [-5.25,5.25])for(const z of [-2.4,2.4]){
-box3('leatherBooth'+x+z,.46,.43,1.4,x,.11,z,sofa);
-box3('boothBack'+x+z,.24,.85,1.4,x+(x<0?-.12:.12),.52,z,leather);
+const fanFrame=B.MeshBuilder.CreateTorus('industrialFanRim',{diameter:1.35,thickness:.1,tessellation:32},club.scene);fanFrame.position.set(-3.9,1.5,5.48);fanFrame.material=metal;
+for(let i=0;i<5;i++){const blade=box3('ventFanBlade'+i,.13,.53,.035,-3.9,1.5,5.38,rust);blade.rotation.z=i*Math.PI*2/5;blade.position.x+=Math.sin(i*Math.PI*2/5)*.23;blade.position.y+=Math.cos(i*Math.PI*2/5)*.23}
+const reactor=B.MeshBuilder.CreateCylinder('toxicReactor',{height:1.55,diameter:.78,tessellation:16},club.scene);reactor.position.set(0,.6,0);reactor.material=metal;
+const reactorCore=B.MeshBuilder.CreateCylinder('reactorCore',{height:1.1,diameter:.56,tessellation:16},club.scene);reactorCore.position.set(0,.65,0);reactorCore.material=red;
+for(const y of [.12,1.16]){const ring=B.MeshBuilder.CreateTorus('reactorGuard'+y,{diameter:1.25,thickness:.085,tessellation:24},club.scene);ring.rotation.x=Math.PI/2;ring.position.set(0,y,0);ring.material=metal}
+for(const x of [-1.6,1.6])for(const z of [-1.5,1.5])box3('reactorBarrier'+x+z,.09,.7,.09,x,.2,z,rust);
+const warning=B.MeshBuilder.CreatePlane('reactorWarning',{size:1.2},club.scene);warning.position.set(0,1.35,5.52);
+const warningMat=mat('reactorWarningRed','#b72730',1.2);warning.material=warningMat;
+for(const x of [-4.85,4.85])for(const z of [-3.7,3.7]){
+const drum=B.MeshBuilder.CreateCylinder('rustBarrel'+x+z,{diameter:.5,height:.76,tessellation:12},club.scene);drum.position.set(x,.23,z);drum.material=rust;
+const band=B.MeshBuilder.CreateTorus('barrelHazardRing'+x+z,{diameter:.51,thickness:.035,tessellation:12},club.scene);band.rotation.x=Math.PI/2;band.position.set(x,.42,z);band.material=hazard;
 }
-// Premium club props: neon wall signs, illuminated bar, seating and stage rig
-const signage=mat('signageNeon','#cc4fe2',.9);
-for(const x of [-4.7,4.7]){box3('loungeTable'+x,.52,.06,.55,x,.32,1.2,steel);box3('loungeLeg'+x,.08,.34,.08,x,.13,1.2,black)}
-for(const x of [-3.5,-2.1,2.1,3.5]){box3('lightRig'+x,.045,.05,8.9,x,2.35,0,steel);box3('rigGlow'+x,.032,.018,8.9,x,2.32,0,x<0?pink:cyan)}
-for(const z of [-4.4,4.4]){box3('truss'+z,9.8,.09,.09,0,2.5,z,steel)}
-box3('neonSignBack',2.4,.72,.08,-2.6,1.55,5.57,black);
-box3('neonSignTop',2.1,.04,.1,-2.6,1.84,5.51,signage);
-box3('neonSignBottom',2.1,.04,.1,-2.6,1.27,5.51,signage);
-const booth=mat('djBooth','#21142d',.3),consoleMat=mat('djConsole','#32364d');
-box3('djStage',3.1,.3,1.4,0,-.01,4.85,steel);
-box3('djConsole',2.7,.65,.65,0,.43,4.85,booth);
-box3('djDesk',2.8,.08,.8,0,.79,4.85,consoleMat);
-for(const x of [-.8,.8]){
-const disc=B.MeshBuilder.CreateCylinder('turntable'+x,{diameter:.47,height:.03,tessellation:24},club.scene);disc.position.set(x,.855,4.85);disc.material=black;
-const center=B.MeshBuilder.CreateCylinder('deckCenter'+x,{diameter:.1,height:.04,tessellation:16},club.scene);center.position.set(x,.88,4.85);center.material=cyan;
-}
-for(let i=0;i<24;i++){const h=.12+.32*(.5+.5*Math.sin(i*.83));box3('eq'+i,.048,h,.014,-.98+i*.085,.34,4.51,i%2?pink:cyan)}
-// hanging mirrored disco ball
-const mirror=mat('mirrorDisco','#9ca9e1',.55);mirror.specularColor=new B.Color3(.9,.9,1);mirror.specularPower=90;
-const disco=B.MeshBuilder.CreateSphere('discoBall',{diameter:.88,segments:20},club.scene);disco.position.set(0,2.32,3.25);disco.material=mirror;club.disco=disco;
-box3('discoCable',.018,.45,.018,0,2.97,3.25,steel);
-for(const [i,x,z,c] of [[0,-4.2,-4.6,pink],[1,4.2,-4.6,cyan],[2,-4.2,4.5,violet],[3,4.2,4.5,pink]]){
-const lamp=new B.SpotLight('stageSpot'+i,new B.Vector3(x,2.25,z),new B.Vector3(-x*.3,-1,-z*.24),Math.PI/3,8,club.scene);
-lamp.diffuse=B.Color3.FromHexString(i%2?'#38a9dd':'#a44ad5');lamp.intensity=2.1;
-box3('lampHousing'+i,.35,.17,.35,x,2.38,z,black);
-}
-const potted=mat('planter','#33313c'),leaf=mat('leaf','#193e3b');
-for(const [x,z] of [[-5.1,-3.9],[5.1,3.7]]){
-const pot=B.MeshBuilder.CreateCylinder('planter'+x,{diameterTop:.52,diameterBottom:.4,height:.58,tessellation:12},club.scene);pot.position.set(x,.15,z);pot.material=potted;
-for(let i=0;i<7;i++){const stem=B.MeshBuilder.CreateCylinder('leaf'+x+i,{height:.65,diameterTop:0,diameterBottom:.14,tessellation:5},club.scene);stem.position.set(x+Math.sin(i*2.4)*.17,.68,z+Math.cos(i*2.4)*.17);stem.rotation.z=Math.sin(i*2.4)*.6;stem.material=leaf}
-}
+const emergency=new B.PointLight('reactorEmergency',new B.Vector3(0,1.8,0),club.scene);emergency.diffuse=new B.Color3(1,.05,.12);emergency.intensity=.7;emergency.range=6;
+const workLight=new B.PointLight('cyanWarehouseLight',new B.Vector3(-3,3,-3),club.scene);workLight.diffuse=new B.Color3(.1,.8,1);workLight.intensity=.8;workLight.range=11;
 club.ready=true;club.failed=false;syncAvatars();
-club.engine.runRenderLoop(()=>{try{updateClub(performance.now());if(club.disco)club.disco.rotation.y+=.002;club.scene.render()}catch(e){if(!club.renderError){club.renderError=true;console.error('3D render error',e);$('cameraHud').textContent='3D-Fehler: '+e.message;$('cameraHud').style.display='block'}}});
+club.engine.runRenderLoop(()=>{try{updateClub(performance.now());club.scene.render()}catch(e){if(!club.renderError){club.renderError=true;console.error('3D render error',e);$('cameraHud').textContent='3D-Fehler: '+e.message;$('cameraHud').style.display='block'}}});
 window.addEventListener('resize',()=>club.engine.resize());
 window.addEventListener('orientationchange',()=>setTimeout(()=>club.engine.resize(),250));
 }catch(e){club.failed=true;console.error('Babylon init',e);$('cameraHud').textContent='3D-Startfehler: '+e.message;$('cameraHud').style.display='block'}
@@ -462,7 +442,7 @@ focus=new BABYLON.Vector3(x,0,z);
 if(progress>=1){club.walking=null;club.walkFinishedAt=now+700}
 }
 const aspect=club.engine.getRenderWidth()/Math.max(1,club.engine.getRenderHeight());
-const overview=new BABYLON.Vector3(8.7,aspect<.8?13.5:12.5,aspect<.8?-12.5:-12);
+const overview=new BABYLON.Vector3(8.5,aspect<.8?14:12,aspect<.8?-14:-13);
 const desired=focus?new BABYLON.Vector3(focus.x+2.8,6.5,focus.z-6.5):overview;
 club.camera.position=BABYLON.Vector3.Lerp(club.camera.position,desired,focus?.095:.04);
 const target=focus?new BABYLON.Vector3(focus.x,.15,focus.z):new BABYLON.Vector3(0,.2,0);
