@@ -41,7 +41,7 @@ for (const [w, h, tag] of [[430, 932, 'hoch'], [932, 430, 'quer']]) {
   await page.screenshot({ path: shot.replace('.png', '_' + tag + '.png') });
   if (tag === 'hoch') {
     const fake = async (name, patch) => {
-      await page.evaluate((patch) => { circ.busy = 0; circ.calmUntil = 0; dismissedPopupKey = ''; const s = JSON.parse(JSON.stringify(snapshot)); Object.assign(s, patch); if (patch.roll_info) s.roll_info = Object.assign({}, snapshot.roll_info || {}, patch.roll_info); render(s); }, patch);
+      const err = await page.evaluate((patch) => { try { refresh = async () => {}; circ.busy = 0; circ.calmUntil = 0; dismissedPopupKey = ''; const s = JSON.parse(JSON.stringify(snapshot)); Object.assign(s, patch); if (patch.roll_info) s.roll_info = Object.assign({}, snapshot.roll_info || {}, patch.roll_info); render(s); return 'ok ' + s.phase + ' sheet=' + document.body.classList.contains('sheet') + ' ev=' + !document.getElementById('eventpanel').classList.contains('hide'); } catch (e) { return 'Fehler ' + e.message; } }, patch); console.log('fake', name, err);
       await sleep(700);
       await page.screenshot({ path: shot.replace('.png', '_' + tag + '_' + name + '.png') });
     };
