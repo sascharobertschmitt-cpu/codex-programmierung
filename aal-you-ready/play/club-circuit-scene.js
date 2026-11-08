@@ -270,6 +270,68 @@
     } catch (e) { console.warn('PA nicht geladen', e); }
 
 
+    // ------------------------------------------------------------ DJ-Booth + Lichtrigg (eigene GLBs)
+    const heads = [];
+    let rigLoaded = false;
+    try {
+      const load = (f) => B.SceneLoader.LoadAssetContainerAsync(o.assetBase, f, scene, null, '.glb');
+      const [dj, tr, mh] = await Promise.all([load('club_dj_booth.glb'), load('club_truss_3m.glb'), load('club_moving_head.glb')]);
+      // Platzhalter-Pult entfernen
+      ['desk', 'eq', 'deck0', 'deck1', 'platter0', 'platter1', 'mixer'].forEach(n => { const m = scene.getMeshByName(n); if (m) m.dispose(); });
+      const place = (container, name, pos, rot) => {
+        const inst = container.instantiateModelsToScene(n => name + '_' + n, false);
+        const holder = new B.TransformNode(name, scene);
+        inst.rootNodes.forEach(r => { r.parent = holder; });
+        holder.position.copyFrom(pos);
+        if (rot) holder.rotation.copyFrom(rot);
+        return { holder, inst };
+      };
+      // DJ-Booth auf dem Podest, Front zur Tanzfläche (-Z)
+      const d = place(dj, 'djbooth', new B.Vector3(0, 0, 0), new B.Vector3(0, Math.PI, 0));
+      d.holder.parent = booth; d.holder.position.set(0, 0.35, -0.15);
+      d.holder.getChildMeshes().forEach(m => shadows.addShadowCaster(m));
+
+      // Rigg: 4 Türme (je 2 x 3 m senkrecht), vorne und hinten je 3 Segmente quer
+      const zF = HL - 6.4, zR = HL - 2.9, xT = 4.65, yTop = 6.0;
+      [[-xT, zF], [xT, zF], [-xT, zR], [xT, zR]].forEach(([x, z], i) => {
+        [1.5, 4.5].forEach((y, k) => place(tr, `tower${i}_${k}`, new B.Vector3(x, y, z), new B.Vector3(0, 0, Math.PI / 2)));
+      });
+      [zF, zR].forEach((z, j) => [-3, 0, 3].forEach((x, k) =>
+        place(tr, `beam${j}_${k}`, new B.Vector3(x, yTop, z), new B.Vector3(0, 0, 0))));
+
+      // Moving Heads kopfüber unter dem vorderen Träger
+      const beamCols = ['#ff4fd8', '#29c6ff', '#f5ecff', '#2ee6b0', '#bb38ff', '#ffb627'];
+      [-3.75, -2.25, -0.75, 0.75, 2.25, 3.75].forEach((x, i) => {
+        const h = place(mh, 'mh' + i, new B.Vector3(x, yTop, zF), new B.Vector3(0, 0, Math.PI));
+        const nodes = h.holder.getDescendants(false);
+        const pan = nodes.find(n => n.name.endsWith('MH_Pan'));
+        const tilt = nodes.find(n => n.name.endsWith('MH_Tilt'));
+        if (!pan || !tilt) return;
+        pan.rotationQuaternion = null; tilt.rotationQuaternion = null;
+        const cone = B.MeshBuilder.CreateCylinder('mhBeam' + i, { diameterTop: 2.4, diameterBottom: 0.09, height: 10, tessellation: 20, cap: B.Mesh.NO_CAP }, scene);
+        cone.parent = tilt; cone.position.y = 0.16 + 5;
+        const bm = new B.StandardMaterial('mhBeamMat' + i, scene);
+        bm.disableLighting = true; bm.emissiveColor = B.Color3.FromHexString(beamCols[i]);
+        bm.alpha = 0.10; bm.alphaMode = B.Engine.ALPHA_ADD; bm.backFaceCulling = false;
+        cone.material = bm;
+        glow.addExcludedMesh(cone);
+        heads.push({ pan, tilt, bm, i });
+      });
+      rigLoaded = true;
+    } catch (e) { console.warn('DJ/Rigg nicht geladen', e); }
+    const BEAM_COLORS = ['#ff4fd8', '#29c6ff', '#f5ecff', '#2ee6b0', '#bb38ff', '#ffb627'].map(c => B.Color3.FromHexString(c));
+    scene.onBeforeRenderObservable.add(() => {
+      if (!heads.length) return;
+      const t = performance.now() / 1000;
+      const scheme = Math.floor(t / 8) % 3;      // alle 8 s neues Muster
+      heads.forEach(h => {
+        const ph = h.i * 0.55;
+        h.pan.rotation.y = scheme === 1 ? Math.sin(t * 0.9) * 1.1 : Math.sin(t * 0.6 + ph) * 1.2;
+        h.tilt.rotation.x = 0.35 + (scheme === 2 ? 0.25 + Math.sin(t * 2 + ph) * 0.2 : Math.sin(t * 0.8 + ph) * 0.45);
+        h.bm.emissiveColor = BEAM_COLORS[(h.i + scheme * 2) % BEAM_COLORS.length];
+      });
+    });
+
     // ------------------------------------------------------------ Spieler
     const SLOTS = [[-0.2, -0.32], [0.2, 0.32], [0.2, -0.32], [-0.2, 0.32], [0, 0], [-0.3, 0], [0.3, 0], [0, 0.45]];
     const tokens = [];
@@ -344,7 +406,7 @@
     await scene.whenReadyAsync();
 
     return {
-      scene, engine, paLoaded, tiles,
+      scene, engine, paLoaded, rigLoaded, tiles,
       sync(players, active) {
         while (tokens.length < players.length) tokens.push(makeToken(tokens.length));
         tokens.forEach((tk, i) => {

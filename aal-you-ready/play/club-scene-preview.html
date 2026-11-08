@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07080d">
+<title>Club-Szene · Vorschau</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#07080d;color:#f2eefc;font:14px -apple-system,BlinkMacSystemFont,system-ui,sans-serif}
+  canvas{position:fixed;inset:0;width:100vw;height:100dvh;touch-action:none;outline:none}
+  #bar{position:fixed;left:0;right:0;bottom:0;display:flex;gap:6px;padding:0 10px calc(env(safe-area-inset-bottom) + 10px)}
+  button{flex:1;border-radius:12px;border:1px solid #2c2f48;background:#121429dd;color:#f2eefc;font:inherit;font-weight:700;padding:12px 6px}
+  button.on{border-color:#c48bff;background:#3a1f5c}
+  #info{position:fixed;top:calc(env(safe-area-inset-top) + 8px);left:10px;right:10px;font:12px ui-monospace,Menlo,monospace;color:#91f0e5;pointer-events:none}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="info">Lade Club …</div>
+<div id="bar">
+  <button data-v="follow" class="on">Folgen</button>
+  <button data-v="overview">Übersicht</button>
+  <button data-v="city">Stadt</button>
+  <button id="walk">Zug</button>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/babylonjs@7.54.3/babylon.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/babylonjs-loaders@7.54.3/babylonjs.loaders.min.js"></script>
+<script src="./club-circuit-rules.js"></script>
+<script src="./club-exterior.js"></script>
+<script src="./club-circuit-scene.js"></script>
+<script>
+(async () => {
+  const Q = new URLSearchParams(location.search);
+  const info = document.querySelector('#info');
+  const players = [{ id: 'a', position: 0, lap: 0 }, { id: 'b', position: 3, lap: 0 }, { id: 'c', position: 9, lap: 0 }];
+  let turn = 0;
+  try {
+    const t0 = performance.now();
+    const sc = await ClubCircuitScene.create(document.querySelector('#c'), {
+      assetBase: './assets/', exterior: Q.get('ext') !== '0', rain: Q.get('rain') !== '0', quality: Number(Q.get('q') || 1) });
+    sc.sync(players, turn);
+    addEventListener('resize', () => sc.resize());
+    const setView = (v) => { sc.setView(v); document.querySelectorAll('[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === v)); };
+    document.querySelectorAll('[data-v]').forEach(b => b.onclick = () => setView(b.dataset.v));
+    document.querySelector('#walk').onclick = async () => {
+      const p = players[turn], d = ClubRules.rollDice(), from = p.lap * 64 + p.position, to = from + d.total;
+      p.lap = Math.floor(to / 64); p.position = to % 64;
+      setView('follow');
+      await sc.walk(turn, from, to);
+      turn = (turn + 1) % players.length; sc.sync(players, turn);
+    };
+    const ms = Math.round(performance.now() - t0);
+    setInterval(() => { info.textContent = `${sc.engine.getFps().toFixed(0)} fps · PA ${sc.paLoaded ? 'ok' : '–'} · Rigg ${sc.rigLoaded ? 'ok' : '–'} · geladen in ${ms} ms`; }, 1000);
+    if (Q.get('view')) setView(Q.get('view'));
+    if (Q.get('walk')) { for (let i = 0; i < Number(Q.get('walk')); i++) await document.querySelector('#walk').onclick(); }
+    await new Promise(r => setTimeout(r, 3000));
+    window.TEST_RESULT = { ok: sc.paLoaded && sc.rigLoaded, checks: [
+      { name: 'Szene geladen', ok: true, detail: ms + ' ms' },
+      { name: 'PA-Stacks', ok: sc.paLoaded },
+      { name: 'DJ-Booth + Rigg + Moving Heads', ok: sc.rigLoaded },
+    ], stats: { fps: Math.round(sc.engine.getFps()) } };
+  } catch (e) {
+    console.error(e); info.textContent = 'Fehler: ' + e.message;
+    window.TEST_RESULT = { ok: false, checks: [{ name: 'Szene', ok: false, detail: e.message }], stats: {} };
+  }
+})();
+</script>
+</body>
+</html>
