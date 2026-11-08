@@ -467,7 +467,7 @@
 
     // ------------------------------------------------- Figuren (eigene GLBs)
     // Spielfiguren in Spielerfarbe, DJ hinterm Pult, Türsteher am Einlass, tanzende Menge.
-    // Ein überspitzter Charakter für alle (club_character.glb, ca. 0,9 m modelliert),
+    // Ein überspitzter Charakter für alle (club_character.glb, ca. 0,9 m hoch modelliert),
     // unterschieden über Spielerfarbe, Hautton und eine wählbare Kopfbedeckung (club_hats_a/b.glb).
     const HAT_LIFT = [0.73, 0.6726];   // Hüte liegen in der GLB auf dem Boden (Prüfung), hier zurück auf Kopfhöhe
     const HAT_ORDER = ['fischerhut', 'cap', 'kopfhoerer', 'beanie', 'gasmaske', 'aalmuetze', 'hasenohren', 'ledhelm'];
