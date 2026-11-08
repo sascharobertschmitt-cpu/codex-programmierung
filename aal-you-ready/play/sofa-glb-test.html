@@ -1,0 +1,17 @@
+<!doctype html><html lang="de"><head><meta name="viewport" content="width=device-width,initial-scale=1"><meta charset="utf-8"><title>Sofa GLB – lokaler Assettest</title><style>body{margin:0;background:#080a13;color:white;font:14px system-ui}canvas{display:block;width:100vw;height:72dvh;touch-action:none}section{padding:16px}#log{white-space:pre-wrap;color:#91f0e5;overflow-wrap:anywhere}</style></head><body><canvas id="c"></canvas><section><h2>Club-Sofa · lokaler GLB-Test</h2><div id="log">Initialisiere …</div><p>Asset: Poly Haven Sofa 02 (CC0). Keine externe Poly-Haven-Datei beim Laden erforderlich.</p></section><script src="https://cdn.babylonjs.com/babylon.js"></script><script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script><script>
+const log=document.querySelector('#log');const say=s=>{log.textContent=s+'\n'+log.textContent};const B=BABYLON;
+const engine=new B.Engine(document.querySelector('canvas'),true);const scene=new B.Scene(engine);scene.clearColor=new B.Color4(.015,.016,.028,1);
+const cam=new B.ArcRotateCamera('cam',-1.4,1.18,5,new B.Vector3(0,.7,0),scene);cam.attachControl(document.querySelector('canvas'),true);
+new B.HemisphericLight('ambient',new B.Vector3(0,1,0),scene).intensity=1.2;
+const key=new B.DirectionalLight('key',new B.Vector3(-1,-2,-1),scene);key.intensity=1.6;
+const ground=B.MeshBuilder.CreateGround('floor',{width:8,height:8},scene);const mat=new B.StandardMaterial('floorMat',scene);mat.diffuseColor=new B.Color3(.1,.09,.15);ground.material=mat;
+engine.runRenderLoop(()=>scene.render());addEventListener('resize',()=>engine.resize());
+(async()=>{try{say('Lade lokale GLB-Datei …');const res=await B.SceneLoader.ImportMeshAsync('','./assets/','sofa_02.glb',scene);
+const meshes=res.meshes.filter(m=>m.getTotalVertices&&m.getTotalVertices()>0);if(!meshes.length)throw Error('GLB enthält keine sichtbaren Meshes');
+let min=new B.Vector3(Infinity,Infinity,Infinity),max=new B.Vector3(-Infinity,-Infinity,-Infinity);
+for(const m of meshes){m.computeWorldMatrix(true);const b=m.getBoundingInfo().boundingBox;min=B.Vector3.Minimize(min,b.minimumWorld);max=B.Vector3.Maximize(max,b.maximumWorld)}
+const roots=res.meshes.filter(m=>!m.parent),pivot=new B.TransformNode('sofaRoot',scene);roots.forEach(m=>m.parent=pivot);
+const scale=2.7/Math.max(max.x-min.x,max.y-min.y,max.z-min.z,.001);pivot.scaling.setAll(scale);pivot.position.set(-(max.x+min.x)/2*scale,-min.y*scale,-(max.z+min.z)/2*scale);
+say('Erfolg: '+meshes.length+' sichtbare Meshes.');window.TEST_OK=true
+}catch(e){say('FEHLER: '+e.message);window.TEST_OK=false;console.error(e)}})();
+</script></body></html>
