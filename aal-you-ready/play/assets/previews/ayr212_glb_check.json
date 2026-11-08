@@ -62,9 +62,9 @@
     }
   ],
   "analysis": {
-    "file_bytes": 622304,
+    "file_bytes": 622112,
     "triangles": 18548,
-    "vertices": 12221,
+    "vertices": 12213,
     "primitives": 9,
     "meshes": 9,
     "materials": [
