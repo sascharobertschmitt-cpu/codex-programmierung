@@ -9,6 +9,7 @@ on:
       - 'aal-you-ready/play/index.html'
       - 'aal-you-ready/play/club-circuit-scene.js'
       - 'tools/circuit_multiplayer_smoke.mjs'
+      - 'tools/solo_smoke.mjs'
       - '.github/workflows/main-circuit-e2e.yml'
   workflow_dispatch:
 
@@ -40,6 +41,12 @@ jobs:
           mkdir -p aal-you-ready/play/assets/previews
           PW_CHANNEL=chrome node tools/circuit_multiplayer_smoke.mjs http://localhost:8080 \
             aal-you-ready/play/assets/previews/main_circuit | tee /tmp/e2e.log
+      - name: Solo game against bots in headless Chrome
+        run: |
+          curl -s -o /dev/null http://localhost:8080/index.html || (cd aal-you-ready/play && python3 -m http.server 8080 > /tmp/http2.log 2>&1 &)
+          sleep 2
+          PW_CHANNEL=chrome node tools/solo_smoke.mjs http://localhost:8080 \
+            aal-you-ready/play/assets/previews/main_circuit | tee /tmp/solo.log
       - name: Commit screenshots
         if: always()
         run: |
