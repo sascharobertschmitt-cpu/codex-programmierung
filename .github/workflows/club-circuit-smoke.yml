@@ -56,7 +56,7 @@ jobs:
             "http://localhost:8080/club-scene-preview.html?view=follow&walk=1&rain=0" \
             aal-you-ready/play/assets/previews/scene_rig_follow.png 240000 | tee -a /tmp/browser.log || true
           PW_CHANNEL=chrome node tools/browser_smoke.mjs \
-            "http://localhost:8080/club-scene-preview.html?view=follow&n=6&lineup=1&rain=0" \
+            "http://localhost:8080/club-scene-preview.html?view=follow&n=8&lineup=1&rain=0" \
             aal-you-ready/play/assets/previews/scene_figures.png 240000 | tee -a /tmp/browser.log || true
           PW_CHANNEL=chrome node tools/browser_smoke.mjs \
             "http://localhost:8080/club-scene-preview.html?view=floor&rain=0" \

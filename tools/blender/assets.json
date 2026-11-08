@@ -77,104 +77,54 @@
     ]
   },
   {
-    "id": "fig_aal",
-    "name": "Spielfigur Aal",
-    "geometry": "fig_aal_geometry",
-    "glb": "club_fig_aal.glb",
+    "id": "char",
+    "name": "Club-Charakter",
+    "geometry": "char_geometry",
+    "glb": "club_character.glb",
     "expect_size": [
-      0.421,
-      0.766,
-      0.341
+      0.568,
+      0.893,
+      0.236
     ],
     "front_material": "-",
     "mask_materials": "-",
     "deps": [
-      "figures_geometry"
+      "figures_geometry",
+      "character_geometry"
     ]
   },
   {
-    "id": "hum_raver",
-    "name": "Mensch Raverin",
-    "geometry": "hum_raver_geometry",
-    "glb": "club_hum_raver.glb",
+    "id": "hats_a",
+    "name": "Kopfbedeckungen A",
+    "geometry": "hats_a_geometry",
+    "glb": "club_hats_a.glb",
     "expect_size": [
-      0.621,
-      2.06,
-      0.339
+      0.3,
+      0.219,
+      0.319
     ],
     "front_material": "-",
     "mask_materials": "-",
     "deps": [
-      "humans_geometry",
-      "figures_geometry"
+      "figures_geometry",
+      "character_geometry"
     ]
   },
   {
-    "id": "hum_dj",
-    "name": "Mensch DJ",
-    "geometry": "hum_dj_geometry",
-    "glb": "club_hum_dj.glb",
+    "id": "hats_b",
+    "name": "Kopfbedeckungen B",
+    "geometry": "hats_b_geometry",
+    "glb": "club_hats_b.glb",
     "expect_size": [
-      0.599,
-      1.777,
-      0.603
+      0.214,
+      0.997,
+      0.279
     ],
     "front_material": "-",
     "mask_materials": "-",
     "deps": [
-      "humans_geometry",
-      "figures_geometry"
-    ]
-  },
-  {
-    "id": "hum_tuersteher",
-    "name": "Mensch Türsteher",
-    "geometry": "hum_tuersteher_geometry",
-    "glb": "club_hum_tuersteher.glb",
-    "expect_size": [
-      0.634,
-      1.817,
-      0.444
-    ],
-    "front_material": "-",
-    "mask_materials": "-",
-    "deps": [
-      "humans_geometry",
-      "figures_geometry"
-    ]
-  },
-  {
-    "id": "hum_gasmaske",
-    "name": "Mensch Gasmasken-Punk",
-    "geometry": "hum_gasmaske_geometry",
-    "glb": "club_hum_gasmaske.glb",
-    "expect_size": [
-      0.708,
-      1.992,
-      0.289
-    ],
-    "front_material": "-",
-    "mask_materials": "-",
-    "deps": [
-      "humans_geometry",
-      "figures_geometry"
-    ]
-  },
-  {
-    "id": "hum_taenzerin",
-    "name": "Mensch Tänzerin",
-    "geometry": "hum_taenzerin_geometry",
-    "glb": "club_hum_taenzerin.glb",
-    "expect_size": [
-      0.768,
-      1.784,
-      0.335
-    ],
-    "front_material": "-",
-    "mask_materials": "-",
-    "deps": [
-      "humans_geometry",
-      "figures_geometry"
+      "figures_geometry",
+      "character_geometry"
     ]
   },
   {
@@ -183,15 +133,15 @@
     "geometry": "crowd_geometry",
     "glb": "club_crowd.glb",
     "expect_size": [
-      0.684,
-      2.084,
-      0.569
+      0.642,
+      1.066,
+      0.359
     ],
     "front_material": "-",
     "mask_materials": "-",
     "deps": [
-      "humans_geometry",
-      "figures_geometry"
+      "figures_geometry",
+      "character_geometry"
     ]
   }
 ]

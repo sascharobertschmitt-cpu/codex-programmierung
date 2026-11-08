@@ -467,46 +467,59 @@
 
     // ------------------------------------------------- Figuren (eigene GLBs)
     // Spielfiguren in Spielerfarbe, DJ hinterm Pult, Türsteher am Einlass, tanzende Menge.
-    // Menschen sind in echter Größe modelliert (ca. 1,75 m), der Aal als Maskottchen 0,8 m
-    const FIG_ORDER = ['raver', 'dj', 'aal', 'taenzerin', 'gasmaske', 'tuersteher'];
-    const FIG_FILE = k => k === 'aal' ? 'club_fig_aal.glb' : 'club_hum_' + k + '.glb';
-    const TOK = { aal: 1.3 }, TOK_HUMAN = 0.66;
-    const tokScale = k => TOK[k] || TOK_HUMAN;
-    const figs = {};
+    // Ein überspitzter Charakter für alle (club_character.glb, ca. 0,9 m modelliert),
+    // unterschieden über Spielerfarbe, Hautton und eine wählbare Kopfbedeckung (club_hats_a/b.glb).
+    const HAT_ORDER = ['fischerhut', 'cap', 'kopfhoerer', 'beanie', 'gasmaske', 'aalmuetze', 'hasenohren', 'ledhelm'];
+    const SKINS = ['#e9b493', '#a8704c', '#5a3624', '#d29a74', '#7b4a2e', '#f1c7a5'];
+    const TOK_SCALE = 1.15, NPC_SCALE = 2.0;
+    let charC = null, hatC = [];
     const npcs = [];
     let figuresLoaded = false, crowdLoaded = false;
     const crowd = { meshes: [], dancers: [] };
     const tameGlow = (mt) => { if (mt && mt.name.includes('M_Glow')) mt.emissiveIntensity = 1.1; };
-    const tint = (meshes, hex, glowScale) => meshes.forEach(m => {
+    const tint = (meshes, hex, glowScale, skin) => meshes.forEach(m => {
       const mt = m.material;
       tameGlow(mt);
       if (mt && mt.name.includes('M_Accent')) {
         mt.albedoColor = B.Color3.FromHexString(hex).toLinearSpace();
         mt.emissiveColor = B.Color3.FromHexString(hex).scale(glowScale);
       }
+      if (mt && skin && mt.name.includes('M_Skin')) mt.albedoColor = B.Color3.FromHexString(skin).toLinearSpace();
     });
-    const spawnFig = (kind, name, scale, hex) => {
-      const c = figs[kind]; if (!c) return null;
+    // Hut-Instanz: nur die Gruppe HAT_<name> behalten
+    const spawnHat = (hat, name) => {
+      const c = hatC.find(h => h && h.meshes.some(m => m.name.includes('HAT_' + hat))) ||
+                hatC.find(h => h && h.transformNodes.some(n => n.name === 'HAT_' + hat));
+      if (!c) return null;
       const inst = c.instantiateModelsToScene(n => name + '_' + n, true);
+      inst.rootNodes.forEach(r => r.getChildren(null, true).forEach(ch => {
+        if (ch.name && /HAT_/.test(ch.name) && !ch.name.endsWith('HAT_' + hat) && ch.getClassName() === 'TransformNode') ch.dispose(false, true);
+      }));
+      return inst.rootNodes;
+    };
+    const spawnFig = (name, scale, hex, hat, skin) => {
+      if (!charC) return null;
       const body = new B.TransformNode(name, scene);
-      inst.rootNodes.forEach(r => { r.parent = body; });
+      charC.instantiateModelsToScene(n => name + '_' + n, true).rootNodes.forEach(r => { r.parent = body; });
+      if (hat) (spawnHat(hat, name + '_hat') || []).forEach(r => { r.parent = body; });
       body.scaling.setAll(scale);
       const meshes = body.getChildMeshes(false);
-      if (hex) tint(meshes, hex, 0.12);
+      if (hex) tint(meshes, hex, 0.1, skin);
       meshes.forEach(m => shadows.addShadowCaster(m));
+      body.metadata = { hat };
       return body;
     };
     try {
       const load = (f) => B.SceneLoader.LoadAssetContainerAsync(o.assetBase, f, scene, null, '.glb');
-      const list = await Promise.all(FIG_ORDER.map(k => load(FIG_FILE(k)).catch(() => null)));
-      FIG_ORDER.forEach((k, i) => { if (list[i]) figs[k] = list[i]; });
-      figuresLoaded = Object.keys(figs).length === FIG_ORDER.length;
+      const [ch, ha, hb] = await Promise.all(['club_character.glb', 'club_hats_a.glb', 'club_hats_b.glb'].map(f => load(f).catch(() => null)));
+      charC = ch; hatC = [ha, hb];
+      figuresLoaded = !!(ch && ha && hb);
       // DJ hinter dem Pult (Podest-Oberkante y 0.6), Blick zur Tanzfläche
-      const dj = spawnFig('dj', 'npcDJ', 1.0, '#29c6ff');
+      const dj = spawnFig('npcDJ', NPC_SCALE, '#29c6ff', 'kopfhoerer', SKINS[1]);
       if (dj) { dj.position.set(0, 0.6, HL - 3.95); dj.rotation.y = Math.PI; npcs.push({ node: dj, kind: 'dj', y: 0.6 }); }
-      // Türsteher innen neben dem Einlass, schaut den ankommenden Figuren entgegen
-      const bo = spawnFig('tuersteher', 'npcBouncer', 1.0, '#ff4fd8');
-      if (bo) { bo.position.set(tiles[0].x + 1.5, 0, tiles[0].z + 2.7); bo.rotation.y = -Math.PI / 2 - 0.6; npcs.push({ node: bo, kind: 'bouncer', y: 0 }); }
+      // Türsteher innen neben dem Einlass: breit gebaut, schaut den ankommenden Figuren entgegen
+      const bo = spawnFig('npcBouncer', NPC_SCALE, '#1a1a22', 'beanie', SKINS[2]);
+      if (bo) { bo.scaling.x *= 1.3; bo.position.set(tiles[0].x + 1.5, 0, tiles[0].z + 2.7); bo.rotation.y = -Math.PI / 2 - 0.6; npcs.push({ node: bo, kind: 'bouncer', y: 0 }); }
     } catch (e) { console.warn('Figuren nicht geladen', e); }
     try {
       const cc = await B.SceneLoader.LoadAssetContainerAsync(o.assetBase, 'club_crowd.glb', scene, null, '.glb');
@@ -611,13 +624,13 @@
     // ------------------------------------------------------------ Spieler
     const SLOTS = [[-0.22, -0.3], [0.22, 0.3], [0.22, -0.3], [-0.22, 0.3], [0, 0], [-0.3, 0], [0.3, 0], [0, 0.45]];
     const tokens = [];
-    const makeToken = (i) => {
+    const makeToken = (i, players) => {
       const rootN = new B.TransformNode('tok' + i, scene);
       const col = COLORS[i % COLORS.length];
       const ring = B.MeshBuilder.CreateTorus('ring' + i, { diameter: 0.46, thickness: 0.035, tessellation: 32 }, scene);
       ring.parent = rootN; ring.position.y = 0.02; ring.material = pbr('ringm' + i, '#000000', 0, 1, col);
-      const kind = FIG_ORDER[i % FIG_ORDER.length];
-      let body = spawnFig(kind, 'tokFig' + i, tokScale(kind), col);
+      const hat = (players && players[i] && players[i].hat) || HAT_ORDER[i % HAT_ORDER.length];
+      let body = spawnFig('tokFig' + i, TOK_SCALE, col, hat, SKINS[i % SKINS.length]);
       if (body) {
         body.parent = rootN;
       } else {                                    // Rückfall: einfache Figur aus Grundformen
@@ -629,7 +642,7 @@
         h.parent = body; h.position.y = 0.62; h.material = mat;
         [b, h].forEach(m => shadows.addShadowCaster(m));
       }
-      return { root: rootN, body, ring, walking: false };
+      return { root: rootN, body, ring, walking: false, hat, i };
     };
     // Ruheblick: nach außen (zur Kamera) und etwas in Laufrichtung
     const restYaw = (f) => {
@@ -715,8 +728,14 @@
     return {
       scene, engine, paLoaded, rigLoaded, figuresLoaded, crowdLoaded, tiles, drawCard,
       sync(players, active) {
-        while (tokens.length < players.length) tokens.push(makeToken(tokens.length));
+        while (tokens.length < players.length) tokens.push(makeToken(tokens.length, players));
         tokens.forEach((tk, i) => {
+          // Kopfbedeckung geändert (z. B. Lobby): Figur neu aufbauen
+          const want = players[i] && players[i].hat;
+          if (want && want !== tk.hat && charC) {
+            const nb = spawnFig('tokFig' + i + '_' + want, TOK_SCALE, COLORS[i % COLORS.length], want, SKINS[i % SKINS.length]);
+            if (nb) { nb.parent = tk.root; nb.rotation.y = tk.body.rotation.y; tk.body.dispose(false, true); tk.body = nb; tk.hat = want; }
+          }
           tk.root.setEnabled(i < players.length);
           if (i < players.length && !tk.walking) { tk.root.position.copyFrom(slotPos(players[i].position, i)); tk.body.rotation.y = restYaw(players[i].position); }
         });
