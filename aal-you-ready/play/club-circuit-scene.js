@@ -469,7 +469,7 @@
     // Alle Avatare sind auf 1 m Höhe normalisiert, Blick +Z, Mixamo-Skelett. Animation per Knochen-Posen.
     const AV = {
       players: ['002', '027', '038', '052', '046', '079', '086', '088', '087', '120', '160', '093'],
-      dj: '069', bouncer: '102', crowd: ['003', '012', '018', '053', '054', '060', '070', '072'],
+      dj: '069', bouncer: '018', crowd: ['003', '012', '102', '053', '054', '060', '070', '072'],
     };
     const TOK_SCALE = 0.95;
     const avCache = {};
@@ -504,7 +504,7 @@
     const makeRig = (holder) => {
       const nodes = {};
       holder.getDescendants(false).forEach(n => { const m = /mixamorig:(\w+)$/.exec(n.name || ''); if (m && !nodes[m[1]] && n.getClassName() === 'TransformNode') nodes[m[1]] = n; });
-      if (!nodes.Hips || !nodes.LeftArm || !nodes.RightArm || !nodes.LeftUpLeg) return null;
+      if (!nodes.Hips || !nodes.LeftArm || !nodes.RightArm || !nodes.LeftUpLeg) { console.error('Rig unvollständig: ' + holder.name + ' ' + Object.keys(nodes).length); return null; }
       ANIM.concat(['Hips']).forEach(k => { const n = nodes[k]; if (n && !n.rotationQuaternion) n.rotationQuaternion = B.Quaternion.FromEulerVector(n.rotation); });
       holder.computeWorldMatrix(true); refresh(holder);
       const bind = {}; ANIM.forEach(k => { if (nodes[k]) bind[k] = nodes[k].rotationQuaternion.clone(); });
@@ -573,7 +573,8 @@
       c.instantiateModelsToScene(n => name + '_' + n, false, { doNotInstantiate: true }).rootNodes.forEach(r => { r.parent = holder; });
       holder.scaling.setAll(scale);
       holder.getChildMeshes(false).forEach(m => { shadows.addShadowCaster(m); m.alwaysSelectAsActiveMesh = true; });
-      const rig = makeRig(holder);
+      let rig = null;
+      try { rig = makeRig(holder); } catch (e) { console.error('Rig-Fehler ' + name + ': ' + e.message); }
       return { holder, rig };
     };
     // Tanzende Menge, DJ, Türsteher (laden im Hintergrund, Spielstart wartet nicht darauf)
