@@ -25,7 +25,7 @@ for (const [w, h, tag] of [[430, 932, 'hoch'], [932, 430, 'quer']]) {
   console.log('-- Schleier-Kandidaten (großer Schatten):'); info.veils.forEach(l => console.log('   V', l));
   console.log('-- Vollflächige Elemente mit Hintergrund:'); info.covers.forEach(l => console.log('   C', l));
   const ov = await page.evaluate(() => {
-    const ids = ['.hud-brand', '#updateInLobby', '#turnlabel', '#status', '#players', '#circuitView', '#diceResult', '#roll', '#reopenPopup', '.exit-game', '#notice'];
+    const ids = ['.hud-brand', '#updateInLobby', '#turnlabel', '#status', '#players', '#circuitView', '#diceResult', '#roll', '#reopenPopup', '.exit-game', '#notice', '#scoreboard', '#shopBtn'];
     const vis = ids.map(q => [q, document.querySelector(q)]).filter(([, e]) => e && getComputedStyle(e).display !== 'none' && !e.classList.contains('hide') && e.getClientRects().length && e.getBoundingClientRect().width > 0)
       .map(([q, e]) => [q, e.getBoundingClientRect()]);
     const hits = [];
@@ -39,6 +39,18 @@ for (const [w, h, tag] of [[430, 932, 'hoch'], [932, 430, 'quer']]) {
   console.log('-- HUD-Elemente:'); ov.rects.forEach(l => console.log('   R', l));
   console.log('-- Überlappungen:', ov.hits.length ? '' : 'keine'); ov.hits.forEach(l => console.log('   X', l));
   await page.screenshot({ path: shot.replace('.png', '_' + tag + '.png') });
+  if (tag === 'hoch') {
+    const fake = async (name, patch) => {
+      await page.evaluate((patch) => { circ.busy = 0; circ.calmUntil = 0; dismissedPopupKey = ''; const s = JSON.parse(JSON.stringify(snapshot)); Object.assign(s, patch); if (patch.roll_info) s.roll_info = Object.assign({}, snapshot.roll_info || {}, patch.roll_info); render(s); }, patch);
+      await sleep(700);
+      await page.screenshot({ path: shot.replace('.png', '_' + tag + '_' + name + '.png') });
+    };
+    await page.evaluate(() => { sbOpen = true; renderScoreboard(snapshot); }); await sleep(400);
+    await page.screenshot({ path: shot.replace('.png', '_' + tag + '_offen.png') });
+    await page.evaluate(() => { sbOpen = false; renderScoreboard(snapshot); });
+    await fake('ereignis', { phase: 'event', task: '🤖 DJ Bitrate hat die Aufgabe gemeistert! +30 Münzen' });
+    await fake('stern', { phase: 'choice', your_turn: true, task: '⭐ Du kommst am Sternhändler vorbei: 1 Stern für 150 Münzen kaufen?', roll_info: { star_offer: true } });
+  }
   await page.close();
 }
 await browser.close();
