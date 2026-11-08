@@ -1,0 +1,63 @@
+{
+  "asset": "MH1",
+  "blender": "4.2.3 LTS",
+  "glb": "aal-you-ready/play/assets/club_moving_head.glb",
+  "glb_bytes": 102540,
+  "triangles_total": 4784,
+  "meshes": {
+    "MH1_BaseDark": {
+      "triangles": 768,
+      "vertices": 386,
+      "material": "M_MetalDark"
+    },
+    "MH1_BaseRubber": {
+      "triangles": 1088,
+      "vertices": 562,
+      "material": "M_Rubber"
+    },
+    "MH1_BaseScreen": {
+      "triangles": 192,
+      "vertices": 98,
+      "material": "M_Screen"
+    },
+    "MH1_PanDark": {
+      "triangles": 816,
+      "vertices": 414,
+      "material": "M_MetalDark"
+    },
+    "MH1_PanSteel": {
+      "triangles": 344,
+      "vertices": 178,
+      "material": "M_Steel"
+    },
+    "MH1_TiltDark": {
+      "triangles": 440,
+      "vertices": 241,
+      "material": "M_MetalDark"
+    },
+    "MH1_TiltPlastic": {
+      "triangles": 896,
+      "vertices": 584,
+      "material": "M_Plastic"
+    },
+    "MH1_TiltLens": {
+      "triangles": 120,
+      "vertices": 81,
+      "material": "M_Lens"
+    },
+    "MH1_TiltSteel": {
+      "triangles": 120,
+      "vertices": 64,
+      "material": "M_Steel"
+    }
+  },
+  "dims_m": {
+    "width": 0.4,
+    "height": 0.55
+  },
+  "previews": [
+    "aal-you-ready/play/assets/previews/mh1_front34.jpg",
+    "aal-you-ready/play/assets/previews/mh1_front_detail.jpg"
+  ],
+  "seconds": 181.8
+}
