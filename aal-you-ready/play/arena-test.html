@@ -1,11 +1,11 @@
 <!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Aal You Ready? – 3D-Arena-Labor</title><style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#080b13;color:#f5f5ff;font-family:system-ui,Arial,sans-serif}#stage{position:absolute;inset:0;width:100%;height:100%;touch-action:none;outline:0}header{position:absolute;top:env(safe-area-inset-top,0px);left:0;right:0;padding:12px 16px;pointer-events:none;text-shadow:0 2px 8px #000}h1{font-size:16px;margin:0;letter-spacing:.07em}small{color:#8ff6f6}#tools{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 14px);left:12px;right:12px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap}button{border:1px solid #56c9d1;border-radius:20px;background:#121b2d;color:white;padding:11px 14px;font-weight:700}#status{position:absolute;top:67px;left:14px;right:14px;color:#d4f5ff;font-size:12px;pointer-events:none}#error{position:absolute;top:30%;left:8%;right:8%;padding:15px;background:#4b1026;border-radius:10px;display:none;white-space:pre-wrap}
-</style></head><body><canvas id="stage"></canvas><header><h1>AAL YOU READY? <small>ARENA LAB 0.4</small></h1><small>Eigenständiger 3D-Prototyp · ohne Multiplayer</small></header><div id="status">Initialisiere 3D …</div><div id="error"></div><div id="tools"><button id="overview">Übersicht</button><button id="angle">Perspektive</button><button id="walk">Weg prüfen</button><button id="stop">Stopp</button></div><script src="https://cdn.babylonjs.com/babylon.js"></script><script>
+</style></head><body><canvas id="stage"></canvas><header><h1>AAL YOU READY? <small>ARENA LAB 0.5 · GLB LOUNGE</small></h1><small>Eigenständiger 3D-Prototyp · ohne Multiplayer</small></header><div id="status">Initialisiere 3D …</div><div id="error"></div><div id="tools"><button id="overview">Übersicht</button><button id="angle">Perspektive</button><button id="walk">Weg prüfen</button><button id="stop">Stopp</button></div><script src="https://cdn.babylonjs.com/babylon.js"></script><script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script><script>
 'use strict';
 const $=id=>document.getElementById(id),status=$('status'),error=$('error');
 const PATH=(()=>{const p=[[0,0]],seen=new Set(['0,0']);let x=0,y=0,dx=1,dy=0;let left=0,right=10,top=0,bottom=10;while(p.length<64){let nx=x+dx,ny=y+dy;if(nx<left||nx>right||ny<top||ny>bottom||seen.has(nx+','+ny)){if(dx===1){dx=0;dy=1;top++}else if(dy===1){dx=-1;dy=0;right--}else if(dx===-1){dx=0;dy=-1;bottom--}else{dx=1;dy=0;left++}nx=x+dx;ny=y+dy}if(seen.has(nx+','+ny))throw Error('Spiral path collision');x=nx;y=ny;p.push([x,y]);seen.add(x+','+y)}return p})();
 const checks={count:PATH.length===64,unique:new Set(PATH.map(p=>p.join(','))).size===64,adjacent:PATH.every((p,i)=>i===63||Math.abs(p[0]-PATH[i+1][0])+Math.abs(p[1]-PATH[i+1][1])===1)};
-checks.passed=Object.values(checks).every(Boolean);window.ARENA_DIAGNOSTICS={version:'0.4',path:PATH,checks};if(!checks.passed)throw Error('Wegprüfung fehlgeschlagen '+JSON.stringify(checks));
+checks.passed=Object.values(checks).every(Boolean);window.ARENA_DIAGNOSTICS={version:'0.5',path:PATH,checks};if(!checks.passed)throw Error('Wegprüfung fehlgeschlagen '+JSON.stringify(checks));
 function boot(){if(!window.BABYLON){error.style.display='block';error.textContent='Babylon.js konnte nicht geladen werden.';return}
 try{
 const B=BABYLON,canvas=$('stage'),engine=new B.Engine(canvas,true,{stencil:false,antialias:true}),scene=new B.Scene(engine);
@@ -43,11 +43,35 @@ for(let i=0;i<10;i++)for(let j=0;j<16;j++){const th=(i+.5)*Math.PI/10,ph=j*Math.
 // Lounge corners, tables, palms, and illuminated pillars frame the board.
 for(const side of [-1,1]){
 const x=side*7.5;
-for(const z of [-4.2,1.6]){box('sofa seat'+side+z,1.25,.38,2.0,x,.13,z,sofa);box('sofa back'+side+z,.27,.9,2.0,x+side*.55,.55,z,sofa);box('sofa side'+side+z,.95,.55,.25,x,.32,z-.86,sofa)}
+// GLB lounge furniture is loaded below, after the room geometry.
 for(const z of [-3.5,2]){cyl('lounge table'+side+z,.45,.08,side*6.1,.5,z,black);cyl('table pedestal'+side+z,.07,.5,side*6.1,.2,z,gold);cyl('table candle'+side+z,.09,.22,side*6.1,.66,z,amber)}
 for(const z of [-5.5,5.5]){cyl('club column'+side+z,.32,4,x,1.7,z,black);for(const y of [.4,1.5,2.6]){const ring=B.MeshBuilder.CreateTorus('column neon'+side+z+y,{diameter:.72,thickness:.065,tessellation:20},scene);ring.rotation.x=Math.PI/2;ring.position.set(x,y,z);ring.material=side===1?cyan:purple}}
 for(const z of [-1,4.6]){cyl('plant pot'+side+z,.36,.65,side*6.8,.2,z,steel);cyl('palm trunk'+side+z,.07,1.5,side*6.8,1.1,z,gold);for(let i=0;i<7;i++){const angle=i*Math.PI*2/7;const leaf=box('palm leaf'+side+z+i,.12,.055,1.25,side*6.8+Math.sin(angle)*.46,1.9,z+Math.cos(angle)*.46,mat('leaf'+side+z+i,'#1b5948'));leaf.rotation.y=angle;leaf.rotation.x=.35}}
 }
+// Genuine CC0 Poly Haven sofa, packaged in this repository as one GLB.
+const sofaSpots=[[-7.45,-4.2,Math.PI/2],[-7.45,1.6,Math.PI/2],[7.45,-4.2,-Math.PI/2],[7.45,1.6,-Math.PI/2]];
+window.ARENA_DIAGNOSTICS.sofa={state:'loading',count:0};
+B.SceneLoader.ImportMeshAsync('','./assets/','sofa_02.glb',scene).then(result=>{
+  const visible=result.meshes.filter(m=>m.getTotalVertices&&m.getTotalVertices()>0);
+  if(!visible.length)throw Error('Sofa GLB enthält keine Geometrie');
+  let low=new B.Vector3(Infinity,Infinity,Infinity),high=new B.Vector3(-Infinity,-Infinity,-Infinity);
+  for(const mesh of visible){mesh.computeWorldMatrix(true);const bounds=mesh.getBoundingInfo().boundingBox;low=B.Vector3.Minimize(low,bounds.minimumWorld);high=B.Vector3.Maximize(high,bounds.maximumWorld)}
+  const center=low.add(high).scale(.5),width=Math.max(high.x-low.x,high.z-low.z,.01),scale=1.85/width;
+  const root=new B.TransformNode('lounge sofa master',scene);
+  for(const mesh of result.meshes.filter(m=>!m.parent))mesh.parent=root;
+  root.scaling.setAll(scale);root.position.set(-center.x*scale,-low.y*scale-.12,-center.z*scale);
+  for(let i=0;i<sofaSpots.length;i++){
+    const spot=sofaSpots[i],holder=new B.TransformNode('real leather sofa '+i,scene);
+    holder.position.set(spot[0],0,spot[1]);holder.rotation.y=spot[2];
+    if(i===0){root.parent=holder}else{
+      const instanceRoot=root.clone('sofa clone '+i,holder,false);
+      // Babylon's TransformNode.clone clones the complete child mesh hierarchy.
+      if(!instanceRoot)throw Error('Sofa konnte nicht geklont werden');
+    }
+  }
+  window.ARENA_DIAGNOSTICS.sofa={state:'ready',count:sofaSpots.length,meshes:visible.length};
+  status.textContent+=' · 4 echte GLB-Sofas';
+}).catch(err=>{console.error('Sofa GLB',err);window.ARENA_DIAGNOSTICS.sofa={state:'error',message:String(err)};status.textContent+=' · Sofa-Ladefehler';});
 // 64 physical tiles on a separated, sequential inward-winding route.
 const at=i=>({x:(PATH[i][0]-5)*1.09,z:(PATH[i][1]-5)*1.09});
 const type=i=>i===0?'START':i===63?'ZIEL':i%9===0?'SLF':i%7===0?'SPECIAL':i%3===0?'MALEN':'QUIZ';
