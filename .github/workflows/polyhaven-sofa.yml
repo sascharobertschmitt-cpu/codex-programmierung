@@ -14,7 +14,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Fetch glTF and all dependencies from Poly Haven\n        timeout-minutes: 8
+      - name: Fetch glTF and all dependencies from Poly Haven
+        timeout-minutes: 8
         run: |
           mkdir -p aal-you-ready/play/assets/sofa
           python3 - <<'PY'
@@ -53,13 +54,16 @@ jobs:
                   item['uri']=name
           (out/'source.gltf').write_text(json.dumps(gltf))
           PY
-      - name: Pack into a standalone GLB\n        timeout-minutes: 8
+      - name: Pack into a standalone GLB
+        timeout-minutes: 8
         run: npx --yes @gltf-transform/cli copy aal-you-ready/play/assets/sofa/source.gltf aal-you-ready/play/assets/sofa_02.glb
       - name: Remove temporary source files
         run: rm -rf aal-you-ready/play/assets/sofa
-      - name: Commit game-ready model\n        timeout-minutes: 3
+      - name: Commit game-ready model
+        timeout-minutes: 3
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          test -s aal-you-ready/play/assets/sofa_02.glb\n          git add aal-you-ready/play/assets/sofa_02.glb
+          test -s aal-you-ready/play/assets/sofa_02.glb
+          git add aal-you-ready/play/assets/sofa_02.glb
           git diff --cached --quiet || (git commit -m 'Add CC0 Poly Haven sofa GLB asset' && git push)
