@@ -1,0 +1,36 @@
+{
+  "asset": "FIG_AAL",
+  "blender": "4.2.3 LTS",
+  "glb": "aal-you-ready/play/assets/club_fig_aal.glb",
+  "glb_bytes": 88040,
+  "triangles_total": 4634,
+  "meshes": {
+    "FIG_aal_Eel": {
+      "triangles": 2366,
+      "vertices": 1195,
+      "material": "M_Eel"
+    },
+    "FIG_aal_DustCap": {
+      "triangles": 832,
+      "vertices": 424,
+      "material": "M_DustCap"
+    },
+    "FIG_aal_White": {
+      "triangles": 576,
+      "vertices": 292,
+      "material": "M_White"
+    },
+    "FIG_aal_Accent": {
+      "triangles": 860,
+      "vertices": 446,
+      "material": "M_Accent"
+    }
+  },
+  "dims_m": {
+    "height": 0.8
+  },
+  "previews": [
+    "aal-you-ready/play/assets/previews/fig_aal_front34.jpg"
+  ],
+  "seconds": 65.2
+}

@@ -28,7 +28,7 @@
     {
       "name": "Dateigroesse <= 2.0 MB",
       "status": "PASS",
-      "detail": "580 KB"
+      "detail": "579 KB"
     },
     {
       "name": "Alle Bilder eingebettet",
@@ -62,9 +62,9 @@
     }
   ],
   "analysis": {
-    "file_bytes": 593912,
+    "file_bytes": 592496,
     "triangles": 13606,
-    "vertices": 8643,
+    "vertices": 8584,
     "primitives": 9,
     "meshes": 9,
     "materials": [

@@ -1,0 +1,46 @@
+{
+  "asset": "FIG_TUERSTEHER",
+  "blender": "4.2.3 LTS",
+  "glb": "aal-you-ready/play/assets/club_fig_tuersteher.glb",
+  "glb_bytes": 119388,
+  "triangles_total": 6116,
+  "meshes": {
+    "FIG_tuersteher_Cloth": {
+      "triangles": 2856,
+      "vertices": 1538,
+      "material": "M_Cloth"
+    },
+    "FIG_tuersteher_Rubber": {
+      "triangles": 864,
+      "vertices": 436,
+      "material": "M_Rubber"
+    },
+    "FIG_tuersteher_Skin3": {
+      "triangles": 1592,
+      "vertices": 818,
+      "material": "M_Skin3"
+    },
+    "FIG_tuersteher_DustCap": {
+      "triangles": 456,
+      "vertices": 242,
+      "material": "M_DustCap"
+    },
+    "FIG_tuersteher_Accent": {
+      "triangles": 336,
+      "vertices": 172,
+      "material": "M_Accent"
+    },
+    "FIG_tuersteher_Plastic": {
+      "triangles": 12,
+      "vertices": 12,
+      "material": "M_Plastic"
+    }
+  },
+  "dims_m": {
+    "height": 0.8
+  },
+  "previews": [
+    "aal-you-ready/play/assets/previews/fig_tuersteher_front34.jpg"
+  ],
+  "seconds": 66.6
+}

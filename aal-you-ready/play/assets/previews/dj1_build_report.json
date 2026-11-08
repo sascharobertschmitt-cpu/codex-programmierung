@@ -2,7 +2,7 @@
   "asset": "DJ1",
   "blender": "4.2.3 LTS",
   "glb": "aal-you-ready/play/assets/club_dj_booth.glb",
-  "glb_bytes": 593892,
+  "glb_bytes": 592476,
   "triangles_total": 13606,
   "meshes": {
     "DJ1_Cabinet": {
@@ -61,5 +61,5 @@
     "aal-you-ready/play/assets/previews/dj1_front_detail.jpg",
     "aal-you-ready/play/assets/previews/dj1_rear34.jpg"
   ],
-  "seconds": 283.2
+  "seconds": 299.4
 }

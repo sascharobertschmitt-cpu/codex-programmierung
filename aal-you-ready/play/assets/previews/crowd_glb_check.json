@@ -1,0 +1,138 @@
+{
+  "checks": [
+    {
+      "name": "GLB-Container glTF 2.0 lesbar",
+      "status": "PASS",
+      "detail": "Khronos glTF Blender I/O v4.2.70"
+    },
+    {
+      "name": "Sichtbare Geometrie vorhanden",
+      "status": "PASS",
+      "detail": "3548 Dreiecke"
+    },
+    {
+      "name": "Dreiecksbudget <= 40000",
+      "status": "PASS",
+      "detail": "3548"
+    },
+    {
+      "name": "Draw Calls (Primitive) <= 16",
+      "status": "PASS",
+      "detail": "3"
+    },
+    {
+      "name": "Dateigroesse <= 2.0 MB",
+      "status": "PASS",
+      "detail": "59 KB"
+    },
+    {
+      "name": "Alle Bilder eingebettet",
+      "status": "PASS",
+      "detail": "0 Bilder, extern: 0"
+    },
+    {
+      "name": "Materialien vorhanden",
+      "status": "PASS",
+      "detail": "2"
+    },
+    {
+      "name": "Ursprung am Boden (min Y ~ 0)",
+      "status": "PASS",
+      "detail": "min Y = 0.0"
+    },
+    {
+      "name": "Ursprung horizontal mittig",
+      "status": "PASS",
+      "detail": "Mitte X = 0.000, Z = 0.021"
+    },
+    {
+      "name": "Masse plausibel",
+      "status": "PASS",
+      "detail": "ist [0.468, 0.8566, 0.3056] m, erwartet [0.468, 0.857, 0.306] m (Toleranz 0.03)"
+    }
+  ],
+  "analysis": {
+    "file_bytes": 60088,
+    "triangles": 3548,
+    "vertices": 1948,
+    "primitives": 3,
+    "meshes": 3,
+    "materials": [
+      {
+        "name": "M_Crowd",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.550000011920929,
+          0.550000011920929,
+          0.5799999833106995,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.699999988079071,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_Glow",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.4000000059604645,
+        "baseColorTexture": false,
+        "normalTexture": false
+      }
+    ],
+    "images": [],
+    "textures": 0,
+    "bounds_min": [
+      -0.234,
+      0.0,
+      -0.1316
+    ],
+    "bounds_max": [
+      0.234,
+      0.8566,
+      0.174
+    ],
+    "size_m": [
+      0.468,
+      0.8566,
+      0.3056
+    ],
+    "material_bounds": {
+      "M_Crowd": {
+        "min": [
+          -0.234,
+          0.0,
+          -0.1316
+        ],
+        "max": [
+          0.234,
+          0.739,
+          0.174
+        ]
+      },
+      "M_Glow": {
+        "min": [
+          0.1597,
+          0.6834,
+          0.008
+        ],
+        "max": [
+          0.2003,
+          0.8566,
+          0.042
+        ]
+      }
+    }
+  }
+}

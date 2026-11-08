@@ -1,0 +1,51 @@
+{
+  "asset": "FIG_RAVER",
+  "blender": "4.2.3 LTS",
+  "glb": "aal-you-ready/play/assets/club_fig_raver.glb",
+  "glb_bytes": 136828,
+  "triangles_total": 6972,
+  "meshes": {
+    "FIG_raver_Cloth": {
+      "triangles": 1224,
+      "vertices": 650,
+      "material": "M_Cloth"
+    },
+    "FIG_raver_Rubber": {
+      "triangles": 864,
+      "vertices": 436,
+      "material": "M_Rubber"
+    },
+    "FIG_raver_White": {
+      "triangles": 424,
+      "vertices": 220,
+      "material": "M_White"
+    },
+    "FIG_raver_Accent": {
+      "triangles": 2376,
+      "vertices": 1264,
+      "material": "M_Accent"
+    },
+    "FIG_raver_Skin1": {
+      "triangles": 1592,
+      "vertices": 818,
+      "material": "M_Skin1"
+    },
+    "FIG_raver_DustCap": {
+      "triangles": 456,
+      "vertices": 242,
+      "material": "M_DustCap"
+    },
+    "FIG_raver_Glow": {
+      "triangles": 36,
+      "vertices": 20,
+      "material": "M_Glow"
+    }
+  },
+  "dims_m": {
+    "height": 0.8
+  },
+  "previews": [
+    "aal-you-ready/play/assets/previews/fig_raver_front34.jpg"
+  ],
+  "seconds": 70.3
+}

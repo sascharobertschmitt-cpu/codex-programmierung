@@ -1,0 +1,51 @@
+{
+  "asset": "FIG_DJ",
+  "blender": "4.2.3 LTS",
+  "glb": "aal-you-ready/play/assets/club_fig_dj.glb",
+  "glb_bytes": 139848,
+  "triangles_total": 6864,
+  "meshes": {
+    "FIG_dj_Cloth": {
+      "triangles": 1256,
+      "vertices": 668,
+      "material": "M_Cloth"
+    },
+    "FIG_dj_Rubber": {
+      "triangles": 1016,
+      "vertices": 516,
+      "material": "M_Rubber"
+    },
+    "FIG_dj_White": {
+      "triangles": 384,
+      "vertices": 196,
+      "material": "M_White"
+    },
+    "FIG_dj_Accent": {
+      "triangles": 2168,
+      "vertices": 1162,
+      "material": "M_Accent"
+    },
+    "FIG_dj_Skin2": {
+      "triangles": 1592,
+      "vertices": 818,
+      "material": "M_Skin2"
+    },
+    "FIG_dj_DustCap": {
+      "triangles": 240,
+      "vertices": 124,
+      "material": "M_DustCap"
+    },
+    "FIG_dj_Plastic": {
+      "triangles": 208,
+      "vertices": 208,
+      "material": "M_Plastic"
+    }
+  },
+  "dims_m": {
+    "height": 0.8
+  },
+  "previews": [
+    "aal-you-ready/play/assets/previews/fig_dj_front34.jpg"
+  ],
+  "seconds": 66.8
+}

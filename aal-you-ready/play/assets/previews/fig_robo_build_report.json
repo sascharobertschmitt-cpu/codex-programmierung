@@ -1,0 +1,41 @@
+{
+  "asset": "FIG_ROBO",
+  "blender": "4.2.3 LTS",
+  "glb": "aal-you-ready/play/assets/club_fig_robo.glb",
+  "glb_bytes": 122980,
+  "triangles_total": 6296,
+  "meshes": {
+    "FIG_robo_Alu": {
+      "triangles": 1768,
+      "vertices": 1000,
+      "material": "M_Alu"
+    },
+    "FIG_robo_Plastic": {
+      "triangles": 2456,
+      "vertices": 1240,
+      "material": "M_Plastic"
+    },
+    "FIG_robo_Accent": {
+      "triangles": 1280,
+      "vertices": 650,
+      "material": "M_Accent"
+    },
+    "FIG_robo_LED": {
+      "triangles": 624,
+      "vertices": 316,
+      "material": "M_LED"
+    },
+    "FIG_robo_Glow": {
+      "triangles": 168,
+      "vertices": 86,
+      "material": "M_Glow"
+    }
+  },
+  "dims_m": {
+    "height": 0.8
+  },
+  "previews": [
+    "aal-you-ready/play/assets/previews/fig_robo_front34.jpg"
+  ],
+  "seconds": 70.9
+}

@@ -1,0 +1,46 @@
+{
+  "asset": "FIG_GASMASKE",
+  "blender": "4.2.3 LTS",
+  "glb": "aal-you-ready/play/assets/club_fig_gasmaske.glb",
+  "glb_bytes": 140080,
+  "triangles_total": 6964,
+  "meshes": {
+    "FIG_gasmaske_Cloth": {
+      "triangles": 840,
+      "vertices": 456,
+      "material": "M_Cloth"
+    },
+    "FIG_gasmaske_Rubber": {
+      "triangles": 1476,
+      "vertices": 758,
+      "material": "M_Rubber"
+    },
+    "FIG_gasmaske_Accent": {
+      "triangles": 2716,
+      "vertices": 1446,
+      "material": "M_Accent"
+    },
+    "FIG_gasmaske_Skin2": {
+      "triangles": 1592,
+      "vertices": 818,
+      "material": "M_Skin2"
+    },
+    "FIG_gasmaske_Steel": {
+      "triangles": 204,
+      "vertices": 108,
+      "material": "M_Steel"
+    },
+    "FIG_gasmaske_DustCap": {
+      "triangles": 136,
+      "vertices": 72,
+      "material": "M_DustCap"
+    }
+  },
+  "dims_m": {
+    "height": 0.8
+  },
+  "previews": [
+    "aal-you-ready/play/assets/previews/fig_gasmaske_front34.jpg"
+  ],
+  "seconds": 67.0
+}
