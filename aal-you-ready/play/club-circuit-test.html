@@ -124,7 +124,7 @@
   });
 
   // ------------------------------------------------------------ Rundkurs
-  const HW = 6.0, HL = 12.0, RC = 4.0;
+  const HW = 8.0, HL = 14.0, RC = 4.0;
   const seg = [];
   const L = (ax, az, bx, bz) => seg.push({ t: 'l', ax, az, bx, bz, len: Math.hypot(bx - ax, bz - az) });
   const C = (cx, cz, a0, a1) => seg.push({ t: 'c', cx, cz, a0, a1, len: Math.abs(a1 - a0) * RC });
@@ -230,8 +230,8 @@
 
   // Prüfungen zur Streckengeometrie
   const gaps = tiles.map((t, i) => { const u = tiles[(i + 1) % tiles.length]; return Math.hypot(u.x - t.x, u.z - t.z); });
-  check('64 Felder auf geschlossener Runde', tiles.length === 64 && Math.abs(gaps[63] - gaps[0]) < 0.06,
-    `Abstand 63→0: ${gaps[63].toFixed(3)} m, Feldabstand ${SPACING.toFixed(3)} m`);
+  check(R.FIELDS + ' Felder auf geschlossener Runde', tiles.length === R.FIELDS && Math.abs(gaps[R.FIELDS - 1] - gaps[0]) < 0.06,
+    `Abstand letzte→0: ${gaps[R.FIELDS - 1].toFixed(3)} m, Feldabstand ${SPACING.toFixed(3)} m`);
   const steps = tiles.map((t, i) => Math.abs(tiles[(i + 1) % tiles.length].h - t.h));
   check('Höhenprofil begehbar', Math.max(...steps) < 0.5 * Math.max(LAND, 1) && tiles[0].h < 0.01,
     `max. Stufe ${Math.max(...steps).toFixed(3)} m, höchstes Feld ${Math.max(...tiles.map(t => t.h)).toFixed(2)} m, Einlass ${tiles[0].h.toFixed(2)} m`);
