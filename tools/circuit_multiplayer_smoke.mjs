@@ -43,7 +43,7 @@ for (let i = 0; i < 60 && s.status !== 'finished' && rolls < 12; i++) {
   s = await rpc('party_snapshot', { p_code: A.code, p_token: A.token });
   const tok = toks[s.turn % 2];
   if (s.phase === 'ready' && turboBought === null) { const me = s.players[s.turn % 2]; if ((me.cash || 0) >= 100 && !me.turbo) { s = await rpc('party_action', { p_code: A.code, p_token: tok, p_host_token: null, p_action: 'buy_turbo' }); turboBought = !!s.players[s.turn % 2].turbo; } }
-  if (s.phase === 'choice') { stairs++; s = await rpc('party_action', { p_code: A.code, p_token: tok, p_host_token: null, p_action: 'stairs_no' }); }
+  if (s.phase === 'choice') { stairs++; s = await rpc('party_action', { p_code: A.code, p_token: tok, p_host_token: null, p_action: s.roll_info && s.roll_info.star_offer ? 'star_yes' : 'stairs_no' }); }
   else if (s.phase === 'ready') { s = await rpc('party_action', { p_code: A.code, p_token: tok, p_host_token: null, p_action: 'roll' }); rolls++; if (s.roll_info && s.roll_info.gate) gate++; if (s.roll_info && s.roll_info.card) cards.push(s.roll_info.card.deck + ':' + s.roll_info.card.title); await sleep(2500); }
   else if (s.phase === 'event') s = await rpc('party_action', { p_code: A.code, p_token: tok, p_host_token: null, p_action: 'event_next' });
   else if (s.phase === 'task') { await rpc('party_action', { p_code: A.code, p_token: tok, p_host_token: null, p_action: 'timer' }); s = await rpc('party_action', { p_code: A.code, p_token: tok, p_host_token: A.host_token, p_action: 'cancel' }); }

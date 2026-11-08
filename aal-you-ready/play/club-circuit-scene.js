@@ -794,7 +794,7 @@
     });
     engine.runRenderLoop(() => scene.render());
 
-    let zoomUntil = 0;
+    let zoomUntil = 0, starNode = null;
     // Billboard-Schild mit Text (Würfelergebnis, Schrittzähler)
     const label = (name, text, col, size) => {
       const tx = new B.DynamicTexture(name + 'Tex', { width: 256, height: 128 }, scene, true);
@@ -900,6 +900,28 @@
           if (i < players.length && !tk.walking) { tk.root.position.copyFrom(slotPos(players[i].position, i)); tk.body.rotation.y = restYaw(players[i].position); }
         });
         if (typeof active === 'number' && active !== follow) { follow = active; autoCam = true; }
+      },
+      setStar(f) {
+        if (!Number.isInteger(f)) { if (starNode) starNode.setEnabled(false); return; }
+        if (!starNode) {
+          starNode = new B.TransformNode('starDealer', scene);
+          const tx = new B.DynamicTexture('starTex', { width: 256, height: 256 }, scene, true); tx.hasAlpha = true;
+          const g = tx.getContext(); g.clearRect(0, 0, 256, 256); g.translate(128, 132);
+          g.beginPath(); for (let i = 0; i < 10; i++) { const rr = i % 2 ? 46 : 112, a = -Math.PI / 2 + i * Math.PI / 5; g.lineTo(rr * Math.cos(a), rr * Math.sin(a)); } g.closePath();
+          g.fillStyle = '#ffd23f'; g.fill(); g.lineWidth = 10; g.strokeStyle = '#fff6c8'; g.stroke(); tx.update();
+          const pl = B.MeshBuilder.CreatePlane('starPlane', { size: 1.3 }, scene); pl.billboardMode = B.Mesh.BILLBOARDMODE_ALL;
+          const sm = new B.StandardMaterial('starMat', scene); sm.disableLighting = true; sm.emissiveTexture = tx; sm.opacityTexture = tx; sm.backFaceCulling = false; pl.material = sm; pl.parent = starNode;
+          const ring = B.MeshBuilder.CreateTorus('starRing', { diameter: 1.15, thickness: 0.07, tessellation: 40 }, scene);
+          const rm = new B.StandardMaterial('starRingMat', scene); rm.disableLighting = true; rm.emissiveColor = B.Color3.FromHexString('#ffd23f'); ring.material = rm; ring.parent = starNode;
+          const beam = B.MeshBuilder.CreateCylinder('starBeam', { diameterTop: 0.25, diameterBottom: 0.9, height: 6, tessellation: 24 }, scene);
+          const bm = new B.StandardMaterial('starBeamMat', scene); bm.disableLighting = true; bm.emissiveColor = B.Color3.FromHexString('#ffd23f'); bm.alpha = 0.18; beam.material = bm; beam.parent = starNode; beam.position.y = 3;
+          glow.addExcludedMesh(beam);
+          starNode.metadata = { pl, ring };
+          scene.onBeforeRenderObservable.add(() => { if (!starNode.isEnabled()) return; const t = performance.now() / 1000; pl.position.y = 1.6 + Math.sin(t * 2.2) * 0.12; ring.rotation.y = t; });
+        }
+        const t = tiles[((f % R.FIELDS) + R.FIELDS) % R.FIELDS];
+        starNode.setEnabled(true); starNode.position.set(t.x, t.h + 0.2, t.z);
+        starNode.metadata.ring.position.y = 0.03;
       },
       // Figur bis zu ihrem Zug in der Warteschlange auf dem alten Feld halten
       freeze(idx, abs) { const tk = tokens[idx]; if (!tk) return; if (!tk.walking) { tk.root.position.copyFrom(slotPos(abs, idx)); tk.body.rotation.y = restYaw(abs); } tk.walking = true; },
