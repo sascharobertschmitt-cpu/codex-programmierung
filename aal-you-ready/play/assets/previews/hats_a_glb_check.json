@@ -1,0 +1,194 @@
+{
+  "checks": [
+    {
+      "name": "GLB-Container glTF 2.0 lesbar",
+      "status": "PASS",
+      "detail": "Khronos glTF Blender I/O v4.2.70"
+    },
+    {
+      "name": "Sichtbare Geometrie vorhanden",
+      "status": "PASS",
+      "detail": "1864 Dreiecke"
+    },
+    {
+      "name": "Dreiecksbudget <= 40000",
+      "status": "PASS",
+      "detail": "1864"
+    },
+    {
+      "name": "Draw Calls (Primitive) <= 16",
+      "status": "PASS",
+      "detail": "7"
+    },
+    {
+      "name": "Dateigroesse <= 2.0 MB",
+      "status": "PASS",
+      "detail": "45 KB"
+    },
+    {
+      "name": "Alle Bilder eingebettet",
+      "status": "PASS",
+      "detail": "0 Bilder, extern: 0"
+    },
+    {
+      "name": "Materialien vorhanden",
+      "status": "PASS",
+      "detail": "4"
+    },
+    {
+      "name": "Ursprung am Boden (min Y ~ 0)",
+      "status": "PASS",
+      "detail": "min Y = 0.0"
+    },
+    {
+      "name": "Ursprung horizontal mittig",
+      "status": "PASS",
+      "detail": "Mitte X = 0.000, Z = -0.009"
+    },
+    {
+      "name": "Masse plausibel",
+      "status": "PASS",
+      "detail": "ist [0.3, 0.2194, 0.3186] m, erwartet [0.3, 0.219, 0.319] m (Toleranz 0.03)"
+    }
+  ],
+  "analysis": {
+    "file_bytes": 46312,
+    "triangles": 1864,
+    "vertices": 1218,
+    "primitives": 7,
+    "meshes": 7,
+    "materials": [
+      {
+        "name": "M_Accent",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.5,
+          0.07999999821186066,
+          0.8500000238418579,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.47999998927116394,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_White",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.800000011920929,
+          0.800000011920929,
+          0.800000011920929,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.3499999940395355,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_Cloth",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.029999999329447746,
+          0.029999999329447746,
+          0.035999998450279236,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.8199999928474426,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_Rubber",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.014000000432133675,
+          0.014000000432133675,
+          0.014000000432133675,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.550000011920929,
+        "baseColorTexture": false,
+        "normalTexture": false
+      }
+    ],
+    "images": [],
+    "textures": 0,
+    "bounds_min": [
+      -0.15,
+      0.0,
+      -0.1686
+    ],
+    "bounds_max": [
+      0.15,
+      0.2194,
+      0.15
+    ],
+    "size_m": [
+      0.3,
+      0.2194,
+      0.3186
+    ],
+    "material_bounds": {
+      "M_Rubber": {
+        "min": [
+          -0.114,
+          0.0,
+          -0.045
+        ],
+        "max": [
+          0.114,
+          0.09,
+          0.045
+        ]
+      },
+      "M_Accent": {
+        "min": [
+          -0.15,
+          0.013,
+          -0.1686
+        ],
+        "max": [
+          0.15,
+          0.2194,
+          0.15
+        ]
+      },
+      "M_Cloth": {
+        "min": [
+          -0.0955,
+          0.1014,
+          -0.0955
+        ],
+        "max": [
+          0.0955,
+          0.1154,
+          0.0955
+        ]
+      },
+      "M_White": {
+        "min": [
+          -0.0105,
+          0.1544,
+          -0.0099
+        ],
+        "max": [
+          0.0105,
+          0.1764,
+          0.0099
+        ]
+      }
+    }
+  }
+}

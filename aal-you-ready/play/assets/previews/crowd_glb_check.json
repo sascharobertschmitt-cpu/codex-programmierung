@@ -8,22 +8,22 @@
     {
       "name": "Sichtbare Geometrie vorhanden",
       "status": "PASS",
-      "detail": "3548 Dreiecke"
+      "detail": "15608 Dreiecke"
     },
     {
       "name": "Dreiecksbudget <= 40000",
       "status": "PASS",
-      "detail": "3548"
+      "detail": "15608"
     },
     {
       "name": "Draw Calls (Primitive) <= 16",
       "status": "PASS",
-      "detail": "3"
+      "detail": "6"
     },
     {
       "name": "Dateigroesse <= 2.0 MB",
       "status": "PASS",
-      "detail": "59 KB"
+      "detail": "402 KB"
     },
     {
       "name": "Alle Bilder eingebettet",
@@ -33,7 +33,7 @@
     {
       "name": "Materialien vorhanden",
       "status": "PASS",
-      "detail": "2"
+      "detail": "1"
     },
     {
       "name": "Ursprung am Boden (min Y ~ 0)",
@@ -43,50 +43,29 @@
     {
       "name": "Ursprung horizontal mittig",
       "status": "PASS",
-      "detail": "Mitte X = 0.000, Z = 0.021"
+      "detail": "Mitte X = 0.000, Z = 0.011"
     },
     {
       "name": "Masse plausibel",
       "status": "PASS",
-      "detail": "ist [0.468, 0.8566, 0.3056] m, erwartet [0.468, 0.857, 0.306] m (Toleranz 0.03)"
+      "detail": "ist [0.642, 1.0659, 0.3588] m, erwartet [0.642, 1.066, 0.359] m (Toleranz 0.03)"
     }
   ],
   "analysis": {
-    "file_bytes": 60088,
-    "triangles": 3548,
-    "vertices": 1948,
-    "primitives": 3,
-    "meshes": 3,
+    "file_bytes": 411612,
+    "triangles": 15608,
+    "vertices": 8682,
+    "primitives": 6,
+    "meshes": 6,
     "materials": [
       {
         "name": "M_Crowd",
         "alphaMode": "OPAQUE",
         "alphaCutoff": null,
         "doubleSided": false,
-        "baseColorFactor": [
-          0.550000011920929,
-          0.550000011920929,
-          0.5799999833106995,
-          1
-        ],
+        "baseColorFactor": null,
         "metallic": 0,
-        "roughness": 0.699999988079071,
-        "baseColorTexture": false,
-        "normalTexture": false
-      },
-      {
-        "name": "M_Glow",
-        "alphaMode": "OPAQUE",
-        "alphaCutoff": null,
-        "doubleSided": false,
-        "baseColorFactor": [
-          0,
-          0,
-          0,
-          1
-        ],
-        "metallic": 0,
-        "roughness": 0.4000000059604645,
+        "roughness": 0.6200000047683716,
         "baseColorTexture": false,
         "normalTexture": false
       }
@@ -94,43 +73,31 @@
     "images": [],
     "textures": 0,
     "bounds_min": [
-      -0.234,
+      -0.321,
       0.0,
-      -0.1316
+      -0.1686
     ],
     "bounds_max": [
-      0.234,
-      0.8566,
-      0.174
+      0.321,
+      1.0659,
+      0.1902
     ],
     "size_m": [
-      0.468,
-      0.8566,
-      0.3056
+      0.642,
+      1.0659,
+      0.3588
     ],
     "material_bounds": {
       "M_Crowd": {
         "min": [
-          -0.234,
+          -0.321,
           0.0,
-          -0.1316
+          -0.1686
         ],
         "max": [
-          0.234,
-          0.739,
-          0.174
-        ]
-      },
-      "M_Glow": {
-        "min": [
-          0.1597,
-          0.6834,
-          0.008
-        ],
-        "max": [
-          0.2003,
-          0.8566,
-          0.042
+          0.321,
+          1.0659,
+          0.1902
         ]
       }
     }

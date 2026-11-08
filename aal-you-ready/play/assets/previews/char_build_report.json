@@ -1,0 +1,46 @@
+{
+  "asset": "CHAR",
+  "blender": "4.2.3 LTS",
+  "glb": "aal-you-ready/play/assets/club_character.glb",
+  "glb_bytes": 135948,
+  "triangles_total": 6960,
+  "meshes": {
+    "CHAR_Accent": {
+      "triangles": 2312,
+      "vertices": 1198,
+      "material": "M_Accent"
+    },
+    "CHAR_White": {
+      "triangles": 636,
+      "vertices": 332,
+      "material": "M_White"
+    },
+    "CHAR_Cloth": {
+      "triangles": 780,
+      "vertices": 424,
+      "material": "M_Cloth"
+    },
+    "CHAR_Skin1": {
+      "triangles": 2564,
+      "vertices": 1344,
+      "material": "M_Skin1"
+    },
+    "CHAR_DustCap": {
+      "triangles": 232,
+      "vertices": 156,
+      "material": "M_DustCap"
+    },
+    "CHAR_HairDark": {
+      "triangles": 436,
+      "vertices": 224,
+      "material": "M_HairDark"
+    }
+  },
+  "dims_m": {
+    "height": 0.9
+  },
+  "previews": [
+    "aal-you-ready/play/assets/previews/char_front34.jpg"
+  ],
+  "seconds": 50.1
+}

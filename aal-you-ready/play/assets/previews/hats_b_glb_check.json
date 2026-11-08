@@ -1,0 +1,306 @@
+{
+  "checks": [
+    {
+      "name": "GLB-Container glTF 2.0 lesbar",
+      "status": "PASS",
+      "detail": "Khronos glTF Blender I/O v4.2.70"
+    },
+    {
+      "name": "Sichtbare Geometrie vorhanden",
+      "status": "PASS",
+      "detail": "4140 Dreiecke"
+    },
+    {
+      "name": "Dreiecksbudget <= 40000",
+      "status": "PASS",
+      "detail": "4140"
+    },
+    {
+      "name": "Draw Calls (Primitive) <= 16",
+      "status": "PASS",
+      "detail": "13"
+    },
+    {
+      "name": "Dateigroesse <= 2.0 MB",
+      "status": "PASS",
+      "detail": "90 KB"
+    },
+    {
+      "name": "Alle Bilder eingebettet",
+      "status": "PASS",
+      "detail": "0 Bilder, extern: 0"
+    },
+    {
+      "name": "Materialien vorhanden",
+      "status": "PASS",
+      "detail": "8"
+    },
+    {
+      "name": "Ursprung am Boden (min Y ~ 0)",
+      "status": "PASS",
+      "detail": "min Y = -0.0"
+    },
+    {
+      "name": "Ursprung horizontal mittig",
+      "status": "PASS",
+      "detail": "Mitte X = 0.002, Z = 0.029"
+    },
+    {
+      "name": "Masse plausibel",
+      "status": "PASS",
+      "detail": "ist [0.2136, 0.3507, 0.2792] m, erwartet [0.214, 0.351, 0.279] m (Toleranz 0.03)"
+    }
+  ],
+  "analysis": {
+    "file_bytes": 91688,
+    "triangles": 4140,
+    "vertices": 2368,
+    "primitives": 13,
+    "meshes": 13,
+    "materials": [
+      {
+        "name": "M_Accent",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.5,
+          0.07999999821186066,
+          0.8500000238418579,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.47999998927116394,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_DustCap",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.019999999552965164,
+          0.019999999552965164,
+          0.02199999988079071,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.2199999988079071,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_Eel",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.03999999910593033,
+          0.10499999672174454,
+          0.05999999865889549,
+          1
+        ],
+        "metallic": 0.15000000596046448,
+        "roughness": 0.2199999988079071,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_White",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.800000011920929,
+          0.800000011920929,
+          0.800000011920929,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.3499999940395355,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_Rubber",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.014000000432133675,
+          0.014000000432133675,
+          0.014000000432133675,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.550000011920929,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_Steel",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.6200000047683716,
+          0.6200000047683716,
+          0.6399999856948853,
+          1
+        ],
+        "metallic": 1.0,
+        "roughness": 0.2800000011920929,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_LED",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.5,
+        "baseColorTexture": false,
+        "normalTexture": false
+      },
+      {
+        "name": "M_Plastic",
+        "alphaMode": "OPAQUE",
+        "alphaCutoff": null,
+        "doubleSided": false,
+        "baseColorFactor": [
+          0.10000000149011612,
+          0.10000000149011612,
+          0.10999999940395355,
+          1
+        ],
+        "metallic": 0,
+        "roughness": 0.44999998807907104,
+        "baseColorTexture": false,
+        "normalTexture": false
+      }
+    ],
+    "images": [],
+    "textures": 0,
+    "bounds_min": [
+      -0.1045,
+      -0.0,
+      -0.111
+    ],
+    "bounds_max": [
+      0.1091,
+      0.3507,
+      0.1683
+    ],
+    "size_m": [
+      0.2136,
+      0.3507,
+      0.2792
+    ],
+    "material_bounds": {
+      "M_Plastic": {
+        "min": [
+          -0.1,
+          -0.0,
+          -0.111
+        ],
+        "max": [
+          0.1,
+          0.2328,
+          0.099
+        ]
+      },
+      "M_LED": {
+        "min": [
+          -0.07,
+          0.0924,
+          0.076
+        ],
+        "max": [
+          0.07,
+          0.1364,
+          0.1
+        ]
+      },
+      "M_Accent": {
+        "min": [
+          -0.0968,
+          0.0217,
+          -0.0726
+        ],
+        "max": [
+          0.0968,
+          0.3507,
+          0.1683
+        ]
+      },
+      "M_White": {
+        "min": [
+          -0.0818,
+          0.2028,
+          0.0075
+        ],
+        "max": [
+          0.0876,
+          0.3326,
+          0.0966
+        ]
+      },
+      "M_Steel": {
+        "min": [
+          -0.054,
+          0.1084,
+          0.104
+        ],
+        "max": [
+          0.054,
+          0.1524,
+          0.112
+        ]
+      },
+      "M_Rubber": {
+        "min": [
+          -0.0929,
+          0.0074,
+          -0.0515
+        ],
+        "max": [
+          0.0929,
+          0.1474,
+          0.1144
+        ]
+      },
+      "M_DustCap": {
+        "min": [
+          -0.05,
+          0.1124,
+          0.0896
+        ],
+        "max": [
+          0.0822,
+          0.2188,
+          0.115
+        ]
+      },
+      "M_Eel": {
+        "min": [
+          -0.1045,
+          0.1275,
+          -0.1106
+        ],
+        "max": [
+          0.1091,
+          0.2258,
+          0.1017
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "asset": "HATS_B",
+  "blender": "4.2.3 LTS",
+  "glb": "aal-you-ready/play/assets/club_hats_b.glb",
+  "glb_bytes": 91688,
+  "triangles_total": 4140,
+  "meshes": {
+    "HAT_gasmaske_Rubber": {
+      "triangles": 420,
+      "vertices": 224,
+      "material": "M_Rubber"
+    },
+    "HAT_gasmaske_Steel": {
+      "triangles": 120,
+      "vertices": 64,
+      "material": "M_Steel"
+    },
+    "HAT_gasmaske_DustCap": {
+      "triangles": 120,
+      "vertices": 64,
+      "material": "M_DustCap"
+    },
+    "HAT_gasmaske_Accent": {
+      "triangles": 68,
+      "vertices": 36,
+      "material": "M_Accent"
+    },
+    "HAT_aalmuetze_Eel": {
+      "triangles": 1156,
+      "vertices": 582,
+      "material": "M_Eel"
+    },
+    "HAT_aalmuetze_White": {
+      "triangles": 160,
+      "vertices": 84,
+      "material": "M_White"
+    },
+    "HAT_aalmuetze_DustCap": {
+      "triangles": 96,
+      "vertices": 52,
+      "material": "M_DustCap"
+    },
+    "HAT_aalmuetze_Accent": {
+      "triangles": 48,
+      "vertices": 26,
+      "material": "M_Accent"
+    },
+    "HAT_hasenohren_Accent": {
+      "triangles": 524,
+      "vertices": 332,
+      "material": "M_Accent"
+    },
+    "HAT_hasenohren_White": {
+      "triangles": 240,
+      "vertices": 124,
+      "material": "M_White"
+    },
+    "HAT_ledhelm_Plastic": {
+      "triangles": 728,
+      "vertices": 366,
+      "material": "M_Plastic"
+    },
+    "HAT_ledhelm_LED": {
+      "triangles": 432,
+      "vertices": 218,
+      "material": "M_LED"
+    },
+    "HAT_ledhelm_Accent": {
+      "triangles": 28,
+      "vertices": 16,
+      "material": "M_Accent"
+    }
+  },
+  "dims_m": {
+    "height": 0.3
+  },
+  "previews": [
+    "aal-you-ready/play/assets/previews/hats_b_front34.jpg"
+  ],
+  "seconds": 49.0
+}

@@ -2,30 +2,45 @@
   "asset": "CROWD",
   "blender": "4.2.3 LTS",
   "glb": "aal-you-ready/play/assets/club_crowd.glb",
-  "glb_bytes": 60088,
-  "triangles_total": 3548,
+  "glb_bytes": 411612,
+  "triangles_total": 15608,
   "meshes": {
-    "CROWD_A_Crowd": {
-      "triangles": 1764,
-      "vertices": 962,
+    "CROWD_V0_Body": {
+      "triangles": 2744,
+      "vertices": 1474,
       "material": "M_Crowd"
     },
-    "CROWD_A_Glow": {
-      "triangles": 20,
-      "vertices": 12,
-      "material": "M_Glow"
+    "CROWD_V1_Body": {
+      "triangles": 2284,
+      "vertices": 1236,
+      "material": "M_Crowd"
     },
-    "CROWD_B_Crowd": {
-      "triangles": 1764,
-      "vertices": 962,
+    "CROWD_V2_Body": {
+      "triangles": 2684,
+      "vertices": 1440,
+      "material": "M_Crowd"
+    },
+    "CROWD_V3_Body": {
+      "triangles": 2304,
+      "vertices": 1248,
+      "material": "M_Crowd"
+    },
+    "CROWD_V4_Body": {
+      "triangles": 2796,
+      "vertices": 1496,
+      "material": "M_Crowd"
+    },
+    "CROWD_V5_Body": {
+      "triangles": 2796,
+      "vertices": 1604,
       "material": "M_Crowd"
     }
   },
   "dims_m": {
-    "height": 0.86
+    "height": 1.0
   },
   "previews": [
     "aal-you-ready/play/assets/previews/crowd_front34.jpg"
   ],
-  "seconds": 71.7
+  "seconds": 59.2
 }

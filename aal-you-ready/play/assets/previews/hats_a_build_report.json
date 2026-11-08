@@ -1,0 +1,51 @@
+{
+  "asset": "HATS_A",
+  "blender": "4.2.3 LTS",
+  "glb": "aal-you-ready/play/assets/club_hats_a.glb",
+  "glb_bytes": 46312,
+  "triangles_total": 1864,
+  "meshes": {
+    "HAT_fischerhut_Accent": {
+      "triangles": 384,
+      "vertices": 194,
+      "material": "M_Accent"
+    },
+    "HAT_fischerhut_Cloth": {
+      "triangles": 128,
+      "vertices": 66,
+      "material": "M_Cloth"
+    },
+    "HAT_cap_Accent": {
+      "triangles": 360,
+      "vertices": 184,
+      "material": "M_Accent"
+    },
+    "HAT_cap_White": {
+      "triangles": 80,
+      "vertices": 42,
+      "material": "M_White"
+    },
+    "HAT_kopfhoerer_Accent": {
+      "triangles": 360,
+      "vertices": 288,
+      "material": "M_Accent"
+    },
+    "HAT_kopfhoerer_Rubber": {
+      "triangles": 152,
+      "vertices": 80,
+      "material": "M_Rubber"
+    },
+    "HAT_beanie_Accent": {
+      "triangles": 400,
+      "vertices": 204,
+      "material": "M_Accent"
+    }
+  },
+  "dims_m": {
+    "height": 0.3
+  },
+  "previews": [
+    "aal-you-ready/play/assets/previews/hats_a_front34.jpg"
+  ],
+  "seconds": 46.5
+}
