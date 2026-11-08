@@ -38,17 +38,28 @@ ok('Seite zeigt Rundkurs-Szene', hud.includes('RUNDKURS'), hud);
 ok('Chips zeigen Runde und Cash', (await page.locator('#players').innerText()).includes('Runde 1/2'));
 
 const toks = [A.token, Bp.token];
-let rolls = 0, gate = 0;
+let rolls = 0, gate = 0, slfRounds = 0;
 for (let i = 0; i < 60 && s.status !== 'finished' && rolls < 12; i++) {
   s = await rpc('party_snapshot', { p_code: A.code, p_token: A.token });
   const tok = toks[s.turn % 2];
   if (s.phase === 'ready') { s = await rpc('party_action', { p_code: A.code, p_token: tok, p_host_token: null, p_action: 'roll' }); rolls++; if (s.roll_info && s.roll_info.gate) gate++; await sleep(2500); }
   else if (s.phase === 'event') s = await rpc('party_action', { p_code: A.code, p_token: tok, p_host_token: null, p_action: 'event_next' });
   else if (s.phase === 'task') { await rpc('party_action', { p_code: A.code, p_token: tok, p_host_token: null, p_action: 'timer' }); s = await rpc('party_action', { p_code: A.code, p_token: tok, p_host_token: A.host_token, p_action: 'cancel' }); }
-  else if (s.phase === 'slf') { s = await rpc('party_action', { p_code: A.code, p_token: tok, p_host_token: null, p_action: 'slf_stop' }); await sleep(3500); s = await rpc('party_snapshot', { p_code: A.code, p_token: A.token }); if (s.phase === 'slf') { try { s = await rpc('party_action', { p_code: A.code, p_token: tok, p_host_token: null, p_action: 'slf_finish' }); } catch (e) {} } }
-  else if (s.phase === 'slf_review') { for (const p of s.players) for (const c of ['Stadt','Land','Fluss','Tier','Beruf']) for (const t of toks) { try { await rpc('party_slf_vote', { p_code: A.code, p_token: t, p_player_id: p.id, p_category: c, p_approved: false }); } catch (e) {} } }
+  else if (s.phase === 'slf') {
+    const L = s.slf_letter;
+    const ans = Object.fromEntries(['Stadt', 'Land', 'Fluss', 'Tier', 'Beruf'].map(c => [c, L + 'testwort']));
+    s = await rpc('party_slf_submit', { p_code: A.code, p_token: A.token, p_answers: ans });
+  }
+  else if (s.phase === 'slf_review') {
+    const host = s.players[0].id;   // nur der Host hat Antworten, der Gast bewertet sie
+    for (const c of ['Stadt', 'Land', 'Fluss', 'Tier', 'Beruf']) {
+      try { s = await rpc('party_slf_vote', { p_code: A.code, p_token: Bp.token, p_player_id: host, p_category: c, p_approved: true }); } catch (e) { console.log('vote', e.message); }
+    }
+    slfRounds++;
+  }
   else if (s.phase === 'slf_results') s = await rpc('party_action', { p_code: A.code, p_token: tok, p_host_token: null, p_action: 'slf_next' });
 }
+ok('Mehrere Züge gespielt (inkl. SLF-Runden)', rolls >= 6, `${rolls} Würfe, ${slfRounds} SLF-Runden`);
 ok('Server-Würfe mit Club-Würfel', rolls > 0 && s.roll_info !== undefined, `${rolls} Würfe, letzter: ${JSON.stringify(s.roll_info)}`);
 await sleep(4000);
 const dice = await page.locator('#diceResult').innerText().catch(() => '');

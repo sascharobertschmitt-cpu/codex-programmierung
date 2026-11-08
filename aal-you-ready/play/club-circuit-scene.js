@@ -312,14 +312,15 @@
       const t = (performance.now() - t0) / 1000;
       const k = Math.min(1, engine.getDeltaTime() / 1000 * 3.5);
       const tok = tokens[follow];
+      const goal = (viewMode === 'follow' && !tok) ? VIEWS.overview : camGoal;   // noch keine Figuren
       const overview = viewMode !== 'follow' || !tok;
-      const goalTarget = overview ? camGoal.target : tok.root.position.add(new B.Vector3(0, 0.4, 0));
+      const goalTarget = overview ? goal.target : tok.root.position.add(new B.Vector3(0, 0.4, 0));
       cam.target = B.Vector3.Lerp(cam.target, goalTarget, k);
-      cam.radius += (camGoal.radius - cam.radius) * k;
+      cam.radius += (goal.radius - cam.radius) * k;
       if (autoCam) {
-        if (camGoal.beta !== undefined) cam.beta += (camGoal.beta - cam.beta) * k * 0.6;
+        if (goal.beta !== undefined) cam.beta += (goal.beta - cam.beta) * k * 0.6;
         const p = tok ? tok.root.position : B.Vector3.Zero();
-        const goalA = overview ? camGoal.alpha : Math.atan2(p.z * 0.55, p.x);
+        const goalA = overview ? (goal.alpha ?? cam.alpha) : Math.atan2(p.z * 0.55, p.x);
         let d = goalA - cam.alpha; d = Math.atan2(Math.sin(d), Math.cos(d));
         cam.alpha += d * k * 0.8;
       }
