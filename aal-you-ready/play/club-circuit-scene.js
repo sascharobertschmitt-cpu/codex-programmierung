@@ -228,15 +228,15 @@
       const t = tiles[n], nx = -Math.sin(t.ang), nz = Math.cos(t.ang);
       const out = (nx * t.x + nz * t.z) >= 0 ? 1 : -1;
       const pos = new B.Vector3(t.x + out * nx * 1.05, 0, t.z + out * nz * 1.05);
-      const hgt = t.h + 1.05;
+      const hgt = t.h + 1.25;
       const pole = B.MeshBuilder.CreateCylinder('numPole' + n, { diameter: 0.05, height: hgt, tessellation: 8 }, scene);
       pole.position.set(pos.x, hgt / 2, pos.z); pole.material = truss0;
       const tx = new B.DynamicTexture('numTex' + n, { width: 128, height: 128 }, scene, true);
       const g = tx.getContext(); g.fillStyle = '#07060c'; g.fillRect(0, 0, 128, 128);
       g.strokeStyle = '#f5ecff'; g.lineWidth = 6; g.strokeRect(5, 5, 118, 118);
       g.fillStyle = '#fff'; g.font = 'bold 66px system-ui,sans-serif'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillText(String(n), 64, 68); tx.update();
-      const sign = B.MeshBuilder.CreatePlane('numSign' + n, { size: 0.42, sideOrientation: B.Mesh.DOUBLESIDE }, scene);
-      sign.position.set(pos.x, hgt + 0.2, pos.z);
+      const sign = B.MeshBuilder.CreatePlane('numSign' + n, { size: 0.62, sideOrientation: B.Mesh.DOUBLESIDE }, scene);
+      sign.position.set(pos.x, hgt + 0.3, pos.z);
       sign.billboardMode = B.Mesh.BILLBOARDMODE_Y;
       const sm2 = new B.StandardMaterial('numM' + n, scene); sm2.disableLighting = true; sm2.emissiveTexture = tx; sign.material = sm2;
       glow.addExcludedMesh(sign);
