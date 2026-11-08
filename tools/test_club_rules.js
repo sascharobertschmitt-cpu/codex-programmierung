@@ -4,10 +4,10 @@ const R = require('../aal-you-ready/play/club-circuit-rules.js');
 let n = 0;
 const t = (name, fn) => { fn(); n++; console.log('ok', name); };
 
-t('64 Felder, Typverteilung', () => {
+t('80 Felder, Typverteilung', () => {
   const c = {};
-  for (let i = 0; i < 64; i++) c[R.fieldType(i)] = (c[R.fieldType(i)] || 0) + 1;
-  assert.deepStrictEqual(c, { gate: 1, activity: 29, slf: 10, special: 6, event: 18 });
+  for (let i = 0; i < 80; i++) c[R.fieldType(i)] = (c[R.fieldType(i)] || 0) + 1;
+  assert.deepStrictEqual(c, { gate: 1, activity: 43, slf: 8, special: 8, event: 20 });
 });
 t('normaler Zug', () => {
   const g = R.newGame(['A', 'B']);
@@ -15,10 +15,10 @@ t('normaler Zug', () => {
   assert.deepStrictEqual(r.path, [1, 2, 3, 4, 5]);
   assert.strictEqual(g.players[0].pos, 5);
   assert.strictEqual(g.turn, 1);
-  assert.strictEqual(r.events[0].fieldType, 'slf');
+  assert.strictEqual(r.events[0].fieldType, 'activity');
 });
 t('ueber Einlass: Gaesteliste', () => {
-  const g = R.newGame(['A', 'B']); g.players[0].pos = 61;
+  const g = R.newGame(['A', 'B']); g.players[0].pos = 77;
   const r = R.move(g, 5, () => 0.1);
   assert.strictEqual(g.players[0].pos, 2);
   assert.strictEqual(g.players[0].lap, 1);
@@ -26,7 +26,7 @@ t('ueber Einlass: Gaesteliste', () => {
   assert.ok(r.events.some(e => e.type === 'gate_guestlist'));
 });
 t('ueber Einlass: Kontrolle -> aussetzen', () => {
-  const g = R.newGame(['A', 'B']); g.players[0].pos = 61;
+  const g = R.newGame(['A', 'B']); g.players[0].pos = 77;
   R.move(g, 5, () => 0.9);
   assert.strictEqual(g.players[0].skip, true);
   R.move(g, 3);                       // B zieht
@@ -36,7 +36,7 @@ t('ueber Einlass: Kontrolle -> aussetzen', () => {
   assert.strictEqual(g.players[0].skip, false);
 });
 t('genau auf Einlass: Volltreffer', () => {
-  const g = R.newGame(['A']); g.players[0].pos = 60;
+  const g = R.newGame(['A']); g.players[0].pos = 76;
   const r = R.move(g, 4, () => 0.9);
   assert.strictEqual(g.players[0].pos, 0);
   assert.strictEqual(g.players[0].cash, 200);
@@ -44,11 +44,11 @@ t('genau auf Einlass: Volltreffer', () => {
   assert.ok(!r.events.some(e => e.type === 'field'));
 });
 t('Sieg nach letzter Runde, bleibt am Einlass', () => {
-  const g = R.newGame(['A', 'B'], { laps: 2 }); g.players[0].pos = 62; g.players[0].lap = 1;
+  const g = R.newGame(['A', 'B'], { laps: 2 }); g.players[0].pos = 78; g.players[0].lap = 1;
   const r = R.move(g, 6);
   assert.strictEqual(g.winner, 0);
   assert.strictEqual(g.players[0].pos, 0);
-  assert.deepStrictEqual(r.path, [63, 0]);
+  assert.deepStrictEqual(r.path, [79, 0]);
   assert.throws(() => R.move(g, 1));
 });
 t('komplettes Spiel endet immer', () => {
