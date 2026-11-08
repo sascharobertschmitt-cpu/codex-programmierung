@@ -494,9 +494,9 @@
       const c = hatC[ci];
       const inst = c.instantiateModelsToScene(n => name + '_' + n, true);
       inst.rootNodes.forEach(r => { r.position.y += HAT_LIFT[ci]; });
-      inst.rootNodes.forEach(r => r.getChildren(null, true).forEach(ch => {
-        if (ch.name && /HAT_/.test(ch.name) && !ch.name.endsWith('HAT_' + hat) && ch.getClassName() === 'TransformNode') ch.dispose(false, true);
-      }));
+      // Gruppen liegen unter __root__ / HATS_x / HAT_<name>: alle fremden Hut-Gruppen samt Inhalt entfernen
+      inst.rootNodes.forEach(r => r.getDescendants(false, n => n.getClassName() === 'TransformNode' && /HAT_[a-z]+$/.test(n.name))
+        .filter(n => !n.name.endsWith('HAT_' + hat)).forEach(n => n.dispose(false, true)));
       return inst.rootNodes;
     };
     const spawnFig = (name, scale, hex, hat, skin) => {
