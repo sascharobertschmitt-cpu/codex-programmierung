@@ -18,7 +18,28 @@ const resolution=['1k','2k','4k'].find(k=>gltf[k])||variants[0],entry=gltf[resol
 if(!file?.url)throw Error('glTF-Datei nicht gefunden: '+JSON.stringify(Object.keys(entry)));
 write('Datei gefunden: '+resolution+' / '+file.url);
 const u=new URL(file.url),root=u.href.slice(0,u.href.lastIndexOf('/')+1),name=u.pathname.split('/').pop();
-const result=await B.SceneLoader.ImportMeshAsync('',root,name,scene);
+// Poly Haven glTF assets have a separate include manifest. Relative texture URLs
+// must be mapped to their actual CDN URLs before Babylon parses the glTF.
+const manifest=file.include||entry.include||{};
+write('Textur-Manifest: '+Object.keys(manifest).length+' Einträge');
+const gltfResponse=await fetch(file.url);if(!gltfResponse.ok)throw Error('glTF HTTP '+gltfResponse.status);
+const gltfJson=await gltfResponse.json();
+const resolveIncluded=(relative)=>{
+  if(!relative||relative.startsWith('data:')||/^https?:/i.test(relative))return relative;
+  const clean=decodeURIComponent(relative).replace(/^\.\//,'');
+  const item=manifest[clean]||manifest[relative]||Object.entries(manifest).find(([key])=>key.replace(/^\.\//,'')===clean)?.[1];
+  const absolute=typeof item==='string'?item:item?.url;
+  if(absolute)return absolute;
+  write('Warnung: Keine Manifest-URL für '+relative);
+  return new URL(relative,root).href;
+};
+for(const img of gltfJson.images||[])if(img.uri)img.uri=resolveIncluded(img.uri);
+for(const buf of gltfJson.buffers||[])if(buf.uri)buf.uri=resolveIncluded(buf.uri);
+const blobUrl=URL.createObjectURL(new Blob([JSON.stringify(gltfJson)],{type:'model/gltf+json'}));
+let result;
+try{result=await B.SceneLoader.ImportMeshAsync('','',blobUrl,scene,undefined,'.gltf')}
+finally{URL.revokeObjectURL(blobUrl)}
+
 for(const mesh of imported)mesh.dispose();imported=result.meshes;
 const roots=result.meshes.filter(m=>!m.parent);const group=new B.TransformNode('assetRoot',scene);for(const m of roots)m.parent=group;
 group.computeWorldMatrix(true);const bounds=result.meshes.filter(m=>m.getBoundingInfo&&m.getTotalVertices&&m.getTotalVertices()>0);
