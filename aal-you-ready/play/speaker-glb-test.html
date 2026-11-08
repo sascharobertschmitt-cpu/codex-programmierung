@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#07080d">
+<title>Asset-Prüfstand · Club-Lautsprecher AYR-212</title>
+<style>
+  *{box-sizing:border-box}
+  html,body{margin:0;background:#07080d;color:#ece9f6;font:14px -apple-system,BlinkMacSystemFont,system-ui,sans-serif}
+  canvas{display:block;width:100vw;height:64dvh;touch-action:none;outline:none}
+  main{padding:12px 14px calc(18px + env(safe-area-inset-bottom))}
+  h1{font-size:16px;margin:0 0 8px}
+  .row{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+  button{flex:1 1 auto;min-width:72px;padding:9px 10px;border-radius:9px;border:1px solid #2c2f44;background:#14162a;color:#ece9f6;font:inherit}
+  button.on{background:#3a1f5c;border-color:#8a4fd8}
+  ul{list-style:none;margin:0 0 10px;padding:0}
+  li{padding:4px 0;border-bottom:1px solid #191b2c;display:flex;gap:8px}
+  li b{min-width:22px}
+  .muted{color:#8d8aa6;font-size:12px}
+  #stats{font:12px ui-monospace,Menlo,monospace;color:#91f0e5;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<main>
+  <h1>Club-Lautsprecher AYR-212 · GLB-Prüfstand</h1>
+  <div class="row">
+    <button data-light="club" class="on">Club-Licht</button>
+    <button data-light="studio">Studio-Licht</button>
+    <button id="rot">Drehen</button>
+  </div>
+  <div class="row">
+    <button data-view="34">3/4</button>
+    <button data-view="front">Front</button>
+    <button data-view="detail">Detail</button>
+    <button data-view="rear">Rückseite</button>
+  </div>
+  <div class="row">
+    <button id="grille">Gitter ausblenden</button>
+    <button id="wire">Drahtgitter</button>
+  </div>
+  <p class="muted">Automatische Prüfungen im Browser (ersetzen nicht den Blick aufs Modell):</p>
+  <ul id="checks"><li><b>…</b>Lade Babylon.js</li></ul>
+  <div id="stats"></div>
+  <p class="muted">Eigenes Design, keine Marke. Erzeugt per Blender-Python in GitHub Actions. Datei: <span id="fname"></span></p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/babylonjs@7.54.3/babylon.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/babylonjs-loaders@7.54.3/babylonjs.loaders.min.js"></script>
+<script>
+(async () => {
+  const P = new URLSearchParams(location.search);
+  const FILE = P.get('file') || 'club_speaker_pa212.glb';
+  const FRONT = P.get('front') || 'M_Grille';
+  const EXPECT = (P.get('expect') || '0.60,0.995,0.53').split(',').map(Number);
+  const checksEl = document.querySelector('#checks');
+  const statsEl = document.querySelector('#stats');
+  document.querySelector('#fname').textContent = FILE;
+  const checks = [];
+  const render = () => {
+    checksEl.innerHTML = checks.map(c =>
+      `<li><b>${c.ok === true ? '✅' : c.ok === 'warn' ? '⚠️' : '❌'}</b><span>${c.name}<br><span class="muted">${c.detail || ''}</span></span></li>`).join('');
+  };
+  const check = (name, ok, detail) => { checks.push({ name, ok, detail }); render(); };
+  const finish = (stats) => {
+    window.TEST_RESULT = { ok: checks.every(c => c.ok !== false), checks, stats };
+    document.body.dataset.test = window.TEST_RESULT.ok ? 'ok' : 'fail';
+  };
+
+  if (!window.BABYLON) { check('Babylon.js geladen', false, 'CDN nicht erreichbar'); finish({}); return; }
+  const B = BABYLON;
+  const canvas = document.querySelector('#c');
+  const engine = new B.Engine(canvas, true, { preserveDrawingBuffer: true, stencil: true }, false);
+  engine.setHardwareScalingLevel(1 / Math.min(window.devicePixelRatio || 1, 2));
+  const scene = new B.Scene(engine);
+  scene.clearColor = new B.Color4(0.012, 0.012, 0.02, 1);
+  const ip = scene.imageProcessingConfiguration;
+  ip.toneMappingEnabled = true;
+  ip.toneMappingType = B.ImageProcessingConfiguration.TONEMAPPING_ACES;
+  ip.exposure = 1.15;
+  ip.contrast = 1.15;
+
+  try {
+    scene.environmentTexture = B.CubeTexture.CreateFromPrefilteredData(
+      'https://assets.babylonjs.com/environments/environmentSpecular.env', scene);
+  } catch (e) { console.warn('Environment fehlt', e); }
+
+  const cam = new B.ArcRotateCamera('cam', Math.PI / 2 - 0.55, 1.22, 2.7, new B.Vector3(0, 0.5, 0), scene);
+  cam.attachControl(canvas, true);
+  cam.minZ = 0.03; cam.lowerRadiusLimit = 0.45; cam.upperRadiusLimit = 8;
+  cam.upperBetaLimit = 1.55; cam.wheelPrecision = 60; cam.pinchPrecision = 220; cam.panningSensibility = 900;
+
+  const ground = B.MeshBuilder.CreateGround('floor', { width: 14, height: 14 }, scene);
+  const gm = new B.PBRMaterial('floorMat', scene);
+  gm.albedoColor = new B.Color3(0.03, 0.03, 0.034); gm.metallic = 0; gm.roughness = 0.62;
+  ground.material = gm; ground.receiveShadows = true;
+
+  // Licht-Setups
+  const key = new B.DirectionalLight('key', new B.Vector3(0.45, -0.8, -0.55), scene);
+  key.position = new B.Vector3(-2.5, 4.5, 3.5);
+  const hemi = new B.HemisphericLight('hemi', new B.Vector3(0, 1, 0), scene);
+  hemi.groundColor = new B.Color3(0.02, 0.02, 0.03);
+  const mag = new B.SpotLight('magenta', new B.Vector3(1.8, 2.4, -1.6), new B.Vector3(-0.6, -0.6, 0.55), 1.0, 2, scene);
+  mag.diffuse = new B.Color3(1, 0.12, 0.65); mag.specular = mag.diffuse;
+  const cyan = new B.SpotLight('cyan', new B.Vector3(-1.9, 2.0, -1.2), new B.Vector3(0.7, -0.5, 0.45), 1.0, 2, scene);
+  cyan.diffuse = new B.Color3(0.1, 0.75, 1); cyan.specular = cyan.diffuse;
+  const sg = new B.ShadowGenerator(1024, key);
+  sg.useBlurExponentialShadowMap = true; sg.blurKernel = 16; sg.darkness = 0.35;
+
+  function setLight(mode) {
+    const club = mode === 'club';
+    key.intensity = club ? 1.1 : 2.6;
+    key.diffuse = club ? new B.Color3(1, 0.92, 0.85) : new B.Color3(1, 1, 1);
+    hemi.intensity = club ? 0.08 : 0.55;
+    mag.intensity = club ? 55 : 0; cyan.intensity = club ? 45 : 0;
+    scene.environmentIntensity = club ? 0.35 : 1.0;
+    document.querySelectorAll('[data-light]').forEach(b => b.classList.toggle('on', b.dataset.light === mode));
+  }
+  setLight('club');
+  document.querySelectorAll('[data-light]').forEach(b => b.onclick = () => setLight(b.dataset.light));
+
+  const views = {
+    '34':     [Math.PI / 2 - 0.55, 1.22, 2.7, 0.5],
+    front:    [Math.PI / 2, 1.45, 2.4, 0.5],
+    detail:   [Math.PI / 2 - 0.35, 1.32, 1.0, 0.62],
+    rear:     [-Math.PI / 2 + 0.6, 1.2, 2.4, 0.45],
+  };
+  document.querySelectorAll('[data-view]').forEach(b => b.onclick = () => {
+    const [a, be, r, y] = views[b.dataset.view];
+    cam.alpha = a; cam.beta = be; cam.radius = r; cam.target = new B.Vector3(0, y, 0);
+  });
+  const rot = document.querySelector('#rot');
+  rot.onclick = () => {
+    cam.useAutoRotationBehavior = !cam.useAutoRotationBehavior;
+    if (cam.autoRotationBehavior) cam.autoRotationBehavior.idleRotationSpeed = 0.35;
+    rot.classList.toggle('on', cam.useAutoRotationBehavior);
+  };
+  document.querySelector('#wire').onclick = (e) => {
+    scene.forceWireframe = !scene.forceWireframe; e.target.classList.toggle('on', scene.forceWireframe);
+  };
+
+  engine.runRenderLoop(() => scene.render());
+  addEventListener('resize', () => engine.resize());
+
+  let inst = null;
+  try { inst = new B.SceneInstrumentation(scene); inst.captureFrameTime = true; } catch (e) { }
+
+  try {
+    check('Babylon.js geladen', true, 'Version ' + B.Engine.Version);
+    const t0 = performance.now();
+    const res = await B.SceneLoader.ImportMeshAsync('', './assets/', FILE + '?v=' + Date.now(), scene, null, '.glb');
+    const loadMs = Math.round(performance.now() - t0);
+    const meshes = res.meshes.filter(m => m.getTotalVertices && m.getTotalVertices() > 0);
+    check('GLB geladen, sichtbare Meshes', meshes.length > 0, `${meshes.length} Meshes in ${loadMs} ms`);
+    meshes.forEach(m => { sg.addShadowCaster(m); m.receiveShadows = true; });
+
+    let min = new B.Vector3(Infinity, Infinity, Infinity), max = new B.Vector3(-Infinity, -Infinity, -Infinity);
+    let tris = 0;
+    const mats = new Map();
+    for (const m of meshes) {
+      m.computeWorldMatrix(true);
+      const bb = m.getBoundingInfo().boundingBox;
+      min = B.Vector3.Minimize(min, bb.minimumWorld); max = B.Vector3.Maximize(max, bb.maximumWorld);
+      tris += (m.getTotalIndices() || m.getTotalVertices()) / 3;
+      if (m.material) mats.set(m.material.name, m.material);
+    }
+    const size = max.subtract(min);
+    const sz = [size.x, size.y, size.z].map(v => v.toFixed(3));
+    const sizeOk = EXPECT.every((e, i) => Math.abs([size.x, size.y, size.z][i] - e) <= 0.03);
+    check('Maße realistisch (Meter)', sizeOk, `B × H × T = ${sz.join(' × ')} m, erwartet ≈ ${EXPECT.join(' × ')}`);
+    check('Ursprung am Boden', Math.abs(min.y) < 0.01, `min Y = ${min.y.toFixed(4)}`);
+
+    const fr = meshes.filter(m => m.material && m.material.name === FRONT);
+    if (fr.length) {
+      let fz = -Infinity;
+      fr.forEach(m => fz = Math.max(fz, m.getBoundingInfo().boundingBox.maximumWorld.z));
+      check('Front zeigt zur Babylon-Kamera (+Z)', fz >= max.z - 0.02, `${FRONT} max Z ${fz.toFixed(3)} / gesamt ${max.z.toFixed(3)}`);
+      const gmat = fr[0].material;
+      const alphaTest = gmat.transparencyMode === B.PBRMaterial.PBRMATERIAL_ALPHATEST ||
+        (gmat.needAlphaTesting && gmat.needAlphaTesting());
+      check('Lochblech als Alpha-Test (MASK)', !!alphaTest, 'transparencyMode = ' + gmat.transparencyMode);
+    }
+
+    await scene.whenReadyAsync();
+    const texs = [...mats.values()].flatMap(m => m.getActiveTextures ? m.getActiveTextures() : []);
+    const texOk = texs.length > 0 && texs.every(t => t.isReady());
+    check('Texturen geladen', texOk, `${texs.length} Textur-Slots in ${mats.size} Materialien`);
+
+    let bytes = null;
+    try {
+      const h = await fetch('./assets/' + FILE, { method: 'HEAD', cache: 'no-store' });
+      bytes = Number(h.headers.get('content-length')) || null;
+    } catch (e) { }
+    check('Dateigröße mobil vertretbar', bytes === null ? 'warn' : bytes < 2e6,
+      bytes === null ? 'Größe unbekannt' : (bytes / 1024).toFixed(0) + ' KB');
+
+    await new Promise(r => setTimeout(r, 2500));
+    const fps = engine.getFps();
+    let draws = null;
+    try { draws = inst ? inst.drawCallsCounter.current : null; } catch (e) { }
+    check('Bildrate (Richtwert, dieses Gerät)', fps >= 45 ? true : 'warn', fps.toFixed(0) + ' fps');
+    const stats = {
+      file: FILE, bytes, loadMs, meshes: meshes.length, triangles: Math.round(tris),
+      materials: [...mats.keys()], drawCalls: draws, fps: Math.round(fps),
+      size_m: sz.map(Number), renderer: engine.getGlInfo().renderer, webgl: engine.webGLVersion,
+    };
+    statsEl.textContent =
+      `Dreiecke: ${stats.triangles}\nMeshes: ${stats.meshes}  Draw Calls: ${draws ?? '–'}\n` +
+      `Materialien: ${stats.materials.join(', ')}\nLadezeit: ${loadMs} ms  FPS: ${stats.fps}\n` +
+      `GPU: ${stats.renderer} (WebGL ${stats.webgl})`;
+
+    const grilleBtn = document.querySelector('#grille');
+    grilleBtn.onclick = () => {
+      const vis = !fr.length || !fr[0].isEnabled();
+      fr.forEach(m => m.setEnabled(vis));
+      grilleBtn.classList.toggle('on', !vis);
+    };
+    finish(stats);
+  } catch (e) {
+    console.error(e);
+    check('Laden ohne Fehler', false, e.message || String(e));
+    finish({});
+  }
+})();
+</script>
+</body>
+</html>
