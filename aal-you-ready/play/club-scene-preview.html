@@ -65,7 +65,7 @@
     await Promise.race([sc.avatarsReady, new Promise(r => setTimeout(r, 60000))]);
     await new Promise(r => setTimeout(r, 3000));
     // ?dice=1: Würfel laufen gerade, Ergebnis-Schild sichtbar im Screenshot
-    if (Q.get('dice')) { setView('follow'); sc.rollDice(0, 4, '+5', 3); await new Promise(r => setTimeout(r, 1700)); }
+    if (Q.get('dice')) { setView('follow'); await sc.rollDice(0, 4, '+5', 3, true); await new Promise(r => setTimeout(r, 4000)); }
     window.TEST_RESULT = { ok: sc.paLoaded && sc.rigLoaded, checks: [
       { name: 'Szene geladen', ok: true, detail: ms + ' ms' },
       { name: 'PA-Stacks', ok: sc.paLoaded },

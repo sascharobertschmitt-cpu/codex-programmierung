@@ -833,7 +833,7 @@
         if (f >= 1) { scene.onBeforeRenderObservable.remove(obs); res(); }
       });
     });
-    const rollDice = async (idx, white, club, turbo) => {
+    const rollDice = async (idx, white, club, turbo, hold) => {
       const tk = tokens[idx]; if (!tk) return;
       follow = idx; autoCam = true;
       const base = tk.root.position.add(new B.Vector3(0, 1.55, 0));
@@ -857,6 +857,7 @@
       l.mesh.position.copyFrom(base).addInPlace(new B.Vector3(0, 0.55, 0));
       l.mesh.scaling.setAll(0.2);
       await animate(260, f => l.mesh.scaling.setAll(0.2 + 0.8 * Math.sin(f * Math.PI / 2) * (1 + 0.15 * Math.sin(f * Math.PI))));
+      if (hold) return;
       await sleep(900);
       dice.forEach(b => b.dispose()); l.dispose();
     };
