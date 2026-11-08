@@ -503,7 +503,7 @@
     };
     const makeRig = (holder) => {
       const nodes = {};
-      holder.getDescendants(false).forEach(n => { const m = /mixamorig:(\w+)$/.exec(n.name || ''); if (m && !nodes[m[1]] && n.getClassName() === 'TransformNode') nodes[m[1]] = n; });
+      holder.getDescendants(false).forEach(n => { const m = /:(\w+)$/.exec(n.name || ''); if (m && !nodes[m[1]] && n.getClassName() === 'TransformNode') nodes[m[1]] = n; });
       if (!nodes.Hips || !nodes.LeftArm || !nodes.RightArm || !nodes.LeftUpLeg) { console.error('Rig unvollständig: ' + holder.name + ' ' + Object.keys(nodes).length); return null; }
       ANIM.concat(['Hips']).forEach(k => { const n = nodes[k]; if (n && !n.rotationQuaternion) n.rotationQuaternion = B.Quaternion.FromEulerVector(n.rotation); });
       holder.computeWorldMatrix(true); refresh(holder);
