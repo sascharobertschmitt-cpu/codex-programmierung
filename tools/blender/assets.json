@@ -4,7 +4,11 @@
     "name": "Club-Topteil AYR-212 (2 x 12\" + Horn)",
     "geometry": "speaker_geometry",
     "glb": "club_speaker_pa212.glb",
-    "expect_size": [0.60, 0.995, 0.53],
+    "expect_size": [
+      0.6,
+      0.995,
+      0.53
+    ],
     "front_material": "M_Grille",
     "mask_materials": "M_Grille"
   },
@@ -13,8 +17,63 @@
     "name": "Club-Subwoofer AYR-118 (1 x 18\")",
     "geometry": "sub_geometry",
     "glb": "club_sub_118.glb",
-    "expect_size": [0.677, 0.654, 0.815],
+    "expect_size": [
+      0.677,
+      0.654,
+      0.815
+    ],
     "front_material": "M_Grille",
-    "mask_materials": "M_Grille"
+    "mask_materials": "M_Grille",
+    "deps": [
+      "speaker_geometry"
+    ]
+  },
+  {
+    "id": "dj1",
+    "name": "DJ-Booth DJ1",
+    "geometry": "dj_geometry",
+    "glb": "club_dj_booth.glb",
+    "expect_size": [
+      2.48,
+      1.206,
+      0.866
+    ],
+    "front_material": "M_Grille",
+    "mask_materials": "M_Grille",
+    "deps": [
+      "speaker_geometry"
+    ]
+  },
+  {
+    "id": "tr1",
+    "name": "Traverse TR1 (3 m)",
+    "geometry": "truss_geometry",
+    "glb": "club_truss_3m.glb",
+    "expect_size": [
+      3.0,
+      0.2925,
+      0.2925
+    ],
+    "front_material": "-",
+    "mask_materials": "-",
+    "deps": [
+      "speaker_geometry"
+    ]
+  },
+  {
+    "id": "mh1",
+    "name": "Moving Head MH1",
+    "geometry": "movinghead_geometry",
+    "glb": "club_moving_head.glb",
+    "expect_size": [
+      0.4,
+      0.546,
+      0.313
+    ],
+    "front_material": "-",
+    "mask_materials": "-",
+    "deps": [
+      "speaker_geometry"
+    ]
   }
 ]

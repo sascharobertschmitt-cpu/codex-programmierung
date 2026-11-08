@@ -177,6 +177,10 @@ def main():
     ap.add_argument("--json-out")
     ap.add_argument("--summary", help="Markdown anhaengen (z.B. $GITHUB_STEP_SUMMARY)")
     a = ap.parse_args()
+    if a.front_material == "-":
+        a.front_material = None
+    if a.mask_materials == "-":
+        a.mask_materials = ""
 
     checks = []
 
