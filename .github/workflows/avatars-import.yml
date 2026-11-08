@@ -62,12 +62,12 @@ jobs:
       - name: Import, normalize, export, render sheet
         timeout-minutes: 40
         run: |
-          OUT=build/avatars_out
-          [ "$MODE" = final ] && OUT=aal-you-ready/play/assets/avatars
+          OUT=build/avatars_out; EXTRA=""
+          if [ "$MODE" = final ]; then OUT=aal-you-ready/play/assets/avatars; EXTRA="--tex 256 --thumbs $OUT/thumbs"; fi
           mkdir -p "$OUT" aal-you-ready/play/assets/previews
           "$HOME/blender/blender" -b --factory-startup --python-exit-code 1 \
             -P tools/avatars/import_avatars.py -- --src build/100avatars --list "$LIST" \
-            --out "$OUT" --sheet "aal-you-ready/play/assets/previews/avatars_${MODE}.jpg" 2>&1 | tee build/avatars.log | grep -E "^\[AV\]|Error|Traceback"
+            --out "$OUT" $EXTRA --sheet "aal-you-ready/play/assets/previews/avatars_${MODE}.jpg" 2>&1 | tee build/avatars.log | grep -E "^\[AV\]|Error|Traceback"
           cp "$OUT/avatars.json" "aal-you-ready/play/assets/previews/avatars_${MODE}.json"
           du -sh "$OUT"
 

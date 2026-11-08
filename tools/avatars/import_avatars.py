@@ -34,6 +34,7 @@ def args():
     ap.add_argument("--sheet", default="")
     ap.add_argument("--tex", type=int, default=512)
     ap.add_argument("--samples", type=int, default=24)
+    ap.add_argument("--thumbs", default="", help="Ordner fuer kleine Vorschaubilder (Lobby)")
     return ap.parse_args(argv)
 
 
@@ -108,8 +109,31 @@ def export(path, root, objs):
         o.select_set(True)
     bpy.context.view_layer.objects.active = root
     bpy.ops.export_scene.gltf(filepath=path, export_format="GLB", use_selection=True, export_yup=True,
-                              export_apply=False, export_skins=True, export_animations=False,
-                              export_cameras=False, export_lights=False, export_image_format="AUTO")
+                              export_apply=False, export_skins=True, export_animations=False, export_morph=False,
+                              export_cameras=False, export_lights=False, export_image_format="JPEG",
+                              export_jpeg_quality=82)
+
+
+def thumb(root, objs, path):
+    """Kleines Portraet (Kopf bis Knie) mit transparentem Hintergrund fuer die Lobby."""
+    sc = bpy.context.scene
+    cam = bpy.data.cameras.new("TC"); cam.type = "ORTHO"; cam.ortho_scale = 0.78
+    co = bpy.data.objects.new("TC", cam); sc.collection.objects.link(co)
+    co.location = (0.0, -3.0, 0.62); co.rotation_euler = (math.radians(90), 0, 0)
+    sc.camera = co
+    li = bpy.data.lights.new("TL", "SUN"); li.energy = 3.5
+    lo = bpy.data.objects.new("TL", li); lo.rotation_euler = (math.radians(60), 0, math.radians(-30))
+    sc.collection.objects.link(lo)
+    if sc.world is None:
+        w = bpy.data.worlds.new("TW"); w.use_nodes = True
+        w.node_tree.nodes["Background"].inputs["Color"].default_value = (0.6, 0.6, 0.65, 1)
+        sc.world = w
+    sc.render.engine = "CYCLES"; sc.cycles.samples = 12
+    sc.render.film_transparent = True
+    sc.render.resolution_x = 192; sc.render.resolution_y = 240
+    sc.render.image_settings.file_format = "PNG"; sc.render.image_settings.color_mode = "RGBA"
+    sc.render.filepath = path
+    bpy.ops.render.render(write_still=True)
 
 
 def bones(objs):
@@ -212,6 +236,9 @@ def main():
         shrink_textures(a.tex)
         out = os.path.join(a.out, "club_av_%s.glb" % nr)
         export(out, root, objs)
+        if a.thumbs:
+            os.makedirs(a.thumbs, exist_ok=True)
+            thumb(root, objs, os.path.join(a.thumbs, "av_%s.png" % nr))
         tris = sum(len(o.data.polygons) for o in objs if o.type == "MESH")
         e = {"id": nr, "name": name, "glb": out, "bytes": os.path.getsize(out), "orig_height": round(h, 3),
              "polys": tris, "bones": bones(objs), "meshes": sum(1 for o in objs if o.type == "MESH")}
