@@ -37,6 +37,7 @@ HORN_W, HORN_H = 0.215, 0.100  # halbe Mundoeffnung
 GRILLE_Y = YF - 0.016          # Gitterflaeche vor der Front
 
 UV_CAB = 1 / 0.10              # Kornstruktur: 256 px auf 10 cm
+UV_WEAR = 1 / 0.60              # Gebrauchsspuren: 512 px auf 60 cm
 UV_GRILLE = 1 / 0.024          # 4 x 4 Loecher pro 24 mm -> 6 mm Teilung
 
 
@@ -44,6 +45,16 @@ def half_width_at(y):
     """Halbe Gehaeusebreite in Abhaengigkeit von y (Trapez)."""
     t = (y - YF) / (YB - YF)
     return (WF + (WR - WF) * t) / 2
+
+
+PORT_X = (-0.105, 0.105)       # Bassreflexrohre hinten
+PORT_Z = Z0 + 0.80
+PORT_R = 0.045
+
+
+def rear_frame(x, z, out=0.0):
+    """Lokaler Rahmen auf der Rueckwand: lokal Z zeigt nach hinten (+Y)."""
+    return frame_matrix((x, YB + out, z), (-1, 0, 0), (0, 0, 1), (0, 1, 0))
 
 
 def front_frame(x, z, out=0.0):
@@ -80,6 +91,10 @@ def build_cutters():
     M2[:3, 3] = apply(M, [(0, 0, -0.07)])[0]
     box(c, M2, (HORN_W, HORN_H, 0.10))
     cutters.append(c)
+    for i, x in enumerate(PORT_X):
+        c = Part(f"CUT_Port{i}", None)
+        cylinder(c, rear_frame(x, PORT_Z), PORT_R + 0.004, -0.14, 0.03, seg=40, caps=True, smooth=False)
+        cutters.append(c)
     return cutters
 
 
@@ -271,8 +286,7 @@ def add_feet_and_pole_cup(parts):
 
 def add_rear_panel(parts):
     """Anschlussfeld: Alu-Platte, zwei Lautsprecherbuchsen (generisch), Schrauben."""
-    def rear(x, z, out=0.0):
-        return frame_matrix((x, YB + out, z), (-1, 0, 0), (0, 0, 1), (0, 1, 0))
+    rear = rear_frame
 
     zc = Z0 + 0.30
     rounded_box(parts["M_Panel"], rear(0, zc, 0.0015), (0.100, 0.062, 0.0025), 0.004, seg=2)
@@ -297,6 +311,29 @@ def add_rear_panel(parts):
             Ms = M.copy()
             Ms[:3, 3] = apply(M, [(0.0225 * math.cos(a), 0.0225 * math.sin(a), 0.0025)])[0]
             screw_head(parts["M_Steel"], Ms, 0.0022)
+    # Bassreflexrohre mit ausgerundetem Kragen
+    for x in PORT_X:
+        M = rear_frame(x, PORT_Z)
+        out_pt = apply(M, [(0, 0, 1.0)])[0]
+        r = PORT_R
+        prof = [(r + 0.024, -0.001), (r + 0.024, 0.003), (r + 0.020, 0.0065), (r + 0.012, 0.0075),
+                (r + 0.005, 0.0055), (r + 0.0015, 0.002), (r, -0.004), (r, -0.040), (r, -0.125)]
+        lathe(parts["M_Horn"], M, prof, seg=40, hint=hint_toward_point(out_pt))
+        lathe(parts["M_Rubber"], M, [(r, -0.125), (0.0, -0.125)], seg=40,
+              hint=hint_toward_point(out_pt))
+        for k in range(4):
+            a = math.radians(45 + 90 * k)
+            Ms = M.copy()
+            Ms[:3, 3] = apply(M, [((r + 0.017) * math.cos(a), (r + 0.017) * math.sin(a), 0.0068)])[0]
+            screw_head(parts["M_Steel"], Ms, 0.0028)
+    # M10-Anschlagpunkte in den Ecken der Rueckwand
+    for x in (-0.155, 0.155):
+        for z in (Z0 + 0.07, Z1 - 0.07):
+            M = rear_frame(x, z)
+            lathe(parts["M_MetalDark"], M,
+                  [(0.0125, -0.0005), (0.0125, 0.0015), (0.0110, 0.0028), (0.0068, 0.0028),
+                   (0.0060, 0.0010), (0.0, 0.0010)], seg=20,
+                  hint=hint_from_point(apply(M, [(0, 0, -0.05)])[0]))
     # leeres Typenschild (keine Marke, nur Flaeche)
     rounded_box(parts["M_MetalDark"], rear(0, Z0 + 0.46, 0.001), (0.070, 0.030, 0.0012), 0.002, seg=1)
 

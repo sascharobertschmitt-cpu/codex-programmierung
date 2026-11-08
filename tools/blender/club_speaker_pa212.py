@@ -73,6 +73,11 @@ def make_textures(tex_dir):
     color, normal = assetlib.texture_grille(256)
     assetlib.write_png(paths["grille_c"], color)
     assetlib.write_png(paths["grille_n"], normal)
+    orm, base = assetlib.texture_wear(512)
+    paths["wear_orm_n"] = os.path.join(tex_dir, "ayr212_wear_orm.png")   # _n: Non-Color
+    paths["wear_base"] = os.path.join(tex_dir, "ayr212_wear_base.png")
+    assetlib.write_png(paths["wear_orm_n"], orm)
+    assetlib.write_png(paths["wear_base"], base)
     imgs = {}
     for key, p in paths.items():
         img = bpy.data.images.load(p, check_existing=False)
@@ -84,8 +89,16 @@ def make_textures(tex_dir):
     return imgs
 
 
+def uv_node(nt, uv_name, loc):
+    n = nt.nodes.new("ShaderNodeUVMap")
+    n.uv_map = uv_name
+    n.location = loc
+    return n
+
+
 def make_material(name, base, metallic, roughness, normal_img=None, normal_strength=1.0,
-                  color_img=None, alpha_from_image=False, double_sided=False):
+                  color_img=None, alpha_from_image=False, double_sided=False,
+                  rough_img=None, wear_uv=None):
     m = bpy.data.materials.new(name)
     m.use_nodes = True
     m.use_backface_culling = not double_sided      # exportiert als glTF doubleSided
@@ -99,12 +112,24 @@ def make_material(name, base, metallic, roughness, normal_img=None, normal_stren
         tex.image = color_img
         tex.location = (-500, 300)
         nt.links.new(tex.outputs["Color"], bsdf.inputs["Base Color"])
+        if wear_uv:
+            nt.links.new(uv_node(nt, wear_uv, (-800, 300)).outputs["UV"], tex.inputs["Vector"])
         if alpha_from_image:
             nt.links.new(tex.outputs["Alpha"], bsdf.inputs["Alpha"])
             if hasattr(m, "surface_render_method"):
                 m.surface_render_method = "DITHERED"
             else:
                 m.blend_method = "CLIP"
+    if rough_img is not None:
+        tex = nt.nodes.new("ShaderNodeTexImage")
+        tex.image = rough_img
+        tex.location = (-700, 50)
+        sep = nt.nodes.new("ShaderNodeSeparateColor")
+        sep.location = (-400, 50)
+        nt.links.new(tex.outputs["Color"], sep.inputs["Color"])
+        nt.links.new(sep.outputs["Green"], bsdf.inputs["Roughness"])
+        if wear_uv:
+            nt.links.new(uv_node(nt, wear_uv, (-900, 50)).outputs["UV"], tex.inputs["Vector"])
     if normal_img is not None:
         tex = nt.nodes.new("ShaderNodeTexImage")
         tex.image = normal_img
@@ -121,7 +146,8 @@ def make_materials(imgs):
     # Basisfarben linear. Bewusst nicht reines Schwarz (0.0), sonst wirkt PBR "tot".
     return {
         "M_Cabinet": make_material("M_Cabinet", (0.020, 0.020, 0.022), 0.0, 0.62,
-                                   imgs["grain_n"], 0.45),
+                                   imgs["grain_n"], 0.45, color_img=imgs["wear_base"],
+                                   rough_img=imgs["wear_orm_n"], wear_uv="UVWear"),
         "M_Grille": make_material("M_Grille", (0.03, 0.03, 0.03), 0.35, 0.42,
                                   imgs["grille_n"], 1.0, color_img=imgs["grille_c"],
                                   alpha_from_image=True, double_sided=True),
@@ -153,11 +179,11 @@ def part_to_object(part, coll, material=None):
     return obj
 
 
-def box_uv_mesh(me, scale):
+def box_uv_mesh(me, scale, layer="UVMap"):
     """Box-Projektion direkt auf ein Mesh (erhaelt eigene Normalen)."""
-    if not me.uv_layers:
-        me.uv_layers.new(name="UVMap")
-    uv = me.uv_layers.active.data
+    if layer not in me.uv_layers:
+        me.uv_layers.new(name=layer)
+    uv = me.uv_layers[layer].data
     for poly in me.polygons:
         n = poly.normal
         ax = max(range(3), key=lambda i: abs(n[i]))
@@ -207,6 +233,7 @@ def build_cabinet(spec, coll, mat):
     me.materials.append(mat)
     me.polygons.foreach_set("material_index", [0] * len(me.polygons))
     box_uv_mesh(me, geo.UV_CAB)
+    box_uv_mesh(me, geo.UV_WEAR, "UVWear")
     me.update()
 
     # Hilfsobjekte entfernen
