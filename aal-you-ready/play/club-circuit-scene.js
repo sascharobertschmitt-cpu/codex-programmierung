@@ -5,7 +5,7 @@
  *
  *   const sc = await ClubCircuitScene.create(canvas, { assetBase: './assets/' });
  *   sc.sync(players, activeIndex)         // players: [{id, position, lap}]
- *   await sc.walk(index, fromAbs, toAbs)  // abs = lap * 64 + position, auch rückwärts
+ *   await sc.walk(index, fromAbs, toAbs)  // abs = lap * FIELDS + position, auch rückwärts
  *   sc.setView('follow'|'overview'|'city'); sc.resize(); sc.dispose()
  */
 (function (root) {
@@ -86,7 +86,7 @@
     });
 
     // ------------------------------------------------------------ Rundkurs
-    const HW = 6.0, HL = 12.0, RC = 4.0;
+    const HW = 8.0, HL = 14.0, RC = 4.0;
     const seg = [];
     const L = (ax, az, bx, bz) => seg.push({ t: 'l', ax, az, bx, bz, len: Math.hypot(bx - ax, bz - az) });
     const C = (cx, cz, a0, a1) => seg.push({ t: 'c', cx, cz, a0, a1, len: Math.abs(a1 - a0) * RC });
@@ -245,8 +245,8 @@
     // VIP-Treppe: goldene Stufen an Feld 20 und 44, Bogen zum Feld +6
     const goldM = new B.StandardMaterial('vipGold', scene); goldM.diffuseColor = B.Color3.FromHexString('#ffcf4a'); goldM.emissiveColor = B.Color3.FromHexString('#c08a10');
     const arcM = new B.StandardMaterial('vipArc', scene); arcM.disableLighting = true; arcM.emissiveColor = B.Color3.FromHexString('#ffcf4a'); arcM.alpha = 0.75;
-    for (const n of [20, 44]) {
-      const t = tiles[n], u = tiles[(n + 6) % 64], nx = -Math.sin(t.ang), nz = Math.cos(t.ang);
+    for (const n of (R.STAIRS || [21, 61])) {
+      const t = tiles[n], u = tiles[(n + 6) % R.FIELDS], nx = -Math.sin(t.ang), nz = Math.cos(t.ang);
       const out = (nx * t.x + nz * t.z) >= 0 ? 1 : -1;
       const base = new B.Vector3(t.x + out * nx * 0.95, 0, t.z + out * nz * 0.95);
       // goldenes Tor über dem Feld
@@ -724,12 +724,12 @@
     };
     // Ruheblick: nach außen (zur Kamera) und etwas in Laufrichtung
     const restYaw = (f) => {
-      const t = tiles[((f % 64) + 64) % 64];
+      const t = tiles[((f % R.FIELDS) + R.FIELDS) % R.FIELDS];
       const ol = Math.hypot(t.x, t.z) || 1;
       const dx = t.x / ol + 0.6 * Math.cos(t.ang), dz = t.z / ol + 0.6 * Math.sin(t.ang);
       return Math.atan2(dx, dz);
     };
-    const field = (abs) => ((abs % 64) + 64) % 64;
+    const field = (abs) => ((abs % R.FIELDS) + R.FIELDS) % R.FIELDS;
     const slotPos = (f, idx) => {
       const t = tiles[field(f)], [a, b] = SLOTS[idx % SLOTS.length];
       const tx = Math.cos(t.ang), tz = Math.sin(t.ang);
@@ -744,7 +744,7 @@
     cam.wheelPrecision = 25; cam.pinchPrecision = 60; cam.panningSensibility = 0;
     const VIEWS = {
       follow: { radius: 8.3, beta: 0.95 },
-      overview: { target: new B.Vector3(0, 2.0, 1.5), radius: 31, beta: 1.16, alpha: -Math.PI / 2 - 0.35 },
+      overview: { target: new B.Vector3(0, 2.0, 1.5), radius: 36, beta: 1.16, alpha: -Math.PI / 2 - 0.35 },
       city: { target: new B.Vector3(0, 20, 20), radius: 70, beta: 1.47, alpha: -Math.PI / 2 - 0.45 },
       floor: { target: new B.Vector3(0, 1.4, 4.2), radius: 10.5, beta: 1.22, alpha: -Math.PI / 2 - 0.42 },
       cards: { target: new B.Vector3(0, 1.5, -6.2), radius: 8.5, beta: 1.2, alpha: -Math.PI / 2 },

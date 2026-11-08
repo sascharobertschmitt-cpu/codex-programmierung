@@ -13,11 +13,11 @@
 }(typeof self !== 'undefined' ? self : this, function () {
   'use strict';
 
-  const FIELDS = 64;
-  const ACTIVITIES = [2, 4, 6, 9, 11, 13, 16, 18, 20, 22, 25, 27, 30, 33, 35, 37, 39, 42, 44, 46, 48, 51, 53, 55, 57, 59, 61, 62];
-  const SLF = [5, 12, 19, 26, 32, 38, 45, 50, 56, 60];
-  const SPECIAL = [7, 17, 28, 40, 49, 58];
-  const EVENTS = [1, 3, 8, 10, 14, 15, 21, 23, 24, 29, 31, 34, 36, 41, 43, 47, 52, 54];
+  const FIELDS = 80;
+  const ACTIVITIES = [1, 3, 5, 7, 8, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 32, 33, 35, 37, 39, 41, 43, 45, 47, 49, 51, 53, 55, 56, 57, 59, 61, 63, 65, 67, 69, 71, 73, 75, 77, 79];
+  const SLF = [4, 20, 24, 36, 48, 52, 68, 72];
+  const SPECIAL = [12, 16, 28, 40, 44, 60, 64, 76];
+  const EVENTS = [2, 6, 10, 14, 18, 22, 26, 30, 34, 38, 42, 46, 50, 54, 58, 62, 66, 70, 74, 78];
 
   const DEFAULTS = {
     laps: 2,
@@ -127,7 +127,8 @@
     return { white, club, total };
   }
 
+  const STAIRS = [21, 61];
   const LABELS = { gate: 'Einlass', activity: 'Aktion', slf: 'Stadt-Land-Fluss', special: 'Spezial', event: 'Ereignis' };
 
-  return { FIELDS, DEFAULTS, LABELS, CLUB_DIE, fieldType, newGame, nextTurn, move, rollDice };
+  return { FIELDS, STAIRS, DEFAULTS, LABELS, CLUB_DIE, fieldType, newGame, nextTurn, move, rollDice };
 }));
