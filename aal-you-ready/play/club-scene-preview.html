@@ -33,7 +33,7 @@
 (async () => {
   const Q = new URLSearchParams(location.search);
   const info = document.querySelector('#info');
-  // ?n=6 Anzahl Figuren, ?lineup=1 alle nebeneinander ab Feld 2
+  // ?n=6 Anzahl Figuren (GLB-Spielfiguren), ?lineup=1 alle nebeneinander ab Feld 2
   const N = Math.max(1, Math.min(8, Number(Q.get('n') || 3)));
   const players = Array.from({ length: N }, (_, i) => ({ id: 'p' + i, position: Q.get('lineup') ? 2 + i : [0, 3, 9, 14, 20, 27, 33, 40][i], lap: 0 }));
   let turn = 0;
