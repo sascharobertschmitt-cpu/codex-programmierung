@@ -251,9 +251,9 @@
 
     // ------------------------------------------- Kartenstapel in der Mitte
     // Links Ereigniskarten (cyan), rechts Aufgabenkarten (gold). drawCard() hebt eine Karte ab.
-    const DECKS = { ereignis: { x: -1.7, col: '#29c6ff', label: 'EREIGNIS', icon: '⚡' },
-                    aufgabe: { x: 1.7, col: '#ffb627', label: 'AUFGABE', icon: '★' } };
-    const CARD_Z = -6.2, CARD_W = 1.05, CARD_D = 1.45;
+    const DECKS = { ereignis: { x: -0.85, col: '#29c6ff', label: 'EREIGNIS', icon: '⚡' },
+                    aufgabe: { x: 0.85, col: '#ffb627', label: 'AUFGABE', icon: '★' } };
+    const CARD_Z = -6.2, CARD_W = 0.9, CARD_D = 1.25;
     const cardFace = (deck, title, body) => {
       const d = DECKS[deck];
       const t = new B.DynamicTexture('cardTex_' + deck + (title ? '_t' : ''), { width: 256, height: 356 }, scene, true);
@@ -278,11 +278,11 @@
     Object.entries(DECKS).forEach(([key, d]) => {
       const root = new B.TransformNode('deck_' + key, scene);
       root.position.set(d.x, 0, CARD_Z);
-      const ped = B.MeshBuilder.CreateBox('deckPed_' + key, { width: 1.5, height: 0.7, depth: 1.9 }, scene);
+      const ped = B.MeshBuilder.CreateBox('deckPed_' + key, { width: 1.25, height: 0.7, depth: 1.65 }, scene);
       ped.parent = root; ped.position.y = 0.35; ped.material = pbr('deckPedM_' + key, '#1b1b24', 0.6, 0.35);
       ped.receiveShadows = true;
-      const edge = B.MeshBuilder.CreateBox('deckEdge_' + key, { width: 1.52, height: 0.03, depth: 1.92 }, scene);
-      edge.parent = root; edge.position.y = 0.69; edge.material = pbr('deckEdgeM_' + key, '#000000', 0, 1, d.col);
+      const edge = B.MeshBuilder.CreateBox('deckEdge_' + key, { width: 1.27, height: 0.03, depth: 1.67 }, scene);
+      edge.parent = root; edge.position.y = 0.69; edge.material = pbr('deckEdgeM_' + key, '#000000', 0, 1, d.col); edge.material.emissiveColor = edge.material.emissiveColor.scale(0.6);
       const sideMat = pbr('cardSide_' + key, '#e8e4f2', 0, 0.6);
       for (let k = 0; k < 9; k++) {
         const c = B.MeshBuilder.CreateBox('deckCard_' + key + k, { width: CARD_W, height: 0.018, depth: CARD_D }, scene);
@@ -303,7 +303,7 @@
       const front = B.MeshBuilder.CreatePlane('flyFront_' + key, { width: CARD_W, height: CARD_D }, scene);
       front.parent = fly; front.position.z = -0.004; front.material = frontMat; glow.addExcludedMesh(front);
       const lamp = new B.PointLight('deckLamp_' + key, new B.Vector3(d.x, 2.2, CARD_Z), scene);
-      lamp.diffuse = B.Color3.FromHexString(d.col); lamp.intensity = 6; lamp.range = 4.5;
+      lamp.diffuse = B.Color3.FromHexString(d.col); lamp.intensity = 1.6; lamp.range = 3.5;
       decks[key] = { root, fly, front, frontMat, t: -1 };
     });
     let flyTex = null;
@@ -321,7 +321,8 @@
         o.t += dt;
         const u = Math.min(1, o.t / 1.1);                              // hochheben und umdrehen
         const e = 1 - Math.pow(1 - u, 3);
-        o.fly.position.y = 0.92 + e * 1.9 + Math.sin(o.t * 2) * 0.05 * e;
+        o.fly.position.y = 0.92 + e * 1.75 + Math.sin(o.t * 2) * 0.05 * e;
+        o.fly.position.x = -o.root.position.x * e;                       // zur Mitte zwischen den Stapeln
         o.fly.rotation.x = Math.PI / 2 * (1 - e);                       // flach -> aufrecht
         // aufrecht zur Kamera drehen
         const cp = cam.position, wp = o.fly.getAbsolutePosition();
@@ -560,7 +561,7 @@
       overview: { target: new B.Vector3(0, 2.0, 1.5), radius: 31, beta: 1.16, alpha: -Math.PI / 2 - 0.35 },
       city: { target: new B.Vector3(0, 20, 20), radius: 70, beta: 1.47, alpha: -Math.PI / 2 - 0.45 },
       floor: { target: new B.Vector3(0, 1.4, 4.2), radius: 10.5, beta: 1.22, alpha: -Math.PI / 2 - 0.42 },
-      cards: { target: new B.Vector3(0, 1.5, -6.2), radius: 7.5, beta: 1.2, alpha: -Math.PI / 2 },
+      cards: { target: new B.Vector3(0, 1.5, -6.2), radius: 8.5, beta: 1.2, alpha: -Math.PI / 2 },
     };
     let follow = 0, viewMode = 'follow', autoCam = true, camGoal = VIEWS.follow;
     canvas.addEventListener('pointerdown', () => { autoCam = false; });
