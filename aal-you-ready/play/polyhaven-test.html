@@ -1,0 +1,34 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Poly Haven 3D Asset Test</title><style>*{box-sizing:border-box}body{margin:0;background:#080b16;color:#fff;font:14px system-ui}canvas{width:100vw;height:76dvh;display:block;touch-action:none}main{padding:14px}h1{font-size:19px;margin:0 0 8px}#log{font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere;color:#a8f2ef;max-height:100px;overflow:auto}button{border:1px solid #4bdbf0;border-radius:20px;background:#172238;color:white;padding:10px 14px;margin-right:7px}a{color:#77eaff}</style></head><body><canvas id="view"></canvas><main><h1>Poly Haven – echter 3D-Modelltest</h1><div id="log">Lade Babylon.js …</div><p><button id="retry">Modell erneut laden</button><button id="turn">Kamera zurücksetzen</button></p><small>Quelle: <a href="https://polyhaven.com/a/sofa_02">Poly Haven Sofa 02</a> · CC0. Getrennt vom eigentlichen Spiel.</small></main><script src="https://cdn.babylonjs.com/babylon.js"></script><script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script><script>
+const log=document.getElementById('log');const write=s=>{log.textContent=s+'\n'+log.textContent;console.log(s)};
+const B=window.BABYLON;if(!B){write('Fehler: Babylon.js nicht geladen');throw Error('Babylon missing')}
+const engine=new B.Engine(document.getElementById('view'),true),scene=new B.Scene(engine);scene.clearColor=new B.Color4(.018,.016,.03,1);
+const camera=new B.ArcRotateCamera('camera',-Math.PI/2,1.12,5.5,new B.Vector3(0,.7,0),scene);camera.attachControl(document.getElementById('view'),true);camera.lowerRadiusLimit=1.5;camera.upperRadiusLimit=18;
+const hemi=new B.HemisphericLight('fill',new B.Vector3(0,1,0),scene);hemi.intensity=1.1;const spot=new B.DirectionalLight('key',new B.Vector3(-.6,-1,.4),scene);spot.intensity=1.4;
+const ground=B.MeshBuilder.CreateGround('ground',{width:9,height:9},scene);const gm=new B.StandardMaterial('groundmat',scene);gm.diffuseColor=new B.Color3(.12,.11,.16);ground.material=gm;
+engine.runRenderLoop(()=>scene.render());window.addEventListener('resize',()=>engine.resize());
+document.getElementById('turn').onclick=()=>{camera.alpha=-Math.PI/2;camera.beta=1.12;camera.radius=5.5;camera.target.set(0,.7,0)};
+let imported=[];
+async function load(){
+document.getElementById('retry').disabled=true;
+try{
+write('Frage Poly Haven nach Sofa 02 / glTF-Dateien …');
+const res=await fetch('https://api.polyhaven.com/files/sofa_02',{headers:{'Accept':'application/json'}});if(!res.ok)throw Error('Poly Haven API HTTP '+res.status);
+const files=await res.json(),gltf=files.gltf||{},variants=Object.keys(gltf);if(!variants.length)throw Error('Kein glTF-Format in API-Antwort');
+const resolution=['1k','2k','4k'].find(k=>gltf[k])||variants[0],entry=gltf[resolution],file=entry.gltf||Object.values(entry).find(v=>v&&typeof v==='object'&&v.url);
+if(!file?.url)throw Error('glTF-Datei nicht gefunden: '+JSON.stringify(Object.keys(entry)));
+write('Datei gefunden: '+resolution+' / '+file.url);
+const u=new URL(file.url),root=u.href.slice(0,u.href.lastIndexOf('/')+1),name=u.pathname.split('/').pop();
+const result=await B.SceneLoader.ImportMeshAsync('',root,name,scene);
+for(const mesh of imported)mesh.dispose();imported=result.meshes;
+const roots=result.meshes.filter(m=>!m.parent);const group=new B.TransformNode('assetRoot',scene);for(const m of roots)m.parent=group;
+group.computeWorldMatrix(true);const bounds=result.meshes.filter(m=>m.getBoundingInfo&&m.getTotalVertices&&m.getTotalVertices()>0);
+if(!bounds.length)throw Error('Modell hat keine sichtbare Geometrie');
+let min=new B.Vector3(Infinity,Infinity,Infinity),max=new B.Vector3(-Infinity,-Infinity,-Infinity);
+for(const m of bounds){m.computeWorldMatrix(true);const bb=m.getBoundingInfo().boundingBox;min=B.Vector3.Minimize(min,bb.minimumWorld);max=B.Vector3.Maximize(max,bb.maximumWorld)}
+const center=min.add(max).scale(.5),height=max.y-min.y,width=max.x-min.x,depth=max.z-min.z,scale=2.6/Math.max(width,depth,height,.001);group.scaling.scaleInPlace(scale);group.position.set(-center.x*scale,-min.y*scale,-center.z*scale);
+write('Erfolgreich geladen: '+bounds.length+' sichtbare Meshes. Quelle Poly Haven, CC0.');window.POLYHAVEN_TEST={ok:true,meshes:bounds.length,resolution,source:file.url};
+}catch(e){write('Import fehlgeschlagen: '+e.message);window.POLYHAVEN_TEST={ok:false,error:e.message};console.error(e)}
+finally{document.getElementById('retry').disabled=false}
+}
+document.getElementById('retry').onclick=load;load();
+</script></body></html>
