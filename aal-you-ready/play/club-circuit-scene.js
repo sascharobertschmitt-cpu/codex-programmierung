@@ -36,7 +36,7 @@
     const hemi = new B.HemisphericLight('hemi', new B.Vector3(0, 1, 0), scene);
     hemi.intensity = 0.38; hemi.diffuse = new B.Color3(0.6, 0.5, 0.9); hemi.groundColor = new B.Color3(0.05, 0.03, 0.08);
     const glow = new B.GlowLayer('glow', scene, { mainTextureRatio: 0.4, blurKernelSize: 32 });
-    glow.intensity = 0.85;
+    glow.intensity = 0.55;
 
     const pbr = (name, hex, metal, rough, emissive) => {
       const m = new B.PBRMaterial(name, scene);
@@ -201,7 +201,7 @@
     const sign = B.MeshBuilder.CreatePlane('sign', { width: 1.9, height: 0.48, sideOrientation: B.Mesh.DOUBLESIDE }, scene);
     sign.parent = gateRoot; sign.position.y = 2.5; sign.rotation.y = Math.PI / 2;
     const sm = new B.StandardMaterial('signMat', scene);
-    sm.disableLighting = true; sm.emissiveTexture = signTex; sign.material = sm;
+    sm.disableLighting = true; sm.emissiveTexture = signTex; sign.material = sm; glow.addExcludedMesh(sign);
 
     // DJ-Booth am Kopfende (Platzhalter, wird später ein eigenes GLB)
     const booth = new B.TransformNode('booth', scene);
@@ -217,7 +217,7 @@
     drawEq(0);
     const eq = B.MeshBuilder.CreatePlane('eq', { width: 2.6, height: 0.62 }, scene);
     eq.parent = booth; eq.position.set(0, 0.85, -0.73); eq.rotation.y = 0;
-    const eqm = new B.StandardMaterial('eqm', scene); eqm.disableLighting = true; eqm.emissiveTexture = eqTex; eq.material = eqm;
+    const eqm = new B.StandardMaterial('eqm', scene); eqm.disableLighting = true; eqm.emissiveTexture = eqTex; eq.material = eqm; glow.addExcludedMesh(eq);
     [-0.7, 0.7].forEach((x, i) => {
       const deck = B.MeshBuilder.CreateBox('deck' + i, { width: 0.5, height: 0.06, depth: 0.4 }, scene);
       deck.parent = booth; deck.position.set(x, 1.38, -0.3); deck.material = pbr('deckm' + i, '#25252c', 0.6, 0.35);
@@ -229,7 +229,7 @@
     const wall = B.MeshBuilder.CreatePlane('ledwall', { width: 8, height: 3.2 }, scene);
     wall.position.set(0, 4.4, HL + 2.3);
     const wallTex = new B.DynamicTexture('wallTex', { width: 512, height: 205 }, scene, true);
-    const wm = new B.StandardMaterial('wallm', scene); wm.disableLighting = true; wm.emissiveTexture = wallTex; wall.material = wm;
+    const wm = new B.StandardMaterial('wallm', scene); wm.disableLighting = true; wm.emissiveTexture = wallTex; wall.material = wm; glow.addExcludedMesh(wall);
     const drawWall = (t) => { const g = wallTex.getContext(); g.fillStyle = '#05030a'; g.fillRect(0, 0, 512, 205);
       g.strokeStyle = '#bb38ff'; g.lineWidth = 7; const s = 1 + 0.06 * Math.sin(t * 4);
       g.beginPath(); g.moveTo(256 - 70 * s, 50); g.lineTo(256 + 70 * s, 50); g.lineTo(256, 50 + 115 * s); g.closePath(); g.stroke();
@@ -362,13 +362,24 @@
     cam.lowerBetaLimit = 0.25; cam.upperBetaLimit = 1.45;
     cam.wheelPrecision = 25; cam.pinchPrecision = 60; cam.panningSensibility = 0;
     const VIEWS = {
-      follow: { radius: 8.5, beta: 1.0 },
+      follow: { radius: 9.5, beta: 0.95 },
       overview: { target: new B.Vector3(0, 2.0, 1.5), radius: 31, beta: 1.16, alpha: -Math.PI / 2 - 0.35 },
       city: { target: new B.Vector3(0, 20, 20), radius: 70, beta: 1.47, alpha: -Math.PI / 2 - 0.45 },
     };
     let follow = 0, viewMode = 'follow', autoCam = true, camGoal = VIEWS.follow;
     canvas.addEventListener('pointerdown', () => { autoCam = false; });
 
+    // Kamera schräg hinter der Figur: außen, um ~35° gegen die Laufrichtung versetzt
+    const followAlpha = (p) => {
+      let best = 0, bd = 1e9;
+      tiles.forEach((t, n) => { const d = (t.x - p.x) ** 2 + (t.z - p.z) ** 2; if (d < bd) { bd = d; best = n; } });
+      const t = tiles[best];
+      const out = Math.atan2(p.z * 0.55, p.x);
+      // Laufrichtung (Tangente) als Winkel; Kamera rückt zur Gegenrichtung
+      const back = Math.atan2(-Math.sin(t.ang), -Math.cos(t.ang));
+      let d = back - out; d = Math.atan2(Math.sin(d), Math.cos(d));
+      return out + Math.max(-0.65, Math.min(0.65, d)) ;
+    };
     const t0 = performance.now();
     scene.onBeforeRenderObservable.add(() => {
       const t = (performance.now() - t0) / 1000;
@@ -382,7 +393,7 @@
       if (autoCam) {
         if (goal.beta !== undefined) cam.beta += (goal.beta - cam.beta) * k * 0.6;
         const p = tok ? tok.root.position : B.Vector3.Zero();
-        const goalA = overview ? (goal.alpha ?? cam.alpha) : Math.atan2(p.z * 0.55, p.x);
+        const goalA = overview ? (goal.alpha ?? cam.alpha) : followAlpha(p);
         let d = goalA - cam.alpha; d = Math.atan2(Math.sin(d), Math.cos(d));
         cam.alpha += d * k * 0.8;
       }

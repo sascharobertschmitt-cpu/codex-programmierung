@@ -3,6 +3,8 @@ on:
   push:
     paths:
       - 'tools/layout_probe.mjs'
+      - 'aal-you-ready/play/index.html'
+      - 'aal-you-ready/play/club-circuit-scene.js'
       - '.github/workflows/layout-probe.yml'
   workflow_dispatch:
 permissions:
