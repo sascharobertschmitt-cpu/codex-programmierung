@@ -1,0 +1,6 @@
+/play/*.html
+  Cache-Control: no-cache
+/play/*.js
+  Cache-Control: no-cache
+/play/assets/*
+  Cache-Control: public, max-age=86400
