@@ -255,6 +255,7 @@ body.playing #game #winner:not(.hide){position:fixed!important;top:auto!importan
 #confetti{position:fixed;inset:0;z-index:60;pointer-events:none}
 @keyframes winpop{from{transform:scale(1) rotate(-4deg)}to{transform:scale(1.12) rotate(4deg)}}
 /* 8.6 avatar editor, walk info, winner scores */
+#entry .av-btns,#lobby .av-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 #avatarEditor{position:fixed;inset:0;z-index:400;background:#0a0b0d;display:flex;flex-direction:column}
 #avatarEditor.hide{display:none!important}
 .av-top{position:relative;flex:0 0 40%;min-height:200px;border-bottom:3px solid var(--hz)}
@@ -275,10 +276,10 @@ body.playing #game #winner:not(.hide){position:fixed!important;top:auto!importan
 #winner .win-rank .wr-name{display:block;text-align:left}
 #winner .win-rank small{display:block;font-size:11px!important;color:#8d9096;font-weight:500;text-transform:none;letter-spacing:0}
 #winner .win-rank b{font-size:20px!important;color:var(--hz)}
-</style><script defer src="https://cdn.jsdelivr.net/npm/babylonjs@7.54.3/babylon.js"></script></head><body><main><div class="brandline"><span class="brandmark">⚙</span><span>THE DOMINIK EXPERIENCE <em>RACE EDITION</em></span></div><h1>AAL YOU READY?</h1><p class="muted small">BABYLON 3D · ALPHA 7.7 · 2–8 Spieler · 64 Felder · jedes Feld hat eine Funktion</p>
+</style><script defer src="https://cdn.jsdelivr.net/npm/babylonjs@7.54.3/babylon.js"></script><script defer src="https://cdn.jsdelivr.net/npm/babylonjs-loaders@7.54.3/babylonjs.loaders.min.js"></script></head><body><main><div class="brandline"><span class="brandmark">⚙</span><span>THE DOMINIK EXPERIENCE <em>RACE EDITION</em></span></div><h1>AAL YOU READY?</h1><p class="muted small">BABYLON 3D · ALPHA 7.7 · 2–8 Spieler · 64 Felder · jedes Feld hat eine Funktion</p>
 <div id="notice" class="error hide" role="alert"></div><button id="updateInLobby" type="button" onclick="updateInsideLobby()" class="hide">↻ Spiel aktualisieren</button>
-<section id="entry" class="panel"><div class="eyebrow">BUILD 8.6 · INDUSTRIAL BUNKER</div><p class="muted small">Bitte auf allen Geräten denselben Link öffnen. Namen eingeben, dann beitreten. Querformat empfohlen; die Spieloberfläche funktioniert auch hochkant.</p><h2>Zusammen spielen</h2><input id="name" type="text" maxlength="25" placeholder="Dein Spielername" autocomplete="nickname"><button class="secondary" type="button" onclick="openAvatarEditor()">🧍 Figur anpassen</button><button id="create" onclick="createRoom()">Neue Lobby erstellen</button><p class="muted small" style="text-align:center">ODER MIT CODE BEITRETEN</p><input id="joincode" maxlength="6" placeholder="Lobbycode" autocapitalize="characters"><button class="secondary" id="join" onclick="joinRoom()">Lobby beitreten</button></section>
-<section id="lobby" class="panel hide"><button class="secondary" onclick="leave()">← Hauptmenü</button><div class="eyebrow">DEINE LOBBY</div><div id="code" class="code"></div><div id="qr" class="qr"></div><p class="muted small" style="text-align:center">QR-Code scannen oder Code eingeben</p><button class="secondary" onclick="shareRoom()">Einladung teilen</button><button class="secondary" type="button" onclick="openAvatarEditor()">🧍 Meine Figur anpassen</button><h2>Spieler</h2><div id="members" class="members"></div><button id="start" onclick="doAction('start')">Spiel starten</button><p id="waiting" class="muted small"></p></section>
+<section id="entry" class="panel"><div class="eyebrow">BUILD 8.6 · INDUSTRIAL BUNKER</div><p class="muted small">Bitte auf allen Geräten denselben Link öffnen. Namen eingeben, dann beitreten. Querformat empfohlen; die Spieloberfläche funktioniert auch hochkant.</p><h2>Zusammen spielen</h2><input id="name" type="text" maxlength="25" placeholder="Dein Spielername" autocomplete="nickname"><div class="av-btns"><button class="secondary" type="button" onclick="openAvatarEditor()">🧍 Figur anpassen</button><button class="secondary" type="button" onclick="openAvatarEditor(true)">🎲 Zufällige Figur</button></div><button id="create" onclick="createRoom()">Neue Lobby erstellen</button><p class="muted small" style="text-align:center">ODER MIT CODE BEITRETEN</p><input id="joincode" maxlength="6" placeholder="Lobbycode" autocapitalize="characters"><button class="secondary" id="join" onclick="joinRoom()">Lobby beitreten</button></section>
+<section id="lobby" class="panel hide"><button class="secondary" onclick="leave()">← Hauptmenü</button><div class="eyebrow">DEINE LOBBY</div><div id="code" class="code"></div><div id="qr" class="qr"></div><p class="muted small" style="text-align:center">QR-Code scannen oder Code eingeben</p><button class="secondary" onclick="shareRoom()">Einladung teilen</button><div class="av-btns"><button class="secondary" type="button" onclick="openAvatarEditor()">🧍 Figur anpassen</button><button class="secondary" type="button" onclick="openAvatarEditor(true)">🎲 Zufällige Figur</button></div><h2>Spieler</h2><div id="members" class="members"></div><button id="start" onclick="doAction('start')">Spiel starten</button><p id="waiting" class="muted small"></p></section>
 <section id="game" class="hide"><div class="landscape-shell"><div class="panel game-controls"><div class="hud-brand">AAL YOU READY?<small>THE DOMINIK EXPERIENCE · B8.6</small></div><button class="secondary exit-game" onclick="leave()">← Hauptmenü</button><div class="eyebrow" id="turnlabel">AM ZUG</div><div class="status" id="status"></div><div id="players" class="members"></div><div id="message" class="muted small"></div><div id="diceResult" class="dice-result hide" aria-live="polite"></div><div id="walkinfo" class="hide" aria-live="polite"></div><button id="roll" onclick="doAction('roll')">🎲 Würfeln</button><button id="reopenPopup" class="hide" type="button" onclick="reopenPopup()">Pop-up öffnen</button><div id="slfpanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">🔤 STADT · LAND · FLUSS · ALLE SPIELEN</div><h2 id="slfletter"></h2><p id="slfcount" class="muted"></p><p id="slfsave" class="muted small" aria-live="polite">Noch keine Eingaben</p><div id="slffields"></div><button id="slfsend" onclick="submitSLF(false)">Antworten abgeben · Runde beenden</button></div><div id="slfreviewpanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">⚖️ STADT–LAND–FLUSS · GEGENSEITIGE PRÜFUNG</div><h2>Alle Antworten gemeinsam prüfen</h2><p class="muted small">Entscheide für jeden Begriff einzeln. Die Punkte werden erst nach allen Prüfungen vergeben.</p><div id="slfreviewlist"></div><p id="slfreviewstatus" class="muted small"></p></div><div id="slfresultspanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">🔤 STADT–LAND–FLUSS · ERGEBNISSE</div><h2>Alle Antworten</h2><p class="muted small">Nur überprüfte Begriffe erhalten Punkte. Unbekannte gültige Begriffe können derzeit noch fehlen.</p><div id="slfresults"></div><button id="slfnext" onclick="doAction('slf_next')">Zurück zum 3D-Spielbrett · Partie fortsetzen</button></div><div id="activitypanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">🎭 ACTIVITY · GEHEIME AUFGABE</div><div id="activitytext" class="eventcard"></div><div id="activityclock" class="activityclock">60</div><button id="activitystart" onclick="doAction('timer')">▶ 60 Sekunden starten</button><button id="activitycancel" class="secondary" onclick="doAction('cancel')">Aufgabe abbrechen · 0 Punkte</button><div id="activityjudge" class="hide"><div class="eyebrow">⚖️ DU BEWERTEST DIE AUFGABE</div><button onclick="doAction('success')">✓ Geschafft · +1 Punkt</button><button class="secondary" onclick="doAction('fail')">✕ Nicht geschafft · 0 Punkte</button></div><p id="activitywait" class="muted small"></p></div><div id="eventpanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">⚡ EREIGNIS · FÜR ALLE SICHTBAR</div><div id="eventtext" class="eventcard"></div><button id="eventnext" class="gold" onclick="doAction('event_next')">✓ Ereignis bestätigen · Weiter</button></div><div id="winner" class="winner hide"></div></div>
 <div class="panel board-panel"><div class="row"><div><div class="eyebrow">NEON CIRCUIT / 64</div><h2>DER CLUB-PARCOURS</h2></div><div class="orb">✦</div></div><p class="muted small">Ein durchgehender 3D-Clubparcours mit 64 Feldern.</p><div class="board-stage"><canvas id="clubCanvas" aria-label="Babylon.js 3D-Club mit 64 Spielfeldern und Charakteren" width="1000" height="1000"></canvas><div class="camera-hud" id="cameraHud">3D · TECHNO CLUB · 64 FELDER</div></div><div class="row"></div><div class="legend">🎭 28 Activity · ⚡ 18 Ereignisse · 🔤 10 Stadt–Land–Fluss · 🎲 6 Spezialfelder · 🏆 Ziel: 63</div></div></div></section>
 </main><section id="avatarEditor" class="hide"><div class="av-top"><canvas id="avCanvas"></canvas><div class="av-title">DEINE FIGUR <small id="avNote"></small></div></div><div id="avRows" class="av-rows"></div><div class="av-actions"><button class="secondary" onclick="avRandomize()">🎲 Zufall</button><button class="secondary" onclick="closeAvatarEditor()">Abbrechen</button><button onclick="saveAvatar()">Speichern</button></div></section><script>
@@ -514,15 +515,64 @@ function buildAvatar(scene,c,accent,scale){
  root.scaling.setAll(scale||1);
  return {root,limbs:[legs[0],legs[1],arms[0],arms[1]]};
 }
+// ===== GLB character (Blender, rigged) with procedural fallback =====
+const GLB_URL='assets/aal_character.glb';
+const glb={bytes:null,loading:new Map(),ready:new Map(),failed:false,seq:0};
+function glbContainerFor(scene){
+ if(glb.failed||!scene)return null;
+ if(glb.ready.has(scene))return glb.ready.get(scene);
+ if(!glb.loading.has(scene)){
+  if(!window.BABYLON||!BABYLON.SceneLoader||!BABYLON.SceneLoader.IsPluginForExtensionAvailable||!BABYLON.SceneLoader.IsPluginForExtensionAvailable('.glb'))return null;
+  glb.loading.set(scene,true);
+  (async()=>{try{
+   if(!glb.bytes){const r=await fetch(GLB_URL+'?v='+BUILD_VERSION);if(!r.ok)throw Error('GLB '+r.status);glb.bytes=await r.arrayBuffer()}
+   const url=URL.createObjectURL(new Blob([glb.bytes],{type:'model/gltf-binary'}));
+   let c;try{c=await BABYLON.SceneLoader.LoadAssetContainerAsync(url,'',scene,null,'.glb')}finally{setTimeout(()=>URL.revokeObjectURL(url),5000)}
+   glb.ready.set(scene,c);
+  }catch(e){console.warn('GLB character failed, using fallback figure',e);glb.failed=true}})();
+ }
+ return null;
+}
+function disposeAvatar(a){if(!a)return;try{if(a.dispose)a.dispose();else a.root.dispose(false,true)}catch(e){console.warn(e)}}
+function buildAvatarGLB(scene,container,c,accent,scale){
+ const B=BABYLON,id=++glb.seq,ent=container.instantiateModelsToScene(n=>n+'#'+id,true,{doNotInstantiate:true});
+ const root=new B.TransformNode('avatarG'+id,scene);
+ ent.rootNodes.forEach(n=>n.parent=root);
+ const show=new Set(['Base_Skin','Base_Primary','Base_Secondary','Base_Shoe','Base_Face']);
+ if(c.hair>0)show.add('Hair_'+c.hair);
+ show.add('Outfit_'+c.outfit);
+ if(c.hat>0)show.add('Hat_'+c.hat);
+ if(c.glasses>0)show.add('Glasses_'+c.glasses);
+ if(c.acc>0)show.add('Acc_'+c.acc);
+ const lin=h=>B.Color3.FromHexString(h).toLinearSpace();
+ const tint={M_Skin:lin(AV.skin[c.skin]),M_Hair:lin(AV.hairC[c.hairColor]),M_Primary:lin(AV.cloth[c.outfitColor]),M_Secondary:lin(AV.pants[c.pants]),M_Accent:lin(accent)};
+ const mats=new Set();
+ root.getChildMeshes(false).forEach(m=>{
+  const nm=m.name.split('#')[0].replace(/_primitive\d+$/,'');
+  m.alwaysSelectAsActiveMesh=true;
+  if(/^(Base_|Hair_|Outfit_|Hat_|Glasses_|Acc_)/.test(nm))m.setEnabled(show.has(nm));
+  const mm=m.material;if(mm){(mm.subMaterials||[mm]).forEach(x=>x&&mats.add(x))}
+ });
+ mats.forEach(m=>{const k=(m.name||'').split('#')[0].replace(/\.\d+$/,'');if(tint[k]&&m.albedoColor)m.albedoColor=tint[k];if(m.environmentIntensity!==undefined)m.environmentIntensity=.9});
+ const anims={};ent.animationGroups.forEach(g=>{const k=g.name.split('#')[0];anims[k]=g;g.stop()});
+ // ring marker under the feet (player colour)
+ const ring=B.MeshBuilder.CreateTorus('ringG'+id,{diameter:.62,thickness:.05,tessellation:28},scene);
+ const rm=new B.StandardMaterial('ringM'+id,scene);rm.emissiveColor=B.Color3.FromHexString(accent);rm.disableLighting=true;ring.material=rm;ring.parent=root;ring.position.y=.03;
+ root.scaling.setAll(scale||1);
+ const av={root,anims,glb:true,cur:'',dispose(){try{ent.animationGroups.forEach(g=>g.dispose());ent.skeletons.forEach(s=>s.dispose());rm.dispose();root.dispose(false,true)}catch(e){console.warn(e)}}};
+ avSet(av,'Idle');
+ return av;
+}
+function avSet(av,name,speed){if(!av||!av.anims||!av.anims[name])return false;if(av.cur!==name){for(const k in av.anims)av.anims[k].stop();av.cur=name;const g=av.anims[name];g.start(true,speed||1,g.from,g.to,false)}else if(speed&&av.anims[name].speedRatio!==speed)av.anims[name].speedRatio=speed;return true}
 // ===== Avatar editor (live 3D preview) =====
 let avDraft=null,avPrev=null,avSyncTried=false;
 function avRowsHTML(){return AV_KEYS.map(([k,label,kind,src])=>'<div class="av-row"><span class="av-label">'+label+'</span><button class="secondary" onclick="avChange(\''+k+'\',-1)" aria-label="zurück">◀</button><b id="avv-'+k+'"></b><button class="secondary" onclick="avChange(\''+k+'\',1)" aria-label="weiter">▶</button></div>').join('')}
 function avUpdateLabels(){AV_KEYS.forEach(([k,label,kind,src])=>{const el=$('avv-'+k);if(!el)return;const v=avDraft[k];el.innerHTML=kind==='c'?'<i class="av-sw" style="background:'+AV[src][v]+'"></i>'+(v+1)+'/'+AV_LEN[k]:AV[src][v]})}
-function avRebuild(){if(!avPrev)return;if(avPrev.av)avPrev.av.root.dispose(false,true);avPrev.av=buildAvatar(avPrev.scene,avDraft,'#e4a324',1);avPrev.av.root.rotation.y=avPrev.spin}
+function avRebuild(){if(!avPrev)return;disposeAvatar(avPrev.av);const gc=glbContainerFor(avPrev.scene);avPrev.glb=!!gc;avPrev.av=gc?buildAvatarGLB(avPrev.scene,gc,avDraft,'#e4a324',1.0):buildAvatar(avPrev.scene,avDraft,'#e4a324',1);avPrev.av.root.rotation.y=avPrev.spin;if(avPrev.cam)avPrev.cam.target.y=gc?.52:.68}
 function avChange(k,d){avDraft[k]=(avDraft[k]+d+AV_LEN[k])%AV_LEN[k];avUpdateLabels();avRebuild()}
 function avRandomize(){avDraft=avRandom(Math.random()+''+Date.now());avUpdateLabels();avRebuild()}
-function openAvatarEditor(){
- avDraft=avLocal()||avRandom((session&&session.player_id)||$('name').value||'x');
+function openAvatarEditor(rand){
+ avDraft=rand?avRandom(Math.random()+''+Date.now()):(avLocal()||avRandom((session&&session.player_id)||$('name').value||'x'));
  $('avRows').innerHTML=avRowsHTML();$('avatarEditor').classList.remove('hide');avUpdateLabels();
  if(!window.BABYLON){$('avNote').textContent='3D-Vorschau lädt …';setTimeout(()=>{if(!$('avatarEditor').classList.contains('hide')&&!avPrev)initAvPreview()},1200);return}
  initAvPreview();
@@ -536,8 +586,8 @@ function initAvPreview(){
  const d=new B.DirectionalLight('d',new B.Vector3(-.4,-.8,.6),scene);d.intensity=.8;
  const floor=B.MeshBuilder.CreateCylinder('fl',{height:.05,diameter:1.5,tessellation:40},scene);floor.position.y=-.03;const fm=new B.StandardMaterial('fm',scene);fm.diffuseColor=new B.Color3(.12,.13,.16);floor.material=fm;
  const ring=B.MeshBuilder.CreateTorus('rg',{diameter:1.5,thickness:.03,tessellation:48},scene);ring.position.y=.0;const rm=new B.StandardMaterial('rm',scene);rm.emissiveColor=B.Color3.FromHexString('#e4a324');rm.disableLighting=true;ring.material=rm;
- avPrev={engine,scene,spin:Math.PI,av:null};avRebuild();
- engine.runRenderLoop(()=>{if(avPrev.av){avPrev.spin+=.008;avPrev.av.root.rotation.y=avPrev.spin}scene.render()});
+ avPrev={engine,scene,cam,spin:Math.PI,av:null,glb:false};avRebuild();
+ engine.runRenderLoop(()=>{if(avPrev.glb===false&&glb.ready.has(scene))avRebuild();if(avPrev.av){avPrev.spin+=.008;avPrev.av.root.rotation.y=avPrev.spin}scene.render()});
  $('avNote').textContent='Ziehen zum Drehen';
  }catch(e){console.warn('avatar preview',e);$('avNote').textContent='3D-Vorschau nicht möglich – Auswahl funktioniert trotzdem.';avPrev=null}
 }
@@ -651,10 +701,10 @@ window.addEventListener('orientationchange',()=>setTimeout(()=>club.engine.resiz
 }
 function avKey(p,i){return (p.avatar||('d:'+(p.id||p.name)+(snapshot&&p.id===snapshot.your_id&&avLocal()?':'+avEncode(avLocal()):'')))+'|'+COLORS[i%8]}
 function avatarCfg(p,i){return avDecode(p.avatar)||(snapshot&&p.id===snapshot.your_id&&avLocal())||avRandom(p.id||p.name||i)}
-function makeAvatar(i,p){const cfg=avatarCfg(p,i),a=buildAvatar(club.scene,cfg,COLORS[i%8],1.15);a.key=avKey(p,i);a.root.rotation.y=Math.PI;return a}
+function makeAvatar(i,p){const cfg=avatarCfg(p,i),gc=glbContainerFor(club.scene),a=gc?buildAvatarGLB(club.scene,gc,cfg,COLORS[i%8],1.9):buildAvatar(club.scene,cfg,COLORS[i%8],1.15);a.key=avKey(p,i)+(gc?'|G':'');a.root.rotation.y=Math.PI;return a}
 function syncAvatars(){if(!club.ready||!snapshot?.players)return;const pl=snapshot.players;
-while(club.avatars.length>pl.length){club.avatars.pop().root.dispose(false,true)}
-pl.forEach((p,i)=>{let a=club.avatars[i];const probe=avKey(p,i);if(!a||a.key!==probe){if(a)a.root.dispose(false,true);a=club.avatars[i]=makeAvatar(i,p)}a.root.setEnabled(true);if(!club.hold.has(p.id)){const pos=tileXY(p.position);a.root.position.set(pos.x+(i%3-1)*.13,.1,pos.z+(Math.floor(i/3)-1)*.13)}})}
+while(club.avatars.length>pl.length){disposeAvatar(club.avatars.pop())}
+pl.forEach((p,i)=>{let a=club.avatars[i];const probe=avKey(p,i)+(glbContainerFor(club.scene)?'|G':'');if(!a||a.key!==probe){if(a)disposeAvatar(a);a=club.avatars[i]=makeAvatar(i,p)}a.root.setEnabled(true);if(!club.hold.has(p.id)){const pos=tileXY(p.position);a.root.position.set(pos.x+(i%3-1)*.2,.1,pos.z+(Math.floor(i/3)-1)*.2)}})}
 function walkBusy(){return !!club.walking||club.queue.length>0||club.donePending}
 function planWalk(prev,s){
  if(!club.ready||!prev||prev.code!==s.code||prev.status==='lobby'||s.status==='lobby'||!Array.isArray(prev.players))return;
@@ -679,23 +729,23 @@ if(move){
  const stepMs=move.kind==='effect'?330:430,total=move.steps*stepMs,el=Math.min(1,(now-move.started)/total),f=el*move.steps,k=Math.min(move.steps-1,Math.floor(f)),frac=f-k,dir=Math.sign(move.to-move.from);
  const a=tileXY(move.from+dir*k),b=tileXY(move.from+dir*(k+1));
  const x=a.x+(b.x-a.x)*frac,z=a.z+(b.z-a.z)*frac,idx=snapshot.players.findIndex(v=>v.id===move.id),av=club.avatars[idx];
- if(av){const hop=Math.sin(Math.min(1,frac)*Math.PI)*.3;av.root.position.set(x,.1+hop,z);turnTo(av.root,Math.atan2(b.x-a.x,b.z-a.z),.35);const sw=Math.sin(now/105)*.75;av.limbs[0].rotation.x=sw;av.limbs[1].rotation.x=-sw;av.limbs[2].rotation.x=-sw*.8;av.limbs[3].rotation.x=sw*.8}
+ if(av){const hop=Math.sin(Math.min(1,frac)*Math.PI)*.3;av.root.position.set(x,.1+hop,z);turnTo(av.root,Math.atan2(b.x-a.x,b.z-a.z),.35);if(av.anims)avSet(av,'Walk',move.kind==='effect'?1.3:1);else{const sw=Math.sin(now/105)*.75;av.limbs[0].rotation.x=sw;av.limbs[1].rotation.x=-sw;av.limbs[2].rotation.x=-sw*.8;av.limbs[3].rotation.x=sw*.8}}
  focus=new BABYLON.Vector3(x,0,z);club.lastFocus=focus;
- if(el>=1){club.walking=null;if(av)av.limbs.forEach(l=>l.rotation.x=0);if(club.queue.length)club.nextLegAt=now+700;else{club.donePending=true;club.doneAt=now+800}}
+ if(el>=1){club.walking=null;if(av&&av.limbs)av.limbs.forEach(l=>l.rotation.x=0);if(club.queue.length)club.nextLegAt=now+700;else{club.donePending=true;club.doneAt=now+800}}
 }else if(club.donePending||club.queue.length){focus=club.lastFocus||null;if(club.donePending&&now>=club.doneAt)afterWalk()}
 // idle avatars: breathe + face the camera
-snapshot.players.forEach((p,i)=>{const av=club.avatars[i];if(!av)return;if(move&&move.id===p.id)return;if(fin&&p.position>=63)return;if(club.hold.has(p.id)&&!club.walking)return;av.limbs[2].rotation.z=-.06+Math.sin(now/700+i)*.03;av.limbs[3].rotation.z=.06-Math.sin(now/700+i)*.03;av.limbs[2].rotation.x=av.limbs[3].rotation.x=0;turnTo(av.root,Math.PI,.08)});
+snapshot.players.forEach((p,i)=>{const av=club.avatars[i];if(!av)return;if(move&&move.id===p.id)return;if(fin&&p.position>=63)return;if(club.hold.has(p.id)&&!club.walking)return;if(av.anims){avSet(av,'Idle');turnTo(av.root,Math.PI,.08);return}av.limbs[2].rotation.z=-.06+Math.sin(now/700+i)*.03;av.limbs[3].rotation.z=.06-Math.sin(now/700+i)*.03;av.limbs[2].rotation.x=av.limbs[3].rotation.x=0;turnTo(av.root,Math.PI,.08)});
 $('cameraHud').textContent='3D · TECHNO CLUB · 64 FELDER';
 if(fin&&!walkBusy()){
  let wi=0;snapshot.players.forEach((p,i)=>{if(p.position>snapshot.players[wi].position)wi=i});
  const wp=tileXY(snapshot.players[wi].position),av=club.avatars[wi];
- if(av){av.root.position.set(wp.x,.1+Math.abs(Math.sin(now/230))*.4,wp.z);av.root.rotation.y=Math.PI+Math.sin(now/500)*.6;av.limbs[2].rotation.z=-(2.5+Math.sin(now/110)*.4);av.limbs[3].rotation.z=2.5+Math.sin(now/110)*.4}
+ if(av){av.root.position.set(wp.x,.1+(av.anims?0:Math.abs(Math.sin(now/230))*.4),wp.z);av.root.rotation.y=Math.PI+Math.sin(now/500)*.6;if(av.anims){avSet(av,'Cheer');av.root.position.y=.1}else{av.limbs[2].rotation.z=-(2.5+Math.sin(now/110)*.4);av.limbs[3].rotation.z=2.5+Math.sin(now/110)*.4}}
  const a=Math.sin(now/2600)*.9,want=new BABYLON.Vector3(wp.x+Math.sin(a)*4.2,2.9,wp.z-Math.cos(a)*4.4);
  club.camera.position=BABYLON.Vector3.Lerp(club.camera.position,want,.05);club.camera.setTarget(new BABYLON.Vector3(wp.x,.7,wp.z));return;
 }
 const aspect=club.engine.getRenderWidth()/Math.max(1,club.engine.getRenderHeight());
 const overview=new BABYLON.Vector3(0,aspect<.8?17:14,aspect<.8?-11:-10);
-const desired=focus?new BABYLON.Vector3(focus.x+1.8,5.2,focus.z-5):overview;
+const desired=focus?new BABYLON.Vector3(focus.x+1.3,4.2,focus.z-4):overview;
 club.camera.position=BABYLON.Vector3.Lerp(club.camera.position,desired,focus?.1:.04);
 club.camera.setTarget(focus?new BABYLON.Vector3(focus.x,.3,focus.z):new BABYLON.Vector3(0,.2,0));
 }
