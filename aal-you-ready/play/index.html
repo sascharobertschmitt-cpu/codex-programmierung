@@ -301,13 +301,16 @@ body.playing #game .game-controls>#diceResult strong{font-size:18px;white-space:
 body.playing #game .game-controls>.exit-game{left:auto!important;right:12px!important;bottom:calc(var(--hub) + env(safe-area-inset-bottom) + 24px)!important}
 body.playing #game #reopenPopup:not(.hide),body.playing #game .game-controls>#reopenPopup:not(.hide){bottom:calc(var(--hub) + env(safe-area-inset-bottom) + 90px)!important}
 body.playing #notice:not(.hide){bottom:calc(var(--hub) + env(safe-area-inset-bottom) + 92px)}
-#walkinfo{top:132px}
+#walkinfo{top:170px}
+#legend{position:absolute;top:128px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:12;pointer-events:none;white-space:nowrap}
+#legend span{padding:3px 8px;background:#0c0d0fd9;border:1px solid #3b3f45;border-bottom:2px solid var(--c);font-size:11px;font-weight:800;letter-spacing:.04em;color:#e8e6dd;text-transform:uppercase}
+@media(orientation:landscape) and (max-height:520px){#legend{display:none}}
 @media(max-height:430px){#game{--hub:84px}body.playing #game .game-controls>#players{padding-top:12px!important;gap:6px!important}.pcard{padding:5px 8px 5px 10px;gap:3px;min-width:104px}.pc-name{font-size:11px}.pc-meta{font-size:10px}.pc-meta b{font-size:12px}.pc-bar{height:6px}}
 </style><script defer src="https://cdn.jsdelivr.net/npm/babylonjs@7.54.3/babylon.js"></script><script defer src="https://cdn.jsdelivr.net/npm/babylonjs-loaders@7.54.3/babylonjs.loaders.min.js"></script></head><body><main><div class="brandline"><span class="brandmark">⚙</span><span>THE DOMINIK EXPERIENCE <em>RACE EDITION</em></span></div><h1>AAL YOU READY?</h1><p class="muted small">BABYLON 3D · ALPHA 7.7 · 2–8 Spieler · 64 Felder · jedes Feld hat eine Funktion</p>
 <div id="notice" class="error hide" role="alert"></div><button id="updateInLobby" type="button" onclick="updateInsideLobby()" class="hide">↻ Spiel aktualisieren</button>
-<section id="entry" class="panel"><div class="eyebrow">BUILD 8.8 · INDUSTRIAL BUNKER</div><p class="muted small">Bitte auf allen Geräten denselben Link öffnen. Namen eingeben, dann beitreten. Querformat empfohlen; die Spieloberfläche funktioniert auch hochkant.</p><h2>Zusammen spielen</h2><input id="name" type="text" maxlength="25" placeholder="Dein Spielername" autocomplete="nickname"><div class="av-btns"><button class="secondary" type="button" onclick="openAvatarEditor()">🧍 Figur anpassen</button><button class="secondary" type="button" onclick="openAvatarEditor(true)">🎲 Zufällige Figur</button></div><button id="create" onclick="createRoom()">Neue Lobby erstellen</button><button class="secondary" id="solo" onclick="soloGame()">🤖 Allein gegen den Computer</button><p class="muted small" style="text-align:center">ODER MIT CODE BEITRETEN</p><input id="joincode" maxlength="6" placeholder="Lobbycode" autocapitalize="characters"><button class="secondary" id="join" onclick="joinRoom()">Lobby beitreten</button></section>
+<section id="entry" class="panel"><div class="eyebrow">BUILD 8.9 · INDUSTRIAL BUNKER</div><p class="muted small">Bitte auf allen Geräten denselben Link öffnen. Namen eingeben, dann beitreten. Querformat empfohlen; die Spieloberfläche funktioniert auch hochkant.</p><h2>Zusammen spielen</h2><input id="name" type="text" maxlength="25" placeholder="Dein Spielername" autocomplete="nickname"><div class="av-btns"><button class="secondary" type="button" onclick="openAvatarEditor()">🧍 Figur anpassen</button><button class="secondary" type="button" onclick="openAvatarEditor(true)">🎲 Zufällige Figur</button></div><button id="create" onclick="createRoom()">Neue Lobby erstellen</button><button class="secondary" id="solo" onclick="soloGame()">🤖 Allein gegen den Computer</button><p class="muted small" style="text-align:center">ODER MIT CODE BEITRETEN</p><input id="joincode" maxlength="6" placeholder="Lobbycode" autocapitalize="characters"><button class="secondary" id="join" onclick="joinRoom()">Lobby beitreten</button></section>
 <section id="lobby" class="panel hide"><button class="secondary" onclick="leave()">← Hauptmenü</button><div class="eyebrow">DEINE LOBBY</div><div id="code" class="code"></div><div id="qr" class="qr"></div><p class="muted small" style="text-align:center">QR-Code scannen oder Code eingeben</p><button class="secondary" onclick="shareRoom()">Einladung teilen</button><div class="av-btns"><button class="secondary" type="button" onclick="openAvatarEditor()">🧍 Figur anpassen</button><button class="secondary" type="button" onclick="openAvatarEditor(true)">🎲 Zufällige Figur</button></div><div id="botbtns" class="av-btns hide"><button class="secondary" id="botadd" type="button" onclick="addBot()">🤖 Computer-Gegner</button><button class="secondary" id="botdel" type="button" onclick="removeBot()">Bot entfernen</button></div><h2>Spieler</h2><div id="members" class="members"></div><button id="start" onclick="doAction('start')">Spiel starten</button><p id="waiting" class="muted small"></p></section>
-<section id="game" class="hide"><div class="landscape-shell"><div class="panel game-controls"><div class="hud-brand">AAL YOU READY?<small>THE DOMINIK EXPERIENCE · B8.8</small></div><button class="secondary exit-game" onclick="leave()">← Hauptmenü</button><div class="eyebrow" id="turnlabel">AM ZUG</div><div class="status" id="status"></div><div id="players" class="members"></div><div id="message" class="muted small"></div><div id="diceResult" class="dice-result hide" aria-live="polite"></div><div id="walkinfo" class="hide" aria-live="polite"></div><button id="roll" onclick="doAction('roll')">🎲 Würfeln</button><button id="reopenPopup" class="hide" type="button" onclick="reopenPopup()">Pop-up öffnen</button><div id="slfpanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">🔤 STADT · LAND · FLUSS · ALLE SPIELEN</div><h2 id="slfletter"></h2><p id="slfcount" class="muted"></p><p id="slfsave" class="muted small" aria-live="polite">Noch keine Eingaben</p><div id="slffields"></div><button id="slfsend" onclick="submitSLF(false)">Antworten abgeben · Runde beenden</button></div><div id="slfreviewpanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">⚖️ STADT–LAND–FLUSS · GEGENSEITIGE PRÜFUNG</div><h2>Alle Antworten gemeinsam prüfen</h2><p class="muted small">Entscheide für jeden Begriff einzeln. Die Punkte werden erst nach allen Prüfungen vergeben.</p><div id="slfreviewlist"></div><p id="slfreviewstatus" class="muted small"></p></div><div id="slfresultspanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">🔤 STADT–LAND–FLUSS · ERGEBNISSE</div><h2>Alle Antworten</h2><p class="muted small">Nur überprüfte Begriffe erhalten Punkte. Unbekannte gültige Begriffe können derzeit noch fehlen.</p><div id="slfresults"></div><button id="slfnext" onclick="doAction('slf_next')">Zurück zum 3D-Spielbrett · Partie fortsetzen</button></div><div id="activitypanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">🎭 ACTIVITY · GEHEIME AUFGABE</div><div id="activitytext" class="eventcard"></div><div id="activityclock" class="activityclock">60</div><button id="activitystart" onclick="doAction('timer')">▶ 60 Sekunden starten</button><button id="activitycancel" class="secondary" onclick="doAction('cancel')">Aufgabe abbrechen · 0 Punkte</button><div id="activityjudge" class="hide"><div class="eyebrow">⚖️ DU BEWERTEST DIE AUFGABE</div><button onclick="doAction('success')">✓ Geschafft · +1 Punkt</button><button class="secondary" onclick="doAction('fail')">✕ Nicht geschafft · 0 Punkte</button></div><p id="activitywait" class="muted small"></p></div><div id="eventpanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">⚡ EREIGNIS · FÜR ALLE SICHTBAR</div><div id="eventtext" class="eventcard"></div><button id="eventnext" class="gold" onclick="doAction('event_next')">✓ Ereignis bestätigen · Weiter</button></div><div id="winner" class="winner hide"></div></div>
+<section id="game" class="hide"><div class="landscape-shell"><div class="panel game-controls"><div class="hud-brand">AAL YOU READY?<small>THE DOMINIK EXPERIENCE · B8.9</small></div><button class="secondary exit-game" onclick="leave()">← Hauptmenü</button><div class="eyebrow" id="turnlabel">AM ZUG</div><div class="status" id="status"></div><div id="players" class="members"></div><div id="message" class="muted small"></div><div id="diceResult" class="dice-result hide" aria-live="polite"></div><div id="legend" aria-hidden="true"><span style="--c:#ff4d6d">🎭 Aktion</span><span style="--c:#22d3ee">🔤 SLF</span><span style="--c:#a78bfa">⚡ Ereignis</span><span style="--c:#ffc400">🚀🚧 Spezial</span></div><div id="walkinfo" class="hide" aria-live="polite"></div><button id="roll" onclick="doAction('roll')">🎲 Würfeln</button><button id="reopenPopup" class="hide" type="button" onclick="reopenPopup()">Pop-up öffnen</button><div id="slfpanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">🔤 STADT · LAND · FLUSS · ALLE SPIELEN</div><h2 id="slfletter"></h2><p id="slfcount" class="muted"></p><p id="slfsave" class="muted small" aria-live="polite">Noch keine Eingaben</p><div id="slffields"></div><button id="slfsend" onclick="submitSLF(false)">Antworten abgeben · Runde beenden</button></div><div id="slfreviewpanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">⚖️ STADT–LAND–FLUSS · GEGENSEITIGE PRÜFUNG</div><h2>Alle Antworten gemeinsam prüfen</h2><p class="muted small">Entscheide für jeden Begriff einzeln. Die Punkte werden erst nach allen Prüfungen vergeben.</p><div id="slfreviewlist"></div><p id="slfreviewstatus" class="muted small"></p></div><div id="slfresultspanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">🔤 STADT–LAND–FLUSS · ERGEBNISSE</div><h2>Alle Antworten</h2><p class="muted small">Nur überprüfte Begriffe erhalten Punkte. Unbekannte gültige Begriffe können derzeit noch fehlen.</p><div id="slfresults"></div><button id="slfnext" onclick="doAction('slf_next')">Zurück zum 3D-Spielbrett · Partie fortsetzen</button></div><div id="activitypanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">🎭 ACTIVITY · GEHEIME AUFGABE</div><div id="activitytext" class="eventcard"></div><div id="activityclock" class="activityclock">60</div><button id="activitystart" onclick="doAction('timer')">▶ 60 Sekunden starten</button><button id="activitycancel" class="secondary" onclick="doAction('cancel')">Aufgabe abbrechen · 0 Punkte</button><div id="activityjudge" class="hide"><div class="eyebrow">⚖️ DU BEWERTEST DIE AUFGABE</div><button onclick="doAction('success')">✓ Geschafft · +1 Punkt</button><button class="secondary" onclick="doAction('fail')">✕ Nicht geschafft · 0 Punkte</button></div><p id="activitywait" class="muted small"></p></div><div id="eventpanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">⚡ EREIGNIS · FÜR ALLE SICHTBAR</div><div id="eventtext" class="eventcard"></div><button id="eventnext" class="gold" onclick="doAction('event_next')">✓ Ereignis bestätigen · Weiter</button></div><div id="winner" class="winner hide"></div></div>
 <div class="panel board-panel"><div class="row"><div><div class="eyebrow">NEON CIRCUIT / 64</div><h2>DER CLUB-PARCOURS</h2></div><div class="orb">✦</div></div><p class="muted small">Ein durchgehender 3D-Clubparcours mit 64 Feldern.</p><div class="board-stage"><canvas id="clubCanvas" aria-label="Babylon.js 3D-Club mit 64 Spielfeldern und Charakteren" width="1000" height="1000"></canvas><div class="camera-hud" id="cameraHud">3D · TECHNO CLUB · 64 FELDER</div></div><div class="row"></div><div class="legend">🎭 28 Activity · ⚡ 18 Ereignisse · 🔤 10 Stadt–Land–Fluss · 🎲 6 Spezialfelder · 🏆 Ziel: 63</div></div></div></section>
 </main><section id="avatarEditor" class="hide"><div class="av-top"><canvas id="avCanvas"></canvas><div class="av-title">DEINE FIGUR <small id="avNote"></small></div></div><div id="avRows" class="av-rows"></div><div class="av-actions"><button class="secondary" onclick="avRandomize()">🎲 Zufall</button><button class="secondary" onclick="closeAvatarEditor()">Abbrechen</button><button onclick="saveAvatar()">Speichern</button></div></section><script>
 'use strict';
@@ -358,7 +361,7 @@ setInterval(async()=>{
 async function doAction(a){if(acting||!session)return;acting=true;revision++;notice('');$('roll').disabled=$('start').disabled=$('eventnext').disabled=true;const before=snapshot;try{const s=await rpc('party_action',{p_code:session.code,p_token:session.token,p_host_token:session.host_token||null,p_action:a});render(s)}catch(e){notice(a==='rematch'&&/Unbekannte Aktion/.test(e.message)?'Neue Runde braucht noch das Server-Update. Bitte über Hauptmenü eine neue Lobby erstellen.':'Aktion: '+e.message)}finally{acting=false;if(snapshot)render(snapshot);setTimeout(()=>refresh(true),250)}}
 async function refresh(force=false){if(!session||polling||acting)return;polling=true;const requestRevision=revision;const requestCode=session.code;try{const s=await rpc('party_snapshot',{p_code:session.code,p_token:session.token});if(session&&session.code===requestCode&&requestRevision===revision&&!acting)render(s);if(pollFailures)notice('');pollFailures=0}catch(e){pollFailures++;if(pollFailures>=2)notice('Verbindung: '+e.message+' · Erneuter Versuch läuft.')}finally{polling=false}}
 function leave(){if(!confirm('Spiel auf diesem Gerät verlassen?'))return;revision++;session=null;snapshot=null;save();$('entry').classList.remove('hide');$('lobby').classList.add('hide');$('game').classList.add('hide');notice('');history.replaceState(null,'',location.pathname)}
-const BUILD_VERSION='8.8';
+const BUILD_VERSION='8.9';
 const STABLE_GAME_URL='https://codex-programmierung.sascha-robert-schmitt.workers.dev/play/';
 const LATEST_SOURCE_URL=STABLE_GAME_URL+'index.html';
 async function updateInsideLobby(){
@@ -380,7 +383,8 @@ async function autoUpdate(){
   const self=location.origin+location.pathname.replace(/[^/]*$/,'')+'index.html';
   const r=await fetch(self+'?v='+Date.now(),{cache:'no-store'});if(!r.ok)return;
   const html=await r.text(),m=html.match(/const BUILD_VERSION='([^']+)'/);
-  if(!m||m[1]===BUILD_VERSION||!html.includes('function render(s){'))return;
+  if(!m||!html.includes('function render(s){')||!(parseFloat(m[1])>parseFloat(BUILD_VERSION)))return;
+  try{if(sessionStorage.getItem('aal-upd')===m[1])return;sessionStorage.setItem('aal-upd',m[1])}catch(e){return}
   save();location.reload();
  }catch(e){}
 }
@@ -670,6 +674,8 @@ const SPIRAL_PATH=(()=>{const p=[[0,0]];for(let x=1;x<8;x++)p.push([x,0]);for(le
 function tileXY(n){const p=SPIRAL_PATH[Math.max(0,Math.min(63,n))];return {x:p[0]-3.5,z:3.5-p[1]}}
 function mat(name,color,emissive=0){const m=new BABYLON.StandardMaterial(name,club.scene);m.diffuseColor=BABYLON.Color3.FromHexString(color);m.emissiveColor=m.diffuseColor.scale(emissive);m.specularColor=new BABYLON.Color3(.22,.2,.3);return m}
 function box3(name,w,h,d,x,y,z,material){const m=BABYLON.MeshBuilder.CreateBox(name,{width:w,height:h,depth:d},club.scene);m.position.set(x,y,z);m.material=material;return m}
+function mergeSince(start){const by=new Map();club.scene.meshes.slice(start).forEach(m=>{if(m.material&&!m.skeleton&&m.getTotalVertices()>0){const k=m.material.uniqueId;(by.get(k)||by.set(k,[]).get(k)).push(m)}});by.forEach(list=>{if(list.length>1)B_merge(list)})}
+function B_merge(list){try{const mm=BABYLON.Mesh.MergeMeshes(list,true,true,undefined,false,false);if(mm)mm.name='merged_'+mm.name}catch(e){console.warn('merge',e)}}
 function initClub(){
 if(club.ready||club.failed)return;
 if(!window.BABYLON){$('cameraHud').textContent='3D lädt …';$('cameraHud').style.display='block';if(!club.loadWait)club.loadWait=0;club.loadWait++;if(club.loadWait<20)setTimeout(()=>{if(!club.ready)paintClub()},700);else{$('cameraHud').textContent='3D-Bibliothek konnte nicht geladen werden · Verbindung prüfen';club.failed=true}return}
@@ -678,47 +684,57 @@ const B=BABYLON,canvas=$('clubCanvas');
 club.engine=new B.Engine(canvas,true,{preserveDrawingBuffer:false,stencil:false,adaptToDeviceRatio:false});
 club.engine.setHardwareScalingLevel(Math.max(1,Math.min(1.3,(window.devicePixelRatio||1)/2)));
 club.scene=new B.Scene(club.engine);
-club.scene.clearColor=new B.Color4(.025,.029,.05,1);
+club.scene.clearColor=new B.Color4(.02,.022,.03,1);
 club.scene.fogMode=B.Scene.FOGMODE_NONE; // Keep the full 64-tile board visible.
 club.scene.imageProcessingConfiguration.toneMappingEnabled=false;
 club.scene.imageProcessingConfiguration.exposure=1.25;club.scene.imageProcessingConfiguration.contrast=1.08;
 club.camera=new B.FreeCamera('clubCinematicCamera',new B.Vector3(0,16,-11),club.scene);
 club.camera.fov=.86;club.camera.minZ=.12;club.camera.maxZ=120;club.camera.setTarget(new B.Vector3(0,0,0));club.scene.activeCamera=club.camera;
 const ambient=new B.HemisphericLight('clubAmbient',new B.Vector3(0,1,0),club.scene);
-ambient.intensity=1.25;ambient.diffuse=new B.Color3(.9,.9,1);ambient.groundColor=new B.Color3(.4,.35,.5);
-const key=new B.DirectionalLight('clubKey',new B.Vector3(-.4,-1,.3),club.scene);key.intensity=1.05;key.diffuse=new B.Color3(.5,.74,1);
+ambient.intensity=.95;ambient.diffuse=new B.Color3(.9,.9,1);ambient.groundColor=new B.Color3(.4,.35,.5);
+const key=new B.DirectionalLight('clubKey',new B.Vector3(-.4,-1,.3),club.scene);key.intensity=.8;key.diffuse=new B.Color3(.5,.74,1);
 try{const glow=new B.GlowLayer('neonBloom',club.scene,{blurKernelSize:48});glow.intensity=.22;club.glow=glow;}catch(e){console.warn('Glow fallback',e)}
 // Industrial dystopian bunker, 64 readable raised steel tiles and a closed route.
-const metal=mat('blackenedSteel','#4a4c5b'),floor=mat('wetAsphalt','#252836'),dark=mat('deepBlack','#1b1d29'),rust=mat('rust','#543027'),hazard=mat('hazardYellow','#e4a324',.35),red=mat('emergencyRed','#ff2444',1.6),cyan=mat('coldCyan','#00e8ff',1.6),magenta=mat('acidMagenta','#ff27e8',1.45),amber=mat('amberSignal','#ff9c18',1.5);
+const metal=mat('blackenedSteel','#363944'),floor=mat('wetAsphalt','#16181f'),dark=mat('deepBlack','#0f1115'),rust=mat('rust','#543027'),hazard=mat('hazardYellow','#e4a324',.35),red=mat('emergencyRed','#ff2444',1.6),cyan=mat('coldCyan','#00e8ff',1.6),magenta=mat('acidMagenta','#ff27e8',1.45),amber=mat('amberSignal','#ff9c18',1.5);
 metal.specularColor=new B.Color3(.65,.72,.82);metal.specularPower=96;
 floor.specularColor=new B.Color3(.48,.52,.65);floor.specularPower=110;
 box3('undergroundFoundation',13,.55,13,0,-.53,0,dark);
 box3('reflectiveWarehouseFloor',12,.09,12,0,-.22,0,floor);
+const _m1=club.scene.meshes.length;
 for(let i=-5;i<=5;i++){box3('floorSeamX'+i,11.8,.004,.012,0,-.168,i,metal);box3('floorSeamZ'+i,.012,.004,11.8,i,-.168,0,metal)}
-const tileKinds={activity:'#ff315b',slf:'#00dcff',special:'#ffc238',event:'#a24dff',start:'#ffffff',finish:'#ff4a25'};
-const tileFaces={activity:mat('paintedRedSteel','#68243c',.8),slf:mat('paintedBlueSteel','#136c83',.8),special:mat('paintedAmberSteel','#8b571c',.8),event:mat('paintedPurpleSteel','#623c92',.8),start:mat('startSteel','#5a6579',.7),finish:mat('finishSteel','#9b4229',.8)};
-const rim={};for(const [k,v] of Object.entries(tileKinds))rim[k]=mat('luminousTileRim'+k,v,2.3);
-const drawIcon=(n,type)=>{
-const dt=new B.DynamicTexture('engravedGlyph'+n,{width:512,height:512},club.scene,true),ctx=dt.getContext();dt.hasAlpha=true;
-ctx.clearRect(0,0,512,512);ctx.textAlign='center';ctx.textBaseline='middle';
-ctx.fillStyle='#ffffff';ctx.font='bold 112px Arial';ctx.fillText(String(n),256,84);
-const symbol=type==='activity'?['✎','☏','◉'][n%3]:type==='slf'?'SLF':type==='special'?'★':type==='event'?'ϟ':type==='finish'?'🏆':'⚑';
-ctx.fillStyle=tileKinds[type];ctx.shadowColor=tileKinds[type];ctx.shadowBlur=12;ctx.font=(symbol==='SLF'?'bold 124px':'166px')+' Arial';ctx.fillText(symbol,256,271);ctx.shadowBlur=0;
-ctx.fillStyle='#f5f6fb';ctx.font='bold 36px Arial';ctx.fillText(type==='activity'?['MALEN','REDEN','PANTOMIME'][n%3]:type==='slf'?'STADT LAND FLUSS':type==='special'?'SPECIAL':type==='event'?'EREIGNIS':type==='finish'?'ZIEL':'START',256,420);dt.update();
-const m=new B.StandardMaterial('engravedGlyphMaterial'+n,club.scene);m.diffuseTexture=dt;m.opacityTexture=dt;m.emissiveColor=new B.Color3(1,1,1);m.disableLighting=true;m.backFaceCulling=false;
-const plane=B.MeshBuilder.CreatePlane('engravedGlyphPlane'+n,{size:.79},club.scene);plane.rotation.x=Math.PI/2;plane.position.set(tileXY(n).x,.334,tileXY(n).z);plane.material=m;
-};
+mergeSince(_m1);
+const TILE={
+ activity:{c:'#ff4d6d',f:'#2b1019',icon:'🎭',label:'AKTION'},
+ slf:{c:'#22d3ee',f:'#0b2630',icon:'🔤',label:'SLF'},
+ event:{c:'#a78bfa',f:'#1d1633',icon:'⚡',label:'EREIGNIS'},
+ turbo:{c:'#ffc400',f:'#33270a',icon:'🚀',label:'TURBO'},
+ detour:{c:'#ff8a1f',f:'#33200a',icon:'🚧',label:'UMWEG'},
+ start:{c:'#4ade80',f:'#0e2a19',icon:'🏁',label:'START'},
+ finish:{c:'#fde047',f:'#33300a',icon:'🏆',label:'ZIEL'}};
+const kindOf=n=>n===0?'start':n===63?'finish':ACTIVITIES.includes(n)?'activity':SLF_FIELDS.includes(n)?'slf':SPECIAL_FIELDS.includes(n)?([7,28,49].includes(n)?'turbo':'detour'):'event';
+const faceM={},rimM={};for(const [k,v] of Object.entries(TILE)){faceM[k]=mat('tileFace'+k,v.f,1);rimM[k]=mat('tileRim'+k,v.c,1.5)}
+// one shared glyph atlas (8x8 cells) instead of 64 textures
+const CELL=256,atlas=new B.DynamicTexture('tileAtlas',{width:CELL*8,height:CELL*8},club.scene,true),actx=atlas.getContext();atlas.hasAlpha=true;
+actx.clearRect(0,0,CELL*8,CELL*8);actx.textBaseline='middle';
+for(let n=0;n<64;n++){const t=TILE[kindOf(n)],cx=(n%8)*CELL,cy=Math.floor(n/8)*CELL;
+ actx.textAlign='left';actx.font='bold 52px Arial';actx.fillStyle='#ffffff';actx.fillText(String(n),cx+16,cy+32);
+ actx.textAlign='center';actx.font='128px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",Arial';actx.fillStyle='#ffffff';actx.fillText(t.icon,cx+CELL/2,cy+122);
+ actx.font='bold 42px Arial';actx.fillStyle=t.c;actx.fillText(t.label,cx+CELL/2,cy+224)}
+atlas.update();
+const atlasMat=new B.StandardMaterial('tileAtlasMat',club.scene);atlasMat.diffuseTexture=atlas;atlasMat.opacityTexture=atlas;atlasMat.emissiveColor=new B.Color3(1,1,1);atlasMat.disableLighting=true;atlasMat.backFaceCulling=false;
+const G={},put=(k,m,mt)=>{m.material=mt;(G[k]||(G[k]=[])).push(m);return m},gbox=(k,w,h,d,x,y,z,mt)=>{const m=B.MeshBuilder.CreateBox('t',{width:w,height:h,depth:d},club.scene);m.position.set(x,y,z);return put(k,m,mt)};
 for(let n=0;n<64;n++){
-const p=tileXY(n),type=n===0?'start':n===63?'finish':ACTIVITIES.includes(n)?'activity':SLF_FIELDS.includes(n)?'slf':SPECIAL_FIELDS.includes(n)?'special':'event';
-box3('heavySteelBase'+n,.99,.35,.99,p.x,.005,p.z,dark);
-box3('paintedHazardUnderlip'+n,.98,.055,.98,p.x,.145,p.z,n%4===0?hazard:metal);
-box3('neonMetalEdge'+n,.95,.075,.95,p.x,.247,p.z,rim[type]);
-box3('individualTileFace'+n,.855,.047,.855,p.x,.295,p.z,tileFaces[type]);
-for(const dx of [-.405,.405])for(const dz of [-.405,.405]){
-const rivet=B.MeshBuilder.CreateSphere('cornerRivet'+n+'_'+dx+'_'+dz,{diameter:.045,segments:6},club.scene);rivet.position.set(p.x+dx,.334,p.z+dz);rivet.material=metal;
+ const p=tileXY(n),kd=kindOf(n);
+ gbox('base',.99,.35,.99,p.x,.005,p.z,dark);
+ gbox(n%4===0?'hz':'mt',.98,.055,.98,p.x,.145,p.z,n%4===0?hazard:metal);
+ gbox('rim'+kd,.95,.075,.95,p.x,.247,p.z,rimM[kd]);
+ gbox('face'+kd,.83,.047,.83,p.x,.295,p.z,faceM[kd]);
+ for(const dx of [-.4,.4])for(const dz of [-.4,.4]){const rv=B.MeshBuilder.CreateSphere('rv',{diameter:.04,segments:4},club.scene);rv.position.set(p.x+dx,.334,p.z+dz);put('riv',rv,metal)}
+ const u0=(n%8)/8,u1=u0+1/8,v1=1-Math.floor(n/8)/8,v0=v1-1/8;
+ const pl=B.MeshBuilder.CreatePlane('g',{size:.8},club.scene);pl.setVerticesData(B.VertexBuffer.UVKind,[u0,v0,u1,v0,u1,v1,u0,v1]);pl.rotation.x=Math.PI/2;pl.position.set(p.x,.336,p.z);put('glyph',pl,atlasMat);
 }
-drawIcon(n,type);
-}
+for(const k of Object.keys(G)){const mm=B.Mesh.MergeMeshes(G[k],true,true,undefined,false,false);if(mm)mm.name='tiles_'+k}
+const _m2=club.scene.meshes.length;
 for(let n=0;n<64;n++){
 const p=tileXY(n),q=tileXY((n+1)%64),x=(p.x+q.x)/2,z=(p.z+q.z)/2;
 if(Math.abs(p.x-q.x)+Math.abs(p.z-q.z)===1){
@@ -726,6 +742,7 @@ if(p.x!==q.x)box3('routeConnectorX'+n,.12,.035,.045,x,.25,z,n%2?red:cyan);
 else box3('routeConnectorZ'+n,.045,.035,.12,x,.25,z,n%2?red:cyan);
 }
 }
+mergeSince(_m2);
 // Dystopian industrial backdrop, placed outside playable 8x8 route.
 box3('rearBunkerWall',12,1.4,.28,0,.45,5.7,metal);
 // No side walls: they previously obscured the mobile camera.
@@ -756,10 +773,10 @@ const band=B.MeshBuilder.CreateTorus('barrelHazardRing'+x+z,{diameter:.51,thickn
 const emergency=new B.PointLight('reactorEmergency',new B.Vector3(5.05,1.8,0),club.scene);emergency.diffuse=new B.Color3(1,.05,.12);emergency.intensity=.7;emergency.range=6;
 const workLight=new B.PointLight('cyanWarehouseLight',new B.Vector3(-3,3,-3),club.scene);workLight.diffuse=new B.Color3(.1,.8,1);workLight.intensity=.8;workLight.range=11;
 // direction arrows: every tile points to the next one
-const arrowMat=mat('routeArrow','#ffd24a',1.6);arrowMat.backFaceCulling=false;
+const _m3=club.scene.meshes.length;const arrowMat=mat('routeArrow','#ffd24a',1.6);arrowMat.backFaceCulling=false;
 for(let n=0;n<63;n++){const p=tileXY(n),q=tileXY(n+1),dx=Math.sign(q.x-p.x),dz=Math.sign(q.z-p.z);
 const ar=B.MeshBuilder.CreateDisc('routeArrow'+n,{radius:.115,tessellation:3},club.scene);ar.material=arrowMat;ar.rotation.x=Math.PI/2;ar.rotation.y=Math.atan2(-dz,dx);ar.position.set(p.x+dx*.33,.352,p.z+dz*.33)}
-club.ready=true;club.failed=false;$('cameraHud').style.display='none';syncAvatars();
+mergeSince(_m3);club.ready=true;club.failed=false;$('cameraHud').style.display='none';syncAvatars();
 club.engine.runRenderLoop(()=>{try{updateClub(performance.now());club.scene.render()}catch(e){if(!club.renderError){club.renderError=true;console.error('3D render error',e);$('cameraHud').textContent='3D-Fehler: '+e.message;$('cameraHud').style.display='block'}}});
 window.addEventListener('resize',()=>club.engine.resize());
 window.addEventListener('orientationchange',()=>setTimeout(()=>club.engine.resize(),250));
