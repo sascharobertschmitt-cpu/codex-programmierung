@@ -183,9 +183,7 @@ update public.party_members set position=0,lap=0,cash=0,skip=false,stars=0,point
 update public.party_rooms set status='lobby',phase='lobby',turn_index=0,roll=null,task=null,timer_started_at=null,slf_letter=null,slf_deadline=null,roll_info=null,ending_at=null,star_field=null,used_tasks='{}',used_cards='{}' where id=r.id;
 else raise exception 'Unbekannte Aktion'; end if;
 return public.party_snapshot(p_code,p_token);
-end $function$
-
-
+end $function$;
 
 -- ===== Spieler-Avatare (frei konfigurierbare 3D-Figur) =====
 alter table public.party_members add column if not exists avatar text;
