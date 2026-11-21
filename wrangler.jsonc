@@ -1,0 +1,9 @@
+{
+  // Cloudflare Worker, liefert das Spiel als statische Dateien aus aal-you-ready/ aus.
+  // Mit Workers Builds (Git-Verbindung) wird bei jedem Merge auf main automatisch deployt.
+  "name": "codex-programmierung",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./aal-you-ready"
+  }
+}
