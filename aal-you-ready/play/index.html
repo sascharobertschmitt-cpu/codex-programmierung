@@ -254,13 +254,34 @@ body.playing #game #winner:not(.hide){position:fixed!important;top:auto!importan
 #winner .win-hint{font-size:11px!important;color:#8d9096;margin-top:8px}
 #confetti{position:fixed;inset:0;z-index:60;pointer-events:none}
 @keyframes winpop{from{transform:scale(1) rotate(-4deg)}to{transform:scale(1.12) rotate(4deg)}}
+/* 8.6 avatar editor, walk info, winner scores */
+#avatarEditor{position:fixed;inset:0;z-index:400;background:#0a0b0d;display:flex;flex-direction:column}
+#avatarEditor.hide{display:none!important}
+.av-top{position:relative;flex:0 0 40%;min-height:200px;border-bottom:3px solid var(--hz)}
+#avCanvas{width:100%;height:100%;display:block;touch-action:none;outline:none}
+.av-title{position:absolute;top:calc(12px + env(safe-area-inset-top));left:14px;font-weight:900;letter-spacing:.08em;color:var(--hz);text-transform:uppercase}
+.av-title small{display:block;color:#8d9096;font-size:10px;letter-spacing:.06em;font-weight:600}
+.av-rows{flex:1;overflow-y:auto;padding:8px 12px}
+.av-row{display:grid;grid-template-columns:104px 46px 1fr 46px;align-items:center;gap:8px;margin:6px 0}
+.av-row button{min-height:42px;margin:0;padding:0;font-size:15px}
+.av-row b{display:flex;align-items:center;justify-content:center;gap:8px;min-height:42px;background:#17191c;border:1px solid #3b3f45;font-size:14px;text-align:center}
+.av-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#c9c7bd}
+.av-sw{display:inline-block;width:20px;height:20px;border:2px solid #ffffff88}
+.av-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(0,1.3fr);gap:10px;padding:10px 12px calc(12px + env(safe-area-inset-bottom));border-top:1px solid #3b3f45}
+.av-actions button{min-height:48px;margin:0;padding:6px;font-size:13px}
+@media(orientation:landscape) and (max-height:520px){#avatarEditor{flex-direction:row;flex-wrap:wrap}.av-top{flex:0 0 42%;height:100%;border-bottom:0;border-right:3px solid var(--hz)}.av-rows{flex:1 1 50%;height:calc(100% - 70px)}.av-actions{flex:0 0 58%;margin-left:auto}}
+#walkinfo{position:absolute;top:198px;left:50%;transform:translateX(-50%);z-index:20;max-width:92vw;padding:8px 14px;background:#0c0d0fe6;border:1px solid #5a4a1f;border-left:5px solid var(--hz2);font-weight:800;font-size:14px;letter-spacing:.04em;text-transform:uppercase;text-align:center;pointer-events:none}
+#walkinfo.hide{display:none!important}
+#winner .win-rank .wr-name{display:block;text-align:left}
+#winner .win-rank small{display:block;font-size:11px!important;color:#8d9096;font-weight:500;text-transform:none;letter-spacing:0}
+#winner .win-rank b{font-size:20px!important;color:var(--hz)}
 </style><script defer src="https://cdn.jsdelivr.net/npm/babylonjs@7.54.3/babylon.js"></script></head><body><main><div class="brandline"><span class="brandmark">⚙</span><span>THE DOMINIK EXPERIENCE <em>RACE EDITION</em></span></div><h1>AAL YOU READY?</h1><p class="muted small">BABYLON 3D · ALPHA 7.7 · 2–8 Spieler · 64 Felder · jedes Feld hat eine Funktion</p>
 <div id="notice" class="error hide" role="alert"></div><button id="updateInLobby" type="button" onclick="updateInsideLobby()" class="hide">↻ Spiel aktualisieren</button>
-<section id="entry" class="panel"><div class="eyebrow">BUILD 8.5 · INDUSTRIAL BUNKER</div><p class="muted small">Bitte auf allen Geräten denselben Link öffnen. Namen eingeben, dann beitreten. Querformat empfohlen; die Spieloberfläche funktioniert auch hochkant.</p><h2>Zusammen spielen</h2><input id="name" type="text" maxlength="25" placeholder="Dein Spielername" autocomplete="nickname"><button id="create" onclick="createRoom()">Neue Lobby erstellen</button><p class="muted small" style="text-align:center">ODER MIT CODE BEITRETEN</p><input id="joincode" maxlength="6" placeholder="Lobbycode" autocapitalize="characters"><button class="secondary" id="join" onclick="joinRoom()">Lobby beitreten</button></section>
-<section id="lobby" class="panel hide"><button class="secondary" onclick="leave()">← Hauptmenü</button><div class="eyebrow">DEINE LOBBY</div><div id="code" class="code"></div><div id="qr" class="qr"></div><p class="muted small" style="text-align:center">QR-Code scannen oder Code eingeben</p><button class="secondary" onclick="shareRoom()">Einladung teilen</button><h2>Spieler</h2><div id="members" class="members"></div><button id="start" onclick="doAction('start')">Spiel starten</button><p id="waiting" class="muted small"></p></section>
-<section id="game" class="hide"><div class="landscape-shell"><div class="panel game-controls"><div class="hud-brand">AAL YOU READY?<small>THE DOMINIK EXPERIENCE · B8.5</small></div><button class="secondary exit-game" onclick="leave()">← Hauptmenü</button><div class="eyebrow" id="turnlabel">AM ZUG</div><div class="status" id="status"></div><div id="players" class="members"></div><div id="message" class="muted small"></div><div id="diceResult" class="dice-result hide" aria-live="polite"></div><button id="roll" onclick="doAction('roll')">🎲 Würfeln</button><button id="reopenPopup" class="hide" type="button" onclick="reopenPopup()">Pop-up öffnen</button><div id="slfpanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">🔤 STADT · LAND · FLUSS · ALLE SPIELEN</div><h2 id="slfletter"></h2><p id="slfcount" class="muted"></p><p id="slfsave" class="muted small" aria-live="polite">Noch keine Eingaben</p><div id="slffields"></div><button id="slfsend" onclick="submitSLF(false)">Antworten abgeben · Runde beenden</button></div><div id="slfreviewpanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">⚖️ STADT–LAND–FLUSS · GEGENSEITIGE PRÜFUNG</div><h2>Alle Antworten gemeinsam prüfen</h2><p class="muted small">Entscheide für jeden Begriff einzeln. Die Punkte werden erst nach allen Prüfungen vergeben.</p><div id="slfreviewlist"></div><p id="slfreviewstatus" class="muted small"></p></div><div id="slfresultspanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">🔤 STADT–LAND–FLUSS · ERGEBNISSE</div><h2>Alle Antworten</h2><p class="muted small">Nur überprüfte Begriffe erhalten Punkte. Unbekannte gültige Begriffe können derzeit noch fehlen.</p><div id="slfresults"></div><button id="slfnext" onclick="doAction('slf_next')">Zurück zum 3D-Spielbrett · Partie fortsetzen</button></div><div id="activitypanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">🎭 ACTIVITY · GEHEIME AUFGABE</div><div id="activitytext" class="eventcard"></div><div id="activityclock" class="activityclock">60</div><button id="activitystart" onclick="doAction('timer')">▶ 60 Sekunden starten</button><button id="activitycancel" class="secondary" onclick="doAction('cancel')">Aufgabe abbrechen · 0 Punkte</button><div id="activityjudge" class="hide"><div class="eyebrow">⚖️ DU BEWERTEST DIE AUFGABE</div><button onclick="doAction('success')">✓ Geschafft · +1 Punkt</button><button class="secondary" onclick="doAction('fail')">✕ Nicht geschafft · 0 Punkte</button></div><p id="activitywait" class="muted small"></p></div><div id="eventpanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">⚡ EREIGNIS · FÜR ALLE SICHTBAR</div><div id="eventtext" class="eventcard"></div><button id="eventnext" class="gold" onclick="doAction('event_next')">✓ Ereignis bestätigen · Weiter</button></div><div id="winner" class="winner hide"></div></div>
+<section id="entry" class="panel"><div class="eyebrow">BUILD 8.6 · INDUSTRIAL BUNKER</div><p class="muted small">Bitte auf allen Geräten denselben Link öffnen. Namen eingeben, dann beitreten. Querformat empfohlen; die Spieloberfläche funktioniert auch hochkant.</p><h2>Zusammen spielen</h2><input id="name" type="text" maxlength="25" placeholder="Dein Spielername" autocomplete="nickname"><button class="secondary" type="button" onclick="openAvatarEditor()">🧍 Figur anpassen</button><button id="create" onclick="createRoom()">Neue Lobby erstellen</button><p class="muted small" style="text-align:center">ODER MIT CODE BEITRETEN</p><input id="joincode" maxlength="6" placeholder="Lobbycode" autocapitalize="characters"><button class="secondary" id="join" onclick="joinRoom()">Lobby beitreten</button></section>
+<section id="lobby" class="panel hide"><button class="secondary" onclick="leave()">← Hauptmenü</button><div class="eyebrow">DEINE LOBBY</div><div id="code" class="code"></div><div id="qr" class="qr"></div><p class="muted small" style="text-align:center">QR-Code scannen oder Code eingeben</p><button class="secondary" onclick="shareRoom()">Einladung teilen</button><button class="secondary" type="button" onclick="openAvatarEditor()">🧍 Meine Figur anpassen</button><h2>Spieler</h2><div id="members" class="members"></div><button id="start" onclick="doAction('start')">Spiel starten</button><p id="waiting" class="muted small"></p></section>
+<section id="game" class="hide"><div class="landscape-shell"><div class="panel game-controls"><div class="hud-brand">AAL YOU READY?<small>THE DOMINIK EXPERIENCE · B8.6</small></div><button class="secondary exit-game" onclick="leave()">← Hauptmenü</button><div class="eyebrow" id="turnlabel">AM ZUG</div><div class="status" id="status"></div><div id="players" class="members"></div><div id="message" class="muted small"></div><div id="diceResult" class="dice-result hide" aria-live="polite"></div><div id="walkinfo" class="hide" aria-live="polite"></div><button id="roll" onclick="doAction('roll')">🎲 Würfeln</button><button id="reopenPopup" class="hide" type="button" onclick="reopenPopup()">Pop-up öffnen</button><div id="slfpanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">🔤 STADT · LAND · FLUSS · ALLE SPIELEN</div><h2 id="slfletter"></h2><p id="slfcount" class="muted"></p><p id="slfsave" class="muted small" aria-live="polite">Noch keine Eingaben</p><div id="slffields"></div><button id="slfsend" onclick="submitSLF(false)">Antworten abgeben · Runde beenden</button></div><div id="slfreviewpanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">⚖️ STADT–LAND–FLUSS · GEGENSEITIGE PRÜFUNG</div><h2>Alle Antworten gemeinsam prüfen</h2><p class="muted small">Entscheide für jeden Begriff einzeln. Die Punkte werden erst nach allen Prüfungen vergeben.</p><div id="slfreviewlist"></div><p id="slfreviewstatus" class="muted small"></p></div><div id="slfresultspanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">🔤 STADT–LAND–FLUSS · ERGEBNISSE</div><h2>Alle Antworten</h2><p class="muted small">Nur überprüfte Begriffe erhalten Punkte. Unbekannte gültige Begriffe können derzeit noch fehlen.</p><div id="slfresults"></div><button id="slfnext" onclick="doAction('slf_next')">Zurück zum 3D-Spielbrett · Partie fortsetzen</button></div><div id="activitypanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">🎭 ACTIVITY · GEHEIME AUFGABE</div><div id="activitytext" class="eventcard"></div><div id="activityclock" class="activityclock">60</div><button id="activitystart" onclick="doAction('timer')">▶ 60 Sekunden starten</button><button id="activitycancel" class="secondary" onclick="doAction('cancel')">Aufgabe abbrechen · 0 Punkte</button><div id="activityjudge" class="hide"><div class="eyebrow">⚖️ DU BEWERTEST DIE AUFGABE</div><button onclick="doAction('success')">✓ Geschafft · +1 Punkt</button><button class="secondary" onclick="doAction('fail')">✕ Nicht geschafft · 0 Punkte</button></div><p id="activitywait" class="muted small"></p></div><div id="eventpanel" class="hide"><button class="popup-close" type="button" onclick="dismissPopup()" aria-label="Pop-up schließen">×</button><div class="eyebrow">⚡ EREIGNIS · FÜR ALLE SICHTBAR</div><div id="eventtext" class="eventcard"></div><button id="eventnext" class="gold" onclick="doAction('event_next')">✓ Ereignis bestätigen · Weiter</button></div><div id="winner" class="winner hide"></div></div>
 <div class="panel board-panel"><div class="row"><div><div class="eyebrow">NEON CIRCUIT / 64</div><h2>DER CLUB-PARCOURS</h2></div><div class="orb">✦</div></div><p class="muted small">Ein durchgehender 3D-Clubparcours mit 64 Feldern.</p><div class="board-stage"><canvas id="clubCanvas" aria-label="Babylon.js 3D-Club mit 64 Spielfeldern und Charakteren" width="1000" height="1000"></canvas><div class="camera-hud" id="cameraHud">3D · TECHNO CLUB · 64 FELDER</div></div><div class="row"></div><div class="legend">🎭 28 Activity · ⚡ 18 Ereignisse · 🔤 10 Stadt–Land–Fluss · 🎲 6 Spezialfelder · 🏆 Ziel: 63</div></div></div></section>
-</main><script>
+</main><section id="avatarEditor" class="hide"><div class="av-top"><canvas id="avCanvas"></canvas><div class="av-title">DEINE FIGUR <small id="avNote"></small></div></div><div id="avRows" class="av-rows"></div><div class="av-actions"><button class="secondary" onclick="avRandomize()">🎲 Zufall</button><button class="secondary" onclick="closeAvatarEditor()">Abbrechen</button><button onclick="saveAvatar()">Speichern</button></div></section><script>
 'use strict';
 const API='https://rlmuglsqeyeniutlmvbw.supabase.co/rest/v1/rpc/',KEY='sb_publishable_tmmQzdfFoJ2lOhjGrCMCmg_ggtKMnH5';
 const $=id=>document.getElementById(id),ACTIVITIES=[2,4,6,9,11,13,16,18,20,22,25,27,30,33,35,37,39,42,44,46,48,51,53,55,57,59,61,62],SLF_FIELDS=[5,12,19,26,32,38,45,50,56,60],SPECIAL_FIELDS=[7,17,28,40,49,58],EVENT_FIELDS=[1,3,8,10,14,15,21,23,24,29,31,34,36,41,43,47,52,54],COLORS=['#bb38ff','#278fff','#f4bb41','#4ee3ac','#ff668c','#f5ecff','#ff9c4a','#8e83ff'],EVENTS=EVENT_FIELDS;
@@ -272,16 +293,16 @@ function readSession(){try{for(const key of [SESSION_KEY,'aal-race-v63','aal-rac
 function save(){try{if(session)localStorage.setItem(SESSION_KEY,JSON.stringify(session));else{for(const k of [SESSION_KEY,'aal-race-v63','aal-race-v62','aal-race-v61','aal-race-v60','aal-race-v52','aal-race-v51','aal-race-v50'])localStorage.removeItem(k)}}catch(e){console.warn('Local storage unavailable',e)}}
 function dismissPopup(){dismissedPopupKey=currentPopupKey;applyPopupVisibility()}
 function reopenPopup(){dismissedPopupKey='';applyPopupVisibility()}
-function applyPopupVisibility(){const phase=snapshot?.phase||'';const map={slf:'slfpanel',slf_review:'slfreviewpanel',slf_results:'slfresultspanel',task:'activitypanel',event:'eventpanel'};const id=map[phase];currentPopupKey=snapshot?(snapshot.code+':'+snapshot.turn+':'+phase):'';for(const pid of popupIds){const el=$(pid);if(el)el.classList.toggle('hide',pid!==id||dismissedPopupKey===currentPopupKey)}const btn=$('reopenPopup');if(btn){btn.classList.toggle('hide',!id||dismissedPopupKey!==currentPopupKey);btn.textContent=({slf:'Stadt–Land–Fluss',slf_review:'Wörter prüfen',slf_results:'Ergebnisse',task:'Aufgabe',event:'Ereignis'}[phase]||'Pop-up')+' öffnen'}}
+function applyPopupVisibility(){if(typeof walkBusy==='function'&&walkBusy()){for(const pid of popupIds){const el=$(pid);if(el)el.classList.add('hide')}const rb=$('reopenPopup');if(rb)rb.classList.add('hide');return}const phase=snapshot?.phase||'';const map={slf:'slfpanel',slf_review:'slfreviewpanel',slf_results:'slfresultspanel',task:'activitypanel',event:'eventpanel'};const id=map[phase];currentPopupKey=snapshot?(snapshot.code+':'+snapshot.turn+':'+phase):'';for(const pid of popupIds){const el=$(pid);if(el)el.classList.toggle('hide',pid!==id||dismissedPopupKey===currentPopupKey)}const btn=$('reopenPopup');if(btn){btn.classList.toggle('hide',!id||dismissedPopupKey!==currentPopupKey);btn.textContent=({slf:'Stadt–Land–Fluss',slf_review:'Wörter prüfen',slf_results:'Ergebnisse',task:'Aufgabe',event:'Ereignis'}[phase]||'Pop-up')+' öffnen'}}
 
 async function rpc(fn,data){const ctl=new AbortController();const timeout=setTimeout(()=>ctl.abort(),12000);try{const r=await fetch(API+fn,{method:'POST',headers:{'Content-Type':'application/json','apikey':KEY,'Authorization':'Bearer '+KEY},body:JSON.stringify(data),signal:ctl.signal,cache:'no-store'});const v=await r.json();if(!r.ok)throw Error(v.message||'Serverfehler');return v}finally{clearTimeout(timeout)}}
 async function createRoom(){await entryAction('party_create',{p_name:$('name').value.trim()})}
 async function joinRoom(){await entryAction('party_join',{p_name:$('name').value.trim(),p_code:$('joincode').value.trim().toUpperCase()})}
-async function entryAction(fn,args){if(acting)return;if(!args.p_name){notice('Bitte zuerst deinen Spielernamen eingeben.');$('name').focus();return}if(fn==='party_join'&&!args.p_code){notice('Bitte Lobbycode eingeben.');$('joincode').focus();return}acting=true;revision++;notice('');$('create').disabled=$('join').disabled=true;try{session=await rpc(fn,args);save();await refresh(true)}catch(e){notice('Lobby: '+e.message)}finally{acting=false;$('create').disabled=$('join').disabled=false}}
-async function doAction(a){if(acting||!session)return;acting=true;revision++;notice('');$('roll').disabled=$('start').disabled=$('eventnext').disabled=true;const before=snapshot;try{const s=await rpc('party_action',{p_code:session.code,p_token:session.token,p_host_token:session.host_token||null,p_action:a});if(a==='roll'&&before){const mover=before.players[before.turn%before.players.length];const moved=s.players.find(p=>p.id===mover.id);lastMove={name:mover.name,dice:s.roll,from:mover.position,to:moved?.position??mover.position,turn:s.turn,at:Date.now(),id:mover.id};beginWalk(lastMove);boardPage=Math.floor((moved?.position??mover.position)/8);autoFollow=false;}render(s)}catch(e){notice(a==='rematch'&&/Unbekannte Aktion/.test(e.message)?'Neue Runde braucht noch das Server-Update. Bitte über Hauptmenü eine neue Lobby erstellen.':'Aktion: '+e.message)}finally{acting=false;if(snapshot)render(snapshot);setTimeout(()=>refresh(true),250)}}
+async function entryAction(fn,args){if(acting)return;if(!args.p_name){notice('Bitte zuerst deinen Spielernamen eingeben.');$('name').focus();return}if(fn==='party_join'&&!args.p_code){notice('Bitte Lobbycode eingeben.');$('joincode').focus();return}acting=true;revision++;notice('');$('create').disabled=$('join').disabled=true;try{session=await rpc(fn,args);save();avSyncTried=false;await refresh(true);if(avLocal())pushAvatar(false)}catch(e){notice('Lobby: '+e.message)}finally{acting=false;$('create').disabled=$('join').disabled=false}}
+async function doAction(a){if(acting||!session)return;acting=true;revision++;notice('');$('roll').disabled=$('start').disabled=$('eventnext').disabled=true;const before=snapshot;try{const s=await rpc('party_action',{p_code:session.code,p_token:session.token,p_host_token:session.host_token||null,p_action:a});render(s)}catch(e){notice(a==='rematch'&&/Unbekannte Aktion/.test(e.message)?'Neue Runde braucht noch das Server-Update. Bitte über Hauptmenü eine neue Lobby erstellen.':'Aktion: '+e.message)}finally{acting=false;if(snapshot)render(snapshot);setTimeout(()=>refresh(true),250)}}
 async function refresh(force=false){if(!session||polling||acting)return;polling=true;const requestRevision=revision;const requestCode=session.code;try{const s=await rpc('party_snapshot',{p_code:session.code,p_token:session.token});if(session&&session.code===requestCode&&requestRevision===revision&&!acting)render(s);if(pollFailures)notice('');pollFailures=0}catch(e){pollFailures++;if(pollFailures>=2)notice('Verbindung: '+e.message+' · Erneuter Versuch läuft.')}finally{polling=false}}
 function leave(){if(!confirm('Spiel auf diesem Gerät verlassen?'))return;revision++;session=null;snapshot=null;save();$('entry').classList.remove('hide');$('lobby').classList.add('hide');$('game').classList.add('hide');notice('');history.replaceState(null,'',location.pathname)}
-const BUILD_VERSION='8.5';
+const BUILD_VERSION='8.6';
 const STABLE_GAME_URL='https://codex-programmierung.sascha-robert-schmitt.workers.dev/play/';
 const LATEST_SOURCE_URL=STABLE_GAME_URL+'index.html';
 async function updateInsideLobby(){
@@ -310,8 +331,8 @@ async function autoUpdate(){
 autoUpdate();setInterval(()=>{if(!document.hidden)autoUpdate()},60000);
 function shareRoom(){const url=STABLE_GAME_URL+'?join='+encodeURIComponent(session.code);if(navigator.share)navigator.share({title:'Aal You Ready?',url}).catch(()=>{});else if(navigator.clipboard)navigator.clipboard.writeText(url).then(()=>alert('Link kopiert')).catch(()=>prompt('Link kopieren:',url));else prompt('Link kopieren:',url)}
 function renderQR(code){if(qrKey===code)return;qrKey=code;const url=STABLE_GAME_URL+'?join='+encodeURIComponent(code);$('qr').innerHTML='<img alt="Lobby-QR-Code" src="https://api.qrserver.com/v1/create-qr-code/?size=432x432&margin=8&data='+encodeURIComponent(url)+'">'}
-function render(s){if(!session||!s||!Array.isArray(s.players)||!s.players.length)return;const previous=snapshot;if(previous&&previous.code===s.code){for(const p of s.players){const old=previous.players.find(v=>v.id===p.id);if(old&&p.position!==old.position&&p.position>old.position&&!club.walking){beginWalk({id:p.id,from:old.position,to:p.position});break}}}snapshot=s;$('entry').classList.add('hide');$('updateInLobby').classList.remove('hide');const lobby=s.status==='lobby';$('lobby').classList.toggle('hide',!lobby);$('game').classList.toggle('hide',lobby);
-if(lobby){document.body.classList.remove('playing');dismissedPopupKey='';$('code').textContent=s.code;renderQR(s.code);$('members').innerHTML=s.players.map((p,i)=>chip(p,i)).join('');$('start').classList.toggle('hide',!session.host_token);$('start').disabled=acting||s.players.length<2;$('waiting').textContent=s.players.length+' / 8 Spieler · '+(session.host_token?'Du bist Host':'Warte auf den Host');return}
+function render(s){if(!session||!s||!Array.isArray(s.players)||!s.players.length)return;const previous=snapshot;planWalk(previous,s);snapshot=s;$('entry').classList.add('hide');$('updateInLobby').classList.remove('hide');const lobby=s.status==='lobby';$('lobby').classList.toggle('hide',!lobby);$('game').classList.toggle('hide',lobby);
+if(lobby){const me=s.players.find(v=>v.id===s.your_id);if(me&&!me.avatar&&'avatar' in me&&!avSyncTried&&avLocal()){avSyncTried=true;pushAvatar(false)}document.body.classList.remove('playing');dismissedPopupKey='';$('code').textContent=s.code;renderQR(s.code);$('members').innerHTML=s.players.map((p,i)=>chip(p,i)).join('');$('start').classList.toggle('hide',!session.host_token);$('start').disabled=acting||s.players.length<2;$('waiting').textContent=s.players.length+' / 8 Spieler · '+(session.host_token?'Du bist Host':'Warte auf den Host');return}
 const current=s.players[s.turn%s.players.length],finished=s.status==='finished',event=s.phase==='event',activity=s.phase==='task',slf=s.phase==='slf',slfReview=s.phase==='slf_review',slfResults=s.phase==='slf_results';serverOffset=s.server_now?Date.now()-Date.parse(s.server_now):0;document.body.classList.add('playing');
 $('turnlabel').textContent=finished?'SPIEL BEENDET':event?'EREIGNIS':activity?'ACTIVITY':slf?'STADT LAND FLUSS':slfReview?'BEGRIFFE PRÜFEN':slfResults?'ERGEBNISSE':'AM ZUG';
 $('status').textContent=finished?'🏆 Ziel erreicht':current.name+(s.your_turn?(s.phase==='ready'?' · DU DARFST WÜRFELN':' · DEIN ZUG · '+({event:'Ereignis bestätigen',task:'Activity abschließen',slf:'Stadt–Land–Fluss läuft',slf_review:'Antworten prüfen',slf_results:'Ergebnisse schließen'}[s.phase]||'Warte auf Abschluss')):' ist dran');
@@ -322,15 +343,17 @@ renderWinner(s,finished);
 $('message').textContent=finished?'Die Partie ist beendet.':event?'Die Bewegung wurde bereits ausgeführt.':s.your_turn?'Würfle und bewege deine Figur in Richtung Ziel.':'Warte auf den nächsten Würfelzug.';const diceVisible=!finished&&Number.isInteger(s.roll)&&s.roll>0;$('diceResult').classList.toggle('hide',!diceVisible);$('diceResult').innerHTML=diceVisible?'<span class="dice-face">'+['','⚀','⚁','⚂','⚃','⚄','⚅'][s.roll]+'</span><div><strong>Letzter Wurf: '+s.roll+'</strong><small>'+(event?'Ereignis ausgelöst':activity?'Activity-Feld':slf?'Stadt Land Fluss':finished?'Ziel erreicht':s.phase==='ready'?'Nächster Spieler ist dran':'')+'</small></div>':'';
 if(/^Verbinde mit Lobby/.test($('notice').textContent))notice('');if(autoFollow)boardPage=Math.max(0,Math.min(7,Math.floor(current.position/8)));paintClub();applyPopupVisibility()}
 function renderWinner(s,finished){
-const el=$('winner');el.classList.toggle('hide',!finished);
+const el=$('winner');el.classList.toggle('hide',!finished||walkBusy());
 if(!finished){confettiKey='';return}
-const ranked=s.players.map((p,i)=>({p,i})).sort((a,b)=>b.p.position-a.p.position||(b.p.points||0)-(a.p.points||0)||a.i-b.i);
-const best=ranked[0].p,medals=['🥇','🥈','🥉'];
-const key=s.code+':'+s.turn+':'+best.id;
-const title=esc(best.name)+' hat das Ziel erreicht!';
+const sc=p=>({f:p.position,pt:p.points||0,b:p.position>=63?30:0}),tot=p=>{const v=sc(p);return v.f+v.pt+v.b};
+const ranked=s.players.map((p,i)=>({p,i,t:tot(p)})).sort((a,b)=>b.t-a.t||b.p.position-a.p.position||a.i-b.i);
+const top=ranked[0],medals=['🥇','🥈','🥉'],finisher=s.players.find(p=>p.position>=63);
+const key=s.code+':'+s.turn+':'+top.p.id+':'+top.t;
+const title=top.p===finisher||!finisher?esc(top.p.name)+' gewinnt!':esc(top.p.name)+' gewinnt nach Punkten!';
+const sub=finisher&&top.p!==finisher?'<div class="win-hint" style="margin:-4px 0 8px">'+esc(finisher.name)+' war zuerst im Ziel</div>':'';
 if(el.dataset.key!==key){el.dataset.key=key;
-el.innerHTML='<div class="win-trophy">🏆</div><span class="win-title">'+title+'</span>'+ranked.map((r,k)=>'<div class="win-rank'+(k===0?' first':'')+'" style="--c:'+COLORS[r.i%8]+'"><span>'+(medals[k]||(k+1)+'.')+'</span><span>'+esc(r.p.name)+'</span><b>'+r.p.position+'/63</b></div>').join('')+'<div class="win-actions"><button onclick="doAction(\'rematch\')">🔁 Neue Runde</button><button class="secondary" onclick="leave()">Hauptmenü</button></div><div class="win-hint">Neue Runde: alle Spieler landen wieder in der Lobby, der Host startet.</div>';}
-if(confettiKey!==key){confettiKey=key;startConfetti()}
+el.innerHTML='<div class="win-trophy">🏆</div><span class="win-title">'+title+'</span>'+sub+ranked.map((r,k)=>{const v=sc(r.p);return '<div class="win-rank'+(k===0?' first':'')+'" style="--c:'+COLORS[r.i%8]+'"><span>'+(medals[k]||(k+1)+'.')+'</span><span class="wr-name">'+esc(r.p.name)+'<small>'+v.f+' Felder · '+v.pt+' Punkte'+(v.b?' · +'+v.b+' Zielbonus':'')+'</small></span><b>'+r.t+'</b></div>'}).join('')+'<div class="win-actions"><button onclick="doAction(\'rematch\')">🔁 Neue Runde</button><button class="secondary" onclick="leave()">Hauptmenü</button></div><div class="win-hint">Endergebnis = Felder + Punkte (Stadt-Land-Fluss, Aufgaben) + 30 Zielbonus</div>';}
+if(!walkBusy()&&confettiKey!==key){confettiKey=key;startConfetti()}
 }
 let confettiKey='',confettiRaf=0;
 function startConfetti(){
@@ -342,7 +365,7 @@ const t0=performance.now();cancelAnimationFrame(confettiRaf);
 (function tick(now){const t=now-t0;x.clearRect(0,0,c.width,c.height);for(const b of bits){b.x+=b.vx;b.y+=b.vy;b.r+=b.vr;x.save();x.translate(b.x,b.y);x.rotate(b.r);x.fillStyle=b.c;x.fillRect(-b.w/2,-b.h/2,b.w,b.h);x.restore()}
 if(t<7000)confettiRaf=requestAnimationFrame(tick);else x.clearRect(0,0,c.width,c.height)})(t0);
 }
-function chip(p,i){return '<span class="chip"><i class="dot" style="--c:'+COLORS[i%8]+'"></i>'+esc(p.name)+' · '+p.position+'/63</span>'}
+function chip(p,i){return '<span class="chip"><i class="dot" style="--c:'+COLORS[i%8]+'"></i>'+esc(p.name)+' · '+p.position+'/63'+(p.points?' · '+p.points+' Pkt':'')+'</span>'}
 function drawBoard(){if(!snapshot)return;const first=boardPage*8;$('range').textContent=first+'–'+(first+7);$('prev').disabled=boardPage===0;$('next').disabled=boardPage===7;const current=snapshot.players[snapshot.turn%snapshot.players.length];$('board').innerHTML=Array.from({length:8},(_,i)=>{const n=first+i;const pieces=snapshot.players.map((p,j)=>p.position===n?'<i class="figure" style="--c:'+COLORS[j%8]+'" title="'+esc(p.name)+'"><i></i></i>':'').join('');const symbol=n===0?'START':n===63?'ZIEL':SPECIAL_FIELDS.includes(n)?'🎲':EVENTS.includes(n)?'⚡':SLF_FIELDS.includes(n)?'🔤':ACTIVITIES.includes(n)?'🎭':'✧';return '<div class="tile '+((EVENTS.includes(n)||SPECIAL_FIELDS.includes(n))?'event ':'')+(n===63?'finish ':'')+(current.position===n?'current':'')+'"><span class="num">'+n+'</span><span class="symbol">'+symbol+'</span><span class="figures">'+pieces+'</span></div>'}).join('')}
 const slfCats=['Stadt','Land','Fluss','Tier','Beruf'];
 async function finishSLF(){if(!session||acting)return;acting=true;revision++;notice('');$('slffinish').disabled=true;try{const result=await rpc('party_action',{p_code:session.code,p_token:session.token,p_host_token:session.host_token||null,p_action:'slf_finish'});render(result);if(result.phase!=='slf_results')notice('Auswertung läuft – Ergebnisse werden geladen.')}catch(e){if(e.message.includes('Keine aktive Runde')||e.message.includes('Keine Runde')){const latest=await rpc('party_snapshot',{p_code:session.code,p_token:session.token});render(latest)}else notice('Auswertung: '+e.message)}finally{acting=false;$('slffinish').disabled=false;setTimeout(()=>refresh(true),300)}}
@@ -410,7 +433,122 @@ function shiftBoard(delta){boardPage=Math.max(0,Math.min(7,boardPage+delta));aut
 function followTurn(){autoFollow=true;if(snapshot)boardPage=Math.floor(snapshot.players[snapshot.turn%snapshot.players.length].position/8);drawBoard()}
 
 
-const club={mode:'fixed3d',scene:null,engine:null,camera:null,avatars:[],walking:null,walkFinishedAt:0,ready:false,failed:false};
+// ===== AVATAR SYSTEM (8.6): customizable procedural 3D character =====
+const AV={
+ skin:['#f6d3b3','#e8b98f','#c98e63','#9a6140','#6b4128','#ffe1cf'],
+ hairC:['#1b1512','#4a2f1c','#8a5a2b','#d6a84a','#d5d5d5','#c8321f','#3a6ee8','#d63aa8'],
+ cloth:['#ff2444','#ff7a1a','#e4a324','#27c46b','#00b8d9','#3a6ee8','#8e4bff','#e84fb5','#f0f0f0','#2a2d32'],
+ pants:['#2a2d32','#3b4a6b','#6b4a2a','#4a5d3a','#8d9096','#f0f0f0','#7a1f2b','#e4a324'],
+ hair:['Glatze','Kurz','Locken','Irokese','Zopf','Lang'],
+ outfit:['T-Shirt','Hoodie','Anzug','Trainingsjacke','Kleid','Latzhose'],
+ hat:['Keine','Cap','Beanie','Zylinder','Krone','Kopfhörer'],
+ glasses:['Keine','Rund','Sonnenbrille','Visor'],
+ acc:['Keins','Rucksack','Schal','Fliege','Goldkette','Umhang']
+};
+const AV_KEYS=[['skin','Hautton','c','skin'],['hair','Frisur','n','hair'],['hairColor','Haarfarbe','c','hairC'],['outfit','Outfit','n','outfit'],['outfitColor','Outfit-Farbe','c','cloth'],['pants','Hose','c','pants'],['hat','Kopfbedeckung','n','hat'],['glasses','Brille','n','glasses'],['acc','Accessoire','n','acc']];
+const AV_LEN={skin:6,hair:6,hairColor:8,outfit:6,outfitColor:10,pants:8,hat:6,glasses:4,acc:6};
+function avDecode(str){const a=String(str||'').split('.');if(a[0]!=='A1'||a.length!==10)return null;const c={};AV_KEYS.forEach(([k],i)=>{const n=parseInt(a[i+1],10);c[k]=Number.isInteger(n)&&n>=0&&n<AV_LEN[k]?n:0});return c}
+function avEncode(c){return 'A1.'+AV_KEYS.map(([k])=>c[k]).join('.')}
+function avRandom(seed){let h=2166136261;for(const ch of String(seed||'x')){h^=ch.charCodeAt(0);h=Math.imul(h,16777619)}const rnd=()=>{h=Math.imul(h^(h>>>15),2246822507);h=Math.imul(h^(h>>>13),3266489909);h^=h>>>16;return (h>>>0)/4294967296};const c={};AV_KEYS.forEach(([k])=>c[k]=Math.floor(rnd()*AV_LEN[k]));return c}
+let avCache;function avLocal(){if(avCache===undefined){try{avCache=avDecode(localStorage.getItem('aal-avatar'))}catch(e){avCache=null}}return avCache}
+function buildAvatar(scene,c,accent,scale){
+ const B=BABYLON,root=new B.TransformNode('avatar',scene),cache={};
+ const M=(hex,em)=>{const k=hex+(em||0);if(cache[k])return cache[k];const m=new B.StandardMaterial('av'+k,scene);m.diffuseColor=B.Color3.FromHexString(hex);m.specularColor=new B.Color3(.12,.12,.14);if(em)m.emissiveColor=m.diffuseColor.scale(em);return cache[k]=m};
+ const put=(mesh,par,x,y,z,hex,em)=>{mesh.parent=par||root;mesh.position.set(x,y,z);mesh.material=M(hex,em);return mesh};
+ const cyl=(o,...r)=>put(B.MeshBuilder.CreateCylinder('c',o,scene),...r);
+ const box=(w,h,d,...r)=>put(B.MeshBuilder.CreateBox('b',{width:w,height:h,depth:d},scene),...r);
+ const sph=(d,...r)=>put(B.MeshBuilder.CreateSphere('s',{diameter:d,segments:12},scene),...r);
+ const tor=(d,t,...r)=>put(B.MeshBuilder.CreateTorus('t',{diameter:d,thickness:t,tessellation:22},scene),...r);
+ const skin=AV.skin[c.skin],hairCol=AV.hairC[c.hairColor],cloth=AV.cloth[c.outfitColor],o=c.outfit;
+ const DARK='#22252b',long=o===1||o===2||o===3;
+ const legCol=o===2?DARK:o===4?skin:AV.pants[c.pants],sleeve=o===2?DARK:cloth,torsoCol=o===2?DARK:cloth;
+ // legs + shoes
+ const legs=[-1,1].map(s=>{const p=new B.TransformNode('leg',scene);p.parent=root;p.position.set(s*.085,.40,0);cyl({height:.38,diameter:.125,tessellation:10},p,0,-.19,0,legCol);box(.13,.07,.2,p,0,-.365,.035,'#1a1b1f');return p});
+ // torso
+ cyl({height:.44,diameterTop:.32,diameterBottom:.28,tessellation:14},root,0,.64,0,torsoCol);
+ cyl({height:.07,diameter:.3,tessellation:14},root,0,.43,0,'#15161a');
+ if(o===4)cyl({height:.34,diameterTop:.28,diameterBottom:.52,tessellation:16},root,0,.34,0,cloth);
+ if(o===1){sph(.27,root,0,.9,-.1,cloth).scaling.y=.7;box(.17,.1,.02,root,0,.52,.15,'#000000',0);}
+ if(o===2){box(.05,.23,.012,root,0,.7,.152,AV.cloth[(c.outfitColor+4)%10]);box(.13,.05,.012,root,0,.85,.15,'#ffffff')}
+ if(o===3){box(.03,.42,.012,root,0,.64,.152,'#ffffff')}
+ if(o===5){box(.22,.22,.02,root,0,.58,.145,AV.pants[c.pants]);for(const s of [-1,1])box(.04,.28,.02,root,s*.08,.75,.145,AV.pants[c.pants])}
+ // arms
+ const arms=[-1,1].map(s=>{const p=new B.TransformNode('arm',scene);p.parent=root;p.position.set(s*.2,.80,0);cyl({height:.36,diameter:.088,tessellation:8},p,0,-.18,0,long?sleeve:skin);if(!long)cyl({height:.13,diameter:.1,tessellation:8},p,0,-.065,0,sleeve);sph(.1,p,0,-.38,0,skin);if(o===3)box(.012,.33,.09,p,s*.047,-.18,0,'#ffffff');return p});
+ // head
+ cyl({height:.07,diameter:.1,tessellation:10},root,0,.89,0,skin);
+ sph(.3,root,0,1.05,0,skin);
+ for(const s of [-1,1]){sph(.05,root,s*.15,1.05,0,skin);sph(.045,root,s*.055,1.07,.128,'#101114');sph(.014,root,s*.05,1.085,.15,'#ffffff')}
+ sph(.04,root,0,1.025,.15,skin);
+ box(.07,.014,.01,root,0,.985,.145,'#8a2a2a');
+ // hair
+ const cap=()=>sph(.33,root,0,1.12,-.005,hairCol).scaling.y=.62;
+ switch(c.hair){
+  case 1:cap();break;
+  case 2:for(let i=0;i<9;i++){const a=i/9*Math.PI*2;sph(.11,root,Math.cos(a)*.115,1.17+(i%2)*.025,Math.sin(a)*.11-.01,hairCol)}sph(.17,root,0,1.22,-.01,hairCol);break;
+  case 3:for(let i=0;i<5;i++)box(.04,.1+(i===2?.07:i%3===1?.03:0),.07,root,0,1.22+(i===2?.035:0),-.11+i*.055,hairCol);break;
+  case 4:cap();sph(.1,root,0,1.0,-.19,hairCol).scaling.y=1.8;sph(.04,root,0,1.07,-.15,'#ffffff');break;
+  case 5:cap();box(.31,.36,.07,root,0,.97,-.115,hairCol);for(const s of [-1,1])box(.05,.3,.16,root,s*.15,1.0,-.03,hairCol);break;
+ }
+ // hats
+ switch(c.hat){
+  case 1:{const d=B.MeshBuilder.CreateSphere('cap',{diameter:.35,segments:12,slice:.5},scene);put(d,root,0,1.1,0,accent);box(.22,.02,.13,root,0,1.115,.19,accent);break}
+  case 2:{const d=B.MeshBuilder.CreateSphere('bean',{diameter:.34,segments:12,slice:.55},scene);put(d,root,0,1.1,0,AV.cloth[(c.outfitColor+3)%10]);tor(.33,.04,root,0,1.115,0,'#ffffff');sph(.09,root,0,1.28,0,'#ffffff');break}
+  case 3:cyl({height:.24,diameter:.2,tessellation:16},root,0,1.33,0,'#17181c');cyl({height:.025,diameter:.38,tessellation:20},root,0,1.21,0,'#17181c');cyl({height:.05,diameter:.205,tessellation:16},root,0,1.25,0,'#ff2444');break;
+  case 4:cyl({height:.1,diameter:.25,tessellation:5},root,0,1.25,0,'#ffcf3a',.5);for(let i=0;i<5;i++){const a=i/5*Math.PI*2;cyl({height:.1,diameterTop:0,diameterBottom:.07,tessellation:6},root,Math.cos(a)*.115,1.34,Math.sin(a)*.115,'#ffcf3a',.5)}break;
+  case 5:{const pts=[];for(let i=0;i<=16;i++){const a=Math.PI*i/16;pts.push(new B.Vector3(Math.cos(a)*.18,1.05+Math.sin(a)*.19,0))}put(B.MeshBuilder.CreateTube('hp',{path:pts,radius:.014,tessellation:8},scene),root,0,0,0,'#2a2d32');for(const s of [-1,1]){const cup=cyl({height:.05,diameter:.11,tessellation:14},root,s*.18,1.05,0,accent,.35);cup.rotation.z=Math.PI/2}break}
+ }
+ // glasses
+ if(c.glasses===1){for(const s of [-1,1]){const t=tor(.085,.012,root,s*.058,1.07,.145,'#111111');t.rotation.x=Math.PI/2}box(.03,.01,.01,root,0,1.075,.15,'#111111')}
+ if(c.glasses===2){for(const s of [-1,1])box(.085,.05,.012,root,s*.058,1.07,.15,'#050506');box(.2,.012,.012,root,0,1.09,.15,'#050506')}
+ if(c.glasses===3)box(.22,.05,.03,root,0,1.07,.145,'#00e8ff',.9);
+ // accessories
+ switch(c.acc){
+  case 1:box(.23,.3,.1,root,0,.66,-.2,accent);box(.04,.3,.02,root,-.09,.7,.15,'#15161a');box(.04,.3,.02,root,.09,.7,.15,'#15161a');break;
+  case 2:tor(.24,.07,root,0,.88,0,accent).rotation.x=Math.PI/2;box(.07,.22,.025,root,.07,.76,.155,accent).rotation.z=.1;break;
+  case 3:{for(const s of [-1,1]){const k=cyl({height:.07,diameterTop:.0,diameterBottom:.07,tessellation:8},root,s*.045,.845,.155,accent);k.rotation.z=-s*Math.PI/2}sph(.04,root,0,.845,.158,accent);break}
+  case 4:tor(.335,.016,root,0,.79,0,'#ffcf3a',.6).rotation.x=Math.PI/2;sph(.05,root,0,.73,.16,'#ffcf3a',.6);break;
+  case 5:{const cp=box(.36,.55,.02,root,0,.6,-.17,accent);cp.rotation.x=-.12;break}
+ }
+ // ring marker under feet
+ tor(.62,.05,root,0,.04,0,accent,1.4);
+ root.scaling.setAll(scale||1);
+ return {root,limbs:[legs[0],legs[1],arms[0],arms[1]]};
+}
+// ===== Avatar editor (live 3D preview) =====
+let avDraft=null,avPrev=null,avSyncTried=false;
+function avRowsHTML(){return AV_KEYS.map(([k,label,kind,src])=>'<div class="av-row"><span class="av-label">'+label+'</span><button class="secondary" onclick="avChange(\''+k+'\',-1)" aria-label="zurück">◀</button><b id="avv-'+k+'"></b><button class="secondary" onclick="avChange(\''+k+'\',1)" aria-label="weiter">▶</button></div>').join('')}
+function avUpdateLabels(){AV_KEYS.forEach(([k,label,kind,src])=>{const el=$('avv-'+k);if(!el)return;const v=avDraft[k];el.innerHTML=kind==='c'?'<i class="av-sw" style="background:'+AV[src][v]+'"></i>'+(v+1)+'/'+AV_LEN[k]:AV[src][v]})}
+function avRebuild(){if(!avPrev)return;if(avPrev.av)avPrev.av.root.dispose(false,true);avPrev.av=buildAvatar(avPrev.scene,avDraft,'#e4a324',1);avPrev.av.root.rotation.y=avPrev.spin}
+function avChange(k,d){avDraft[k]=(avDraft[k]+d+AV_LEN[k])%AV_LEN[k];avUpdateLabels();avRebuild()}
+function avRandomize(){avDraft=avRandom(Math.random()+''+Date.now());avUpdateLabels();avRebuild()}
+function openAvatarEditor(){
+ avDraft=avLocal()||avRandom((session&&session.player_id)||$('name').value||'x');
+ $('avRows').innerHTML=avRowsHTML();$('avatarEditor').classList.remove('hide');avUpdateLabels();
+ if(!window.BABYLON){$('avNote').textContent='3D-Vorschau lädt …';setTimeout(()=>{if(!$('avatarEditor').classList.contains('hide')&&!avPrev)initAvPreview()},1200);return}
+ initAvPreview();
+}
+function initAvPreview(){
+ if(avPrev)return;if(!window.BABYLON){$('avNote').textContent='3D-Bibliothek nicht geladen – Auswahl funktioniert trotzdem.';return}
+ try{const B=BABYLON,canvas=$('avCanvas'),engine=new B.Engine(canvas,true,{adaptToDeviceRatio:true}),scene=new B.Scene(engine);
+ scene.clearColor=new B.Color4(.04,.045,.055,1);
+ const cam=new B.ArcRotateCamera('avcam',-Math.PI/2,1.32,2.6,new B.Vector3(0,.68,0),scene);cam.lowerRadiusLimit=cam.upperRadiusLimit=2.6;cam.lowerBetaLimit=cam.upperBetaLimit=1.32;cam.attachControl(canvas,true);
+ const h=new B.HemisphericLight('h',new B.Vector3(0,1,.3),scene);h.intensity=1.15;h.groundColor=new B.Color3(.3,.3,.4);
+ const d=new B.DirectionalLight('d',new B.Vector3(-.4,-.8,.6),scene);d.intensity=.8;
+ const floor=B.MeshBuilder.CreateCylinder('fl',{height:.05,diameter:1.5,tessellation:40},scene);floor.position.y=-.03;const fm=new B.StandardMaterial('fm',scene);fm.diffuseColor=new B.Color3(.12,.13,.16);floor.material=fm;
+ const ring=B.MeshBuilder.CreateTorus('rg',{diameter:1.5,thickness:.03,tessellation:48},scene);ring.position.y=.0;const rm=new B.StandardMaterial('rm',scene);rm.emissiveColor=B.Color3.FromHexString('#e4a324');rm.disableLighting=true;ring.material=rm;
+ avPrev={engine,scene,spin:Math.PI,av:null};avRebuild();
+ engine.runRenderLoop(()=>{if(avPrev.av){avPrev.spin+=.008;avPrev.av.root.rotation.y=avPrev.spin}scene.render()});
+ $('avNote').textContent='Ziehen zum Drehen';
+ }catch(e){console.warn('avatar preview',e);$('avNote').textContent='3D-Vorschau nicht möglich – Auswahl funktioniert trotzdem.';avPrev=null}
+}
+function closeAvatarEditor(){$('avatarEditor').classList.add('hide');if(avPrev){try{avPrev.engine.stopRenderLoop();avPrev.scene.dispose();avPrev.engine.dispose()}catch(e){}avPrev=null}}
+async function saveAvatar(){const str=avEncode(avDraft);try{localStorage.setItem('aal-avatar',str)}catch(e){}avCache=avDecode(str);closeAvatarEditor();if(session)await pushAvatar(true);else notice('')}
+async function pushAvatar(loud){
+ const str=avEncode(avLocal()||avDraft||avRandom('x'));if(!session)return;
+ try{const s=await rpc('party_set_avatar',{p_code:session.code,p_token:session.token,p_avatar:str});avSyncTried=true;render(s);if(loud)notice('')}
+ catch(e){avSyncTried=true;if(loud)notice(/party_set_avatar|function|schema cache/i.test(e.message)?'Figur gespeichert – für andere Geräte fehlt noch das Server-Update.':'Figur: '+e.message)}
+}
+const club={mode:'fixed3d',scene:null,engine:null,camera:null,avatars:[],walking:null,queue:[],hold:new Set(),donePending:false,nextLegAt:0,ready:false,failed:false};
 // 64 connected squares, one closed Hamiltonian circuit. No dead ends.
 const SPIRAL_PATH=(()=>{const p=[[0,0]];for(let x=1;x<8;x++)p.push([x,0]);for(let y=1;y<8;y++){if(y%2)for(let x=7;x>=1;x--)p.push([x,y]);else for(let x=1;x<8;x++)p.push([x,y]);}for(let y=7;y>=1;y--)p.push([0,y]);return p})();
 function tileXY(n){const p=SPIRAL_PATH[Math.max(0,Math.min(63,n))];return {x:p[0]-3.5,z:3.5-p[1]}}
@@ -501,63 +639,65 @@ const band=B.MeshBuilder.CreateTorus('barrelHazardRing'+x+z,{diameter:.51,thickn
 }
 const emergency=new B.PointLight('reactorEmergency',new B.Vector3(5.05,1.8,0),club.scene);emergency.diffuse=new B.Color3(1,.05,.12);emergency.intensity=.7;emergency.range=6;
 const workLight=new B.PointLight('cyanWarehouseLight',new B.Vector3(-3,3,-3),club.scene);workLight.diffuse=new B.Color3(.1,.8,1);workLight.intensity=.8;workLight.range=11;
+// direction arrows: every tile points to the next one
+const arrowMat=mat('routeArrow','#ffd24a',1.6);arrowMat.backFaceCulling=false;
+for(let n=0;n<63;n++){const p=tileXY(n),q=tileXY(n+1),dx=Math.sign(q.x-p.x),dz=Math.sign(q.z-p.z);
+const ar=B.MeshBuilder.CreateDisc('routeArrow'+n,{radius:.115,tessellation:3},club.scene);ar.material=arrowMat;ar.rotation.x=Math.PI/2;ar.rotation.y=Math.atan2(-dz,dx);ar.position.set(p.x+dx*.33,.352,p.z+dz*.33)}
 club.ready=true;club.failed=false;$('cameraHud').style.display='none';syncAvatars();
 club.engine.runRenderLoop(()=>{try{updateClub(performance.now());club.scene.render()}catch(e){if(!club.renderError){club.renderError=true;console.error('3D render error',e);$('cameraHud').textContent='3D-Fehler: '+e.message;$('cameraHud').style.display='block'}}});
 window.addEventListener('resize',()=>club.engine.resize());
 window.addEventListener('orientationchange',()=>setTimeout(()=>club.engine.resize(),250));
 }catch(e){club.failed=true;console.error('Babylon init',e);$('cameraHud').textContent='3D-Startfehler: '+e.message;$('cameraHud').style.display='block'}
 }
-function createAvatar(i){
-const B=BABYLON,root=new B.TransformNode('clubPlayer'+i,club.scene),color=COLORS[i%8];root.scaling.setAll(1.5);
-const skin=mat('playerSkin'+i,i%3===0?'#b87b5c':i%3===1?'#d5a889':'#a77b67'),outfit=mat('playerOutfit'+i,'#1c1b2a'),pants=mat('playerPants'+i,'#252839'),hair=mat('playerHair'+i,i%2?'#29242a':'#65534b'),accent=mat('playerAccent'+i,color,.35);
-const torso=B.MeshBuilder.CreateCylinder('torso'+i,{height:.44,diameterTop:.25,diameterBottom:.29,tessellation:10},club.scene);torso.parent=root;torso.position.y=.73;torso.material=outfit;
-const head=B.MeshBuilder.CreateSphere('head'+i,{diameter:.23,segments:12},club.scene);head.parent=root;head.position.y=1.08;head.material=skin;
-const hairstyle=B.MeshBuilder.CreateSphere('hair'+i,{diameter:.235,segments:10},club.scene);hairstyle.parent=root;hairstyle.position.y=1.16;hairstyle.scaling.y=.48;hairstyle.material=hair;
-const belt=B.MeshBuilder.CreateCylinder('belt'+i,{height:.055,diameter:.29,tessellation:10},club.scene);belt.parent=root;belt.position.y=.5;belt.material=accent;
-const limbs=[];for(let j=0;j<4;j++){const arm=j>=2,part=B.MeshBuilder.CreateCylinder('limb'+i+'_'+j,{height:arm?.39:.47,diameter:arm?.09:.115,tessellation:8},club.scene);part.parent=root;part.position.set(arm?(j===2?-.21:.21):(j===0?-.105:.105),arm?.72:.245,0);part.material=arm?outfit:pants;limbs.push(part)}
-const marker=B.MeshBuilder.CreateTorus('playerMarker'+i,{diameter:.55,thickness:.055,tessellation:24},club.scene);marker.parent=root;marker.position.y=.08;marker.material=accent;
-return {root,limbs}
+function avKey(p,i){return (p.avatar||('d:'+(p.id||p.name)+(snapshot&&p.id===snapshot.your_id&&avLocal()?':'+avEncode(avLocal()):'')))+'|'+COLORS[i%8]}
+function avatarCfg(p,i){return avDecode(p.avatar)||(snapshot&&p.id===snapshot.your_id&&avLocal())||avRandom(p.id||p.name||i)}
+function makeAvatar(i,p){const cfg=avatarCfg(p,i),a=buildAvatar(club.scene,cfg,COLORS[i%8],1.15);a.key=avKey(p,i);a.root.rotation.y=Math.PI;return a}
+function syncAvatars(){if(!club.ready||!snapshot?.players)return;const pl=snapshot.players;
+while(club.avatars.length>pl.length){club.avatars.pop().root.dispose(false,true)}
+pl.forEach((p,i)=>{let a=club.avatars[i];const probe=avKey(p,i);if(!a||a.key!==probe){if(a)a.root.dispose(false,true);a=club.avatars[i]=makeAvatar(i,p)}a.root.setEnabled(true);if(!club.hold.has(p.id)){const pos=tileXY(p.position);a.root.position.set(pos.x+(i%3-1)*.13,.1,pos.z+(Math.floor(i/3)-1)*.13)}})}
+function walkBusy(){return !!club.walking||club.queue.length>0||club.donePending}
+function planWalk(prev,s){
+ if(!club.ready||!prev||prev.code!==s.code||prev.status==='lobby'||s.status==='lobby'||!Array.isArray(prev.players))return;
+ s.players.forEach(p=>{const o=prev.players.find(v=>v.id===p.id);if(!o||o.position===p.position)return;
+  const roll=Number.isInteger(s.roll)?s.roll:0,landing=Math.min(63,o.position+roll),legs=[];
+  if(s.board_mode!=='circuit'&&s.phase==='event'&&roll>0&&landing>o.position&&landing!==p.position){legs.push({from:o.position,to:landing,kind:'move',dice:roll},{from:landing,to:p.position,kind:'effect'})}
+  else legs.push({from:o.position,to:p.position,kind:'move',dice:s.board_mode==='circuit'?0:roll});
+  for(const l of legs){club.queue.push({...l,id:p.id,name:p.name,steps:Math.abs(l.to-l.from)})}
+  club.hold.add(p.id);club.busySince=performance.now()});
 }
-function syncAvatars(){if(!club.ready||!snapshot?.players)return;while(club.avatars.length<snapshot.players.length)club.avatars.push(createAvatar(club.avatars.length));club.avatars.forEach((a,i)=>{a.root.setEnabled(i<snapshot.players.length);if(i>=snapshot.players.length)return;const p=snapshot.players[i],pos=tileXY(p.position);if(!club.walking||club.walking.id!==p.id){a.root.position.set(pos.x+(i%3-1)*.13,.1,pos.z+(Math.floor(i/3)-1)*.13)}})}
-function beginWalk(move){if(!move||move.to===move.from)return;club.walking={...move,started:performance.now(),duration:Math.max(1300,Math.abs(move.to-move.from)*520)};club.walkFinishedAt=0}
-function setCameraMode(){club.mode='fixed3d'}
+function showWalkInfo(l){const el=$('walkinfo');if(!el)return;const n=l.steps,fw=l.to>l.from;el.textContent=l.kind==='effect'?'⚡ '+l.name+(fw?' rutscht '+n+' Felder vor ▶':' wird '+n+' Felder zurückgeworfen ◀'):(l.dice?'🎲 '+l.dice+' · ':'')+l.name+' läuft '+n+' Feld'+(n===1?'':'er')+' ▶ Feld '+l.to;el.classList.remove('hide')}
+function afterWalk(){club.hold.clear();club.donePending=false;const el=$('walkinfo');if(el)el.classList.add('hide');if(snapshot){applyPopupVisibility();renderWinner(snapshot,snapshot.status==='finished')}}
+setInterval(()=>{if(walkBusy()&&club.busySince&&performance.now()-club.busySince>25000){club.walking=null;club.queue.length=0;afterWalk()}},1000);
+function turnTo(root,target,k){let d=target-root.rotation.y;while(d>Math.PI)d-=Math.PI*2;while(d<-Math.PI)d+=Math.PI*2;root.rotation.y+=d*k}
 function updateClub(now){
 if(!snapshot||!club.ready)return;
 syncAvatars();
-const move=club.walking;
-$('cameraHud').textContent='3D · TECHNO CLUB · 64 FELDER';
+if(!club.walking&&club.queue.length&&now>=club.nextLegAt){const l=club.queue.shift();club.walking={...l,started:now};showWalkInfo(l)}
+const move=club.walking,fin=snapshot.status==='finished';
 let focus=null;
 if(move){
-const elapsed=(now-move.started)/move.duration,progress=Math.min(1,Math.max(0,elapsed));
-const distance=(move.to-move.from)*progress,step=move.from+distance;
-const lo=Math.floor(step),hi=Math.min(63,lo+1),frac=step-lo;
-const p=tileXY(lo),q=tileXY(hi),x=p.x+(q.x-p.x)*frac,z=p.z+(q.z-p.z)*frac;
-const index=snapshot.players.findIndex(v=>v.id===move.id),avatar=club.avatars[index];
-if(avatar){
-avatar.root.position.set(x,.14+Math.abs(Math.sin(now/135))*.045,z);
-avatar.root.rotation.y=Math.atan2(q.x-p.x,q.z-p.z);
-avatar.limbs.forEach((limb,i)=>limb.rotation.x=Math.sin(now/155+(i%2)*Math.PI)*.28);
-}
-focus=new BABYLON.Vector3(x,0,z);
-if(progress>=1){club.walking=null;club.walkFinishedAt=now+700}
-}
-const finished=snapshot.status==='finished'&&!move;
-if(finished){
+ const stepMs=move.kind==='effect'?330:430,total=move.steps*stepMs,el=Math.min(1,(now-move.started)/total),f=el*move.steps,k=Math.min(move.steps-1,Math.floor(f)),frac=f-k,dir=Math.sign(move.to-move.from);
+ const a=tileXY(move.from+dir*k),b=tileXY(move.from+dir*(k+1));
+ const x=a.x+(b.x-a.x)*frac,z=a.z+(b.z-a.z)*frac,idx=snapshot.players.findIndex(v=>v.id===move.id),av=club.avatars[idx];
+ if(av){const hop=Math.sin(Math.min(1,frac)*Math.PI)*.3;av.root.position.set(x,.1+hop,z);turnTo(av.root,Math.atan2(b.x-a.x,b.z-a.z),.35);const sw=Math.sin(now/105)*.75;av.limbs[0].rotation.x=sw;av.limbs[1].rotation.x=-sw;av.limbs[2].rotation.x=-sw*.8;av.limbs[3].rotation.x=sw*.8}
+ focus=new BABYLON.Vector3(x,0,z);club.lastFocus=focus;
+ if(el>=1){club.walking=null;if(av)av.limbs.forEach(l=>l.rotation.x=0);if(club.queue.length)club.nextLegAt=now+700;else{club.donePending=true;club.doneAt=now+800}}
+}else if(club.donePending||club.queue.length){focus=club.lastFocus||null;if(club.donePending&&now>=club.doneAt)afterWalk()}
+// idle avatars: breathe + face the camera
+snapshot.players.forEach((p,i)=>{const av=club.avatars[i];if(!av)return;if(move&&move.id===p.id)return;if(fin&&p.position>=63)return;if(club.hold.has(p.id)&&!club.walking)return;av.limbs[2].rotation.z=-.06+Math.sin(now/700+i)*.03;av.limbs[3].rotation.z=.06-Math.sin(now/700+i)*.03;av.limbs[2].rotation.x=av.limbs[3].rotation.x=0;turnTo(av.root,Math.PI,.08)});
+$('cameraHud').textContent='3D · TECHNO CLUB · 64 FELDER';
+if(fin&&!walkBusy()){
  let wi=0;snapshot.players.forEach((p,i)=>{if(p.position>snapshot.players[wi].position)wi=i});
  const wp=tileXY(snapshot.players[wi].position),av=club.avatars[wi];
- if(av){av.root.position.set(wp.x,.14+Math.abs(Math.sin(now/230))*.38,wp.z);av.root.rotation.y=now/420;av.limbs.forEach((l,i)=>{if(i>=2)l.rotation.z=(i===2?1:-1)*(2.4+Math.sin(now/110)*.5)})}
- const a=Math.sin(now/2600)*.9;
- const want=new BABYLON.Vector3(wp.x+Math.sin(a)*4.2,2.9,wp.z-Math.cos(a)*4.4);
- club.camera.position=BABYLON.Vector3.Lerp(club.camera.position,want,.05);
- club.camera.setTarget(new BABYLON.Vector3(wp.x,.7,wp.z));
- return;
+ if(av){av.root.position.set(wp.x,.1+Math.abs(Math.sin(now/230))*.4,wp.z);av.root.rotation.y=Math.PI+Math.sin(now/500)*.6;av.limbs[2].rotation.z=-(2.5+Math.sin(now/110)*.4);av.limbs[3].rotation.z=2.5+Math.sin(now/110)*.4}
+ const a=Math.sin(now/2600)*.9,want=new BABYLON.Vector3(wp.x+Math.sin(a)*4.2,2.9,wp.z-Math.cos(a)*4.4);
+ club.camera.position=BABYLON.Vector3.Lerp(club.camera.position,want,.05);club.camera.setTarget(new BABYLON.Vector3(wp.x,.7,wp.z));return;
 }
 const aspect=club.engine.getRenderWidth()/Math.max(1,club.engine.getRenderHeight());
 const overview=new BABYLON.Vector3(0,aspect<.8?17:14,aspect<.8?-11:-10);
-const desired=focus?new BABYLON.Vector3(focus.x+2.5,7.5,focus.z-7.5):overview;
-club.camera.position=BABYLON.Vector3.Lerp(club.camera.position,desired,focus?.095:.04);
-const target=focus?new BABYLON.Vector3(focus.x,.15,focus.z):new BABYLON.Vector3(0,.2,0);
-club.camera.setTarget(target);
+const desired=focus?new BABYLON.Vector3(focus.x+1.8,5.2,focus.z-5):overview;
+club.camera.position=BABYLON.Vector3.Lerp(club.camera.position,desired,focus?.1:.04);
+club.camera.setTarget(focus?new BABYLON.Vector3(focus.x,.3,focus.z):new BABYLON.Vector3(0,.2,0));
 }
 function paintClub(){if(!club.ready&&!club.failed)initClub();else if(club.ready){club.engine.resize();syncAvatars()}else if(club.failed){$('cameraHud').textContent='3D konnte nicht starten';$('cameraHud').style.display='block'}}
 const invite=new URLSearchParams(location.search).get('join');if(invite){$('joincode').value=invite.toUpperCase();$('name').focus();}
