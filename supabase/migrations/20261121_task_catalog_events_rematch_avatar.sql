@@ -89,7 +89,7 @@ elsif p_action='start' then
 if r.host_token is distinct from p_host_token then raise exception 'Nur Host kann starten'; end if;
 if n<2 then raise exception 'Mindestens zwei Spieler'; end if;
 if r.status<>'lobby' then raise exception 'Spiel bereits gestartet'; end if;
-update public.party_rooms set status='playing',phase='ready',turn_index=0,timer_started_at=null where id=r.id;
+update public.party_rooms set status='playing',phase='ready',timer_started_at=null,used_tasks='{}' where id=r.id;
 elsif p_action='roll' then
 if r.status<>'playing' or r.phase<>'ready' or idx<>(r.turn_index%n) then raise exception 'Nicht dein Zug'; end if;
 if r.board_mode='circuit' then perform public.party_circuit_roll(r.id,m.id); return public.party_snapshot(p_code,p_token); end if;
@@ -177,10 +177,9 @@ end if;
 update public.party_rooms set phase='ready',turn_index=turn_index+1,task=null,timer_started_at=null where id=r.id;
 elsif p_action='rematch' then
 if r.status<>'finished' then raise exception 'Spiel läuft noch'; end if;
-delete from public.party_slf_votes where room_id=r.id;
-delete from public.party_slf_answers where room_id=r.id;
+-- turn counter keeps running (next multiple of n) so old Stadt-Land-Fluss rows never collide with the new game
 update public.party_members set position=0,lap=0,cash=0,skip=false,stars=0,points=0,vip=0,turbo=false where room_id=r.id;
-update public.party_rooms set status='lobby',phase='lobby',turn_index=0,roll=null,task=null,timer_started_at=null,slf_letter=null,slf_deadline=null,roll_info=null,ending_at=null,star_field=null,used_tasks='{}',used_cards='{}' where id=r.id;
+update public.party_rooms set status='lobby',phase='lobby',turn_index=(r.turn_index/n+1)*n,roll=null,task=null,timer_started_at=null,slf_letter=null,slf_deadline=null,roll_info=null,ending_at=null,star_field=null,used_tasks='{}',used_cards='{}' where id=r.id;
 else raise exception 'Unbekannte Aktion'; end if;
 return public.party_snapshot(p_code,p_token);
 end $function$;
