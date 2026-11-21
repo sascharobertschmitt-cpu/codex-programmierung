@@ -1,7 +1,7 @@
 """Aal You Ready? - modular, rigged player character (toy style) -> GLB.
 
 Run (headless, bpy module or blender binary):
-    python tools/blender/character_build.py [out.glb] [--preview dir]
+    python tools/character/character_build.py [out.glb] [--preview dir]
 
 One GLB holds the rigged base body plus every optional part. The game switches
 parts on/off by mesh name and tints materials by name:
