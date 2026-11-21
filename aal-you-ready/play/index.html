@@ -217,7 +217,7 @@ async function doAction(a){if(acting||!session)return;acting=true;revision++;not
 async function refresh(force=false){if(!session||polling||acting)return;polling=true;const requestRevision=revision;const requestCode=session.code;try{const s=await rpc('party_snapshot',{p_code:session.code,p_token:session.token});if(session&&session.code===requestCode&&requestRevision===revision&&!acting)render(s);if(pollFailures)notice('');pollFailures=0}catch(e){pollFailures++;if(pollFailures>=2)notice('Verbindung: '+e.message+' · Erneuter Versuch läuft.')}finally{polling=false}}
 function leave(){if(!confirm('Spiel auf diesem Gerät verlassen?'))return;revision++;session=null;snapshot=null;save();$('entry').classList.remove('hide');$('lobby').classList.add('hide');$('game').classList.add('hide');notice('');history.replaceState(null,'',location.pathname)}
 const BUILD_VERSION='8.2';
-const STABLE_GAME_URL='https://raw.githack.com/sascharobertschmitt-cpu/codex-programmierung/main/aal-you-ready/play/index.html';
+const STABLE_GAME_URL='https://codex-programmierung.sascha-robert-schmitt.workers.dev/play/';
 const LATEST_SOURCE_URL='https://raw.githubusercontent.com/sascharobertschmitt-cpu/codex-programmierung/main/aal-you-ready/play/index.html';
 async function updateInsideLobby(){
  if(!session){notice('Bitte zuerst einer Lobby beitreten.');return}
